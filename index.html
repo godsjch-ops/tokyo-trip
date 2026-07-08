@@ -33,6 +33,21 @@
   .btn.danger:hover{background:#fef2f2;}
   .wrap{max-width:1280px;margin:0 auto;padding:18px;}
 
+  /* app shell / left sidebar nav */
+  .app-shell{display:flex;align-items:stretch;min-height:100vh;}
+  .sidenav{width:210px;flex-shrink:0;background:#fff;border-right:1px solid var(--line2);
+    padding:18px 12px;position:sticky;top:0;align-self:flex-start;height:100vh;overflow-y:auto;z-index:40;}
+  .sidenav-brand{display:flex;align-items:center;gap:8px;font-weight:700;font-size:13.5px;
+    margin-bottom:14px;padding:2px 6px;color:var(--ink);}
+  .sidenav-list{display:flex;flex-direction:column;gap:2px;}
+  .sidenav-item{display:flex;align-items:center;gap:9px;text-align:left;width:100%;border:0;
+    background:transparent;border-radius:9px;padding:9px 10px;font-size:13px;font-weight:600;
+    color:#4b5563;cursor:pointer;transition:.12s;}
+  .sidenav-item:hover{background:var(--accent-soft);color:var(--accent);}
+  .main-col{flex:1;min-width:0;}
+  .menu-btn{display:none;}
+  .sidenav-backdrop{display:none;position:fixed;inset:0;background:rgba(17,24,39,.35);z-index:35;}
+
   h2.section{font-size:14.5px;font-weight:700;margin:24px 2px 6px;display:flex;align-items:center;gap:8px;color:var(--ink);}
   h2.section .ic{color:var(--faint);font-size:16px;}
   h2.section .add{margin-left:auto;}
@@ -46,7 +61,7 @@
   .mapcard .bar .list-link{margin-left:auto;background:var(--accent-soft);color:var(--accent);text-decoration:none;
     padding:8px 13px;border-radius:9px;font-size:12.5px;font-weight:700;}
   .mapcard .bar .list-link:hover{background:#e2ebff;}
-  .mapcard iframe{width:100%;height:320px;border:0;display:block;}
+  .mapcard iframe{width:100%;height:320px;border:0;display:block;resize:vertical;overflow:auto;min-height:200px;}
 
   .legend{display:flex;gap:13px;flex-wrap:wrap;align-items:center;margin:14px 2px 12px;font-size:12px;color:var(--muted);}
   .legend .dot{display:inline-flex;align-items:center;gap:6px;}
@@ -112,31 +127,8 @@
   .empty{grid-column:1/-1;color:var(--faint);font-size:13px;background:var(--panel);border:1px dashed var(--line2);
     border-radius:12px;padding:20px;text-align:center;}
 
-  /* agenda (all-at-once list) */
+  /* wide modal (detail section list) */
   .modal.wide{max-width:800px;}
-  .ag-day{margin-bottom:18px;}
-  .ag-dayhead{font-size:15px;font-weight:700;color:var(--ink);padding:7px 2px;border-bottom:2px solid var(--line2);
-    margin-bottom:6px;position:sticky;top:0;background:#fff;z-index:1;}
-  .ag-dayhead span{color:var(--faint);font-weight:500;font-size:12.5px;margin-left:6px;}
-  .ag-dayhead .cnt{float:right;color:var(--faint);font-weight:500;font-size:12px;}
-  .ag-item{display:flex;gap:11px;align-items:stretch;padding:9px 6px;border-bottom:1px solid var(--line);cursor:pointer;border-radius:8px;}
-  .ag-item:hover{background:#f9fafb;}
-  .ag-time{width:44px;font-size:12px;font-weight:700;color:var(--ink);text-align:right;line-height:1.35;flex-shrink:0;padding-top:1px;}
-  .ag-time span{color:var(--faint);font-weight:500;}
-  .ag-bar{width:4px;border-radius:3px;flex-shrink:0;}
-  .ag-main{flex:1;min-width:0;}
-  .ag-title{font-size:14px;font-weight:700;color:var(--ink);}
-  .ag-cat{font-size:11px;font-weight:700;margin-left:7px;}
-  .ag-loc{font-size:12px;color:var(--muted);margin-top:2px;}
-  .ag-desc{font-size:12.5px;color:#4b5563;margin-top:3px;white-space:pre-wrap;line-height:1.5;}
-  .ag-dur{font-size:11.5px;color:var(--faint);flex-shrink:0;align-self:center;}
-  .ag-empty{font-size:12.5px;color:var(--faint);padding:6px 2px;}
-  @media print{
-    header.top,.mapcard,.legend,.daytabs,.grid-scroll,h2.section,.section-hint,.cards,.close-x,.m-foot,.ag-dur{display:none!important;}
-    .overlay{position:static!important;background:none!important;padding:0!important;display:block!important;}
-    .modal{box-shadow:none!important;max-height:none!important;max-width:100%!important;overflow:visible!important;}
-    .ag-item{cursor:default;}
-  }
 
   /* modal */
   .overlay{position:fixed;inset:0;background:rgba(17,24,39,.5);display:none;align-items:center;justify-content:center;
@@ -193,6 +185,12 @@
   .toast.on{opacity:1;}
 
   @media(max-width:760px){
+    .app-shell{display:block;}
+    .sidenav{position:fixed;left:0;top:0;transform:translateX(-100%);transition:transform .22s ease;
+      box-shadow:0 0 0 rgba(0,0,0,0);}
+    .sidenav.open{transform:translateX(0);box-shadow:14px 0 40px rgba(0,0,0,.18);}
+    .sidenav-backdrop.on{display:block;}
+    .menu-btn{display:inline-flex;}
     .wrap{padding:12px;}
     header.top{padding:11px 14px;}
     header.top h1{font-size:15.5px;}
@@ -211,7 +209,21 @@
 </style>
 </head>
 <body>
+<div class="app-shell">
+  <div class="sidenav-backdrop" id="sideNavBackdrop" onclick="toggleSideNav(false)"></div>
+  <nav class="sidenav" id="sideNav">
+    <div class="sidenav-brand"><span>🗼</span> 도쿄 연수</div>
+    <div class="sidenav-list">
+      <button class="sidenav-item" onclick="openDetailList('visit')">🗺️ 방문지 상세보기</button>
+      <button class="sidenav-item" onclick="openDetailList('lodging')">🏨 숙소 상세보기</button>
+      <button class="sidenav-item" onclick="openDetailList('food')">🍜 식당 상세보기</button>
+      <button class="sidenav-item" onclick="openDetailList('shopping')">🛍️ 쇼핑 꿀팁</button>
+      <button class="sidenav-item" onclick="openDetailList('history')">📜 방문지역 역사</button>
+    </div>
+  </nav>
+  <div class="main-col">
 <header class="top">
+  <button class="btn sm menu-btn" onclick="toggleSideNav()">☰</button>
   <div class="brand">
     <div class="ic">🗼</div>
     <div>
@@ -221,7 +233,6 @@
   </div>
   <div class="spacer"></div>
   <button class="btn primary" onclick="openForm()">＋ 일정 추가</button>
-  <button class="btn" onclick="openAgenda()">📋 전체 일정 보기</button>
   <button class="btn sm" onclick="exportJSON()">내보내기</button>
   <button class="btn sm" onclick="document.getElementById('importFile').click()">불러오기</button>
   <input type="file" id="importFile" accept="application/json" style="display:none" onchange="importJSON(this)">
@@ -234,6 +245,7 @@
     <div class="bar">
       <b>방문지 지도</b>
       <span class="hint">드래그·확대해서 볼 수 있어요</span>
+      <span class="map-link" onclick="resetTopMap()">🗺 전체 핀 보기</span>
       <a class="list-link" id="savedListLink" target="_blank" rel="noopener">📍 저장한 방문지 목록 열기</a>
     </div>
     <iframe id="topMap" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
@@ -272,6 +284,8 @@
   <div class="cards" id="lodging"></div>
 
 </div>
+  </div>
+</div>
 
 <!-- VIEW: event -->
 <div class="overlay" id="viewOverlay" onclick="if(event.target===this)closeView()">
@@ -303,15 +317,71 @@
   </div>
 </div>
 
-<!-- AGENDA: all events at once -->
-<div class="overlay" id="agendaOverlay" onclick="if(event.target===this)closeAgenda()">
+<!-- DETAIL SECTION: list page -->
+<div class="overlay" id="detailListOverlay" onclick="if(event.target===this)closeDetailList()">
   <div class="modal wide">
     <div class="m-head">
-      <h2 style="flex:1">전체 일정 · 9/14–9/18</h2>
-      <button class="btn sm" onclick="printAgenda()" style="margin-right:6px">🖨 인쇄</button>
-      <button class="close-x" onclick="closeAgenda()">✕</button>
+      <h2 id="dlTitle" style="flex:1"></h2>
+      <button class="btn primary sm" onclick="openDetailForm()" style="margin-right:6px">＋ 항목 추가</button>
+      <button class="close-x" onclick="closeDetailList()">✕</button>
     </div>
-    <div class="m-body" id="agBody"></div>
+    <div class="m-body">
+      <div class="section-hint" id="dlHint"></div>
+      <div class="cards" id="dlCards"></div>
+    </div>
+  </div>
+</div>
+
+<!-- DETAIL: item view -->
+<div class="overlay" id="detailViewOverlay" onclick="if(event.target===this)closeDetailView()">
+  <div class="modal">
+    <div class="m-head">
+      <h2 id="dvTitle" style="flex:1"></h2>
+      <button class="close-x" onclick="closeDetailView()">✕</button>
+    </div>
+    <div class="m-body">
+      <div class="carousel" id="dCarousel">
+        <div class="track" id="dTrack"></div>
+        <button class="nav prev" onclick="slide(-1)">‹</button><button class="nav next" onclick="slide(1)">›</button>
+        <div class="counter" id="dCounter"></div><div class="dots" id="dDots"></div>
+      </div>
+      <div class="desc" id="dvDesc"></div>
+      <div class="map-actions" id="dvLinks" style="margin-bottom:10px"></div>
+      <div id="dvMapWrap"><div class="map-box"><iframe id="dvMap" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe></div></div>
+      <div class="m-foot">
+        <button class="btn sm" onclick="editDetailCurrent()">✎ 수정</button>
+        <button class="btn sm danger" onclick="deleteDetailCurrent()">삭제</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- DETAIL: form -->
+<div class="overlay" id="detailFormOverlay" onclick="if(event.target===this)closeDetailForm()">
+  <div class="modal">
+    <div class="m-head"><h2 id="dFormTitle">항목 추가</h2><button class="close-x" onclick="closeDetailForm()">✕</button></div>
+    <div class="m-body">
+      <div class="form-grid">
+        <div class="full"><label>제목 *</label><input id="dTitle" placeholder="예: 센소지"></div>
+        <div class="full"><label>내용 / 메모</label><textarea id="dDesc" placeholder="자세한 설명, 팁 등"></textarea></div>
+        <div class="full"><label>관련 링크</label><input id="dUrl" placeholder="https://..."></div>
+        <div class="full"><label>구글맵 위치 (선택, 장소명/주소)</label><input id="dLoc" placeholder="예: 浅草寺 東京"></div>
+        <div class="full"><label>사진</label>
+          <div class="photo-adder">
+            <input id="dPhotoUrl" placeholder="이미지 URL 붙여넣기">
+            <button class="btn sm" onclick="addDetailPhotoUrl()">URL 추가</button>
+            <button class="btn sm" onclick="document.getElementById('dPhotoFile').click()">파일 업로드</button>
+            <input type="file" id="dPhotoFile" accept="image/*" multiple style="display:none" onchange="addDetailPhotoFiles(this)">
+          </div>
+          <div class="hint">업로드 사진은 자동 리사이즈·압축돼요.</div>
+          <div class="thumbs" id="dThumbs"></div>
+        </div>
+      </div>
+      <div class="m-foot">
+        <button class="btn sm" onclick="closeDetailForm()">취소</button>
+        <button class="btn primary sm" onclick="saveDetailItem()">저장</button>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -404,21 +474,35 @@
 /* ---------- config ---------- */
 const START_H=6, END_H=24, ROW_H=50, PXMIN=ROW_H/60, SNAP=30;
 const SAVED_LIST_URL="https://maps.app.goo.gl/p2pW28bvs6XwsYs59";
+const MYMAPS_MID="1O59R_FlNsb6EqQNAsSVZwUAOwPPK2q4";
+const MYMAPS_VIEW_URL=`https://www.google.com/maps/d/edit?mid=${MYMAPS_MID}&usp=sharing`;
+const MYMAPS_EMBED_URL=`https://www.google.com/maps/d/embed?mid=${MYMAPS_MID}`;
 const DAYS=[{label:"9/14",dow:"월"},{label:"9/15",dow:"화"},{label:"9/16",dow:"수"},{label:"9/17",dow:"목"},{label:"9/18",dow:"금"}];
 const CAT={
   visit:{name:"방문",color:"#3b82f6"},meal:{name:"식사",color:"#f59e0b"},move:{name:"이동",color:"#10b981"},
   stay:{name:"숙소",color:"#8b5cf6"},meet:{name:"회의/연수",color:"#ef4444"},free:{name:"자유",color:"#64748b"}};
 const K_EV="tokyo_trip_2026_events",K_BL="tokyo_trip_2026_backlog",K_LG="tokyo_trip_2026_lodging";
+const DETAIL_SECTIONS={
+  visit:{title:"방문지 상세보기",icon:"🗺️",hint:"각 방문지의 역사·배경, 관람 팁, 소요시간 등 자세한 정보를 정리해두세요."},
+  lodging:{title:"숙소 상세보기",icon:"🏨",hint:"숙소별 주변 편의시설, 체크인 팁, 조식 정보 등을 정리해두세요."},
+  food:{title:"식당 상세보기",icon:"🍜",hint:"식당별 추천 메뉴, 예약 방법, 주의사항 등을 정리해두세요."},
+  shopping:{title:"쇼핑 꿀팁",icon:"🛍️",hint:"면세, 추천 매장, 결제·환불 팁 등 쇼핑 관련 정보를 정리해두세요."},
+  history:{title:"방문지역 역사",icon:"📜",hint:"방문 지역의 역사·배경 정보를 정리해두세요."}
+};
 
 /* ---------- state ---------- */
 let events=loadJSON(K_EV,seedEvents), backlog=loadJSON(K_BL,seedBacklog), lodging=loadJSON(K_LG,seedLodging);
+let detailData={};
+Object.keys(DETAIL_SECTIONS).forEach(k=>{detailData[k]=loadJSON("tokyo_trip_2026_detail_"+k,()=>[]);});
 let mobileDay=0, currentId=null, editId=null, blEditId=null, lgEditId=null, pCurrent=null;
-let formPhotos=[], slideIdx=0, slideCount=0, justDragged=0, drag=null;
+let curDetailKey=null, dEditId=null, dCurrent=null, detailFormPhotos=[];
+let formPhotos=[], slideIdx=0, slideCount=0, justDragged=0, drag=null, carIds={car:"vCarousel",track:"vTrack",counter:"vCounter",dots:"vDots"};
 
 function loadJSON(k,seed){try{const r=localStorage.getItem(k);if(r)return JSON.parse(r);}catch(e){}return seed();}
 function saveEvents(){try{localStorage.setItem(K_EV,JSON.stringify(events));}catch(e){toast("저장 공간이 가득 찼어요. 사진을 줄이거나 URL을 사용하세요.");}}
 function persistBacklog(){try{localStorage.setItem(K_BL,JSON.stringify(backlog));}catch(e){}}
 function persistLodging(){try{localStorage.setItem(K_LG,JSON.stringify(lodging));}catch(e){}}
+function persistDetail(k){try{localStorage.setItem("tokyo_trip_2026_detail_"+k,JSON.stringify(detailData[k]));}catch(e){}}
 function uid(){return "e"+Math.random().toString(36).slice(2,9);}
 function seedEvents(){return[
   {id:uid(),day:0,start:"10:00",end:"12:00",cat:"visit",title:"오리엔테이션",loc:"Tokyo Station",desc:"연수 일정 안내 및 팀 편성.\n집합: 도쿄역 마루노우치 중앙 출구.",photos:[]},
@@ -438,8 +522,16 @@ function esc(s){return(s||"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":
 function embedSrc(q){return `https://www.google.com/maps?q=${encodeURIComponent(q)}&hl=ko&z=15&output=embed`;}
 function searchUrl(q){return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(q)}`;}
 
+/* ---------- side nav ---------- */
+function toggleSideNav(force){
+  const nav=document.getElementById("sideNav"),bd=document.getElementById("sideNavBackdrop");
+  const open=force!==undefined?force:!nav.classList.contains("open");
+  nav.classList.toggle("open",open);bd.classList.toggle("on",open);
+}
+
 /* ---------- top map ---------- */
-function initTopMap(){document.getElementById("savedListLink").href=SAVED_LIST_URL;document.getElementById("topMap").src=embedSrc("Tokyo, Japan");}
+function initTopMap(){document.getElementById("savedListLink").href=MYMAPS_VIEW_URL;document.getElementById("topMap").src=MYMAPS_EMBED_URL;}
+function resetTopMap(){document.getElementById("topMap").src=MYMAPS_EMBED_URL;window.scrollTo({top:0,behavior:"smooth"});}
 function showOnTop(){const ev=events.find(x=>x.id===currentId);if(ev&&ev.loc){document.getElementById("topMap").src=embedSrc(ev.loc);closeView();window.scrollTo({top:0,behavior:"smooth"});toast("상단 지도에 표시했어요.");}}
 
 /* ---------- render ---------- */
@@ -606,8 +698,9 @@ function openView(id){
 }
 function closeView(){document.getElementById("viewOverlay").classList.remove("on");document.getElementById("vMap").src="about:blank";}
 function durLabel(s,e){const m=toMin(e)-toMin(s);if(m<=0)return"-";const h=Math.floor(m/60),mm=m%60;return((h?h+"시간 ":"")+(mm?mm+"분":"")).trim()||"0분";}
-function buildCarousel(photos){
-  const car=document.getElementById("vCarousel"),track=document.getElementById("vTrack"),dots=document.getElementById("vDots");
+function buildCarousel(photos,ids){
+  carIds=ids||{car:"vCarousel",track:"vTrack",counter:"vCounter",dots:"vDots"};
+  const car=document.getElementById(carIds.car),track=document.getElementById(carIds.track),dots=document.getElementById(carIds.dots);
   track.innerHTML="";dots.innerHTML="";slideIdx=0;slideCount=photos.length;
   if(!photos.length){car.classList.remove("on");return;}
   car.classList.add("on");
@@ -623,9 +716,9 @@ function buildCarousel(photos){
 }
 function slide(dir){slideIdx=(slideIdx+dir+slideCount)%slideCount;updateSlide();}
 function updateSlide(){
-  document.getElementById("vTrack").style.transform=`translateX(-${slideIdx*100}%)`;
-  document.getElementById("vCounter").textContent=`${slideIdx+1} / ${slideCount}`;
-  [...document.getElementById("vDots").children].forEach((d,i)=>d.className=i===slideIdx?"on":"");
+  document.getElementById(carIds.track).style.transform=`translateX(-${slideIdx*100}%)`;
+  document.getElementById(carIds.counter).textContent=`${slideIdx+1} / ${slideCount}`;
+  [...document.getElementById(carIds.dots).children].forEach((d,i)=>d.className=i===slideIdx?"on":"");
 }
 function editCurrent(){const id=currentId;closeView();openForm(id);}
 function deleteCurrent(){if(!confirm("이 일정을 삭제할까요?"))return;events=events.filter(x=>x.id!==currentId);saveEvents();closeView();render();toast("삭제되었습니다.");}
@@ -747,36 +840,73 @@ function importJSON(input){
 let toastTimer=null;
 function toast(msg){const t=document.getElementById("toast");t.textContent=msg;t.classList.add("on");clearTimeout(toastTimer);toastTimer=setTimeout(()=>t.classList.remove("on"),2400);}
 
-/* ---------- agenda (all-at-once) ---------- */
-function openAgenda(){
-  let html="";
-  DAYS.forEach((d,di)=>{
-    const evs=events.filter(e=>e.day===di).sort((a,b)=>toMin(a.start)-toMin(b.start));
-    html+=`<div class="ag-day"><div class="ag-dayhead">${d.label}<span>${d.dow}요일</span><span class="cnt">${evs.length}건</span></div>`;
-    if(!evs.length)html+=`<div class="ag-empty">일정 없음</div>`;
-    else evs.forEach(e=>{
-      const c=CAT[e.cat]||CAT.visit;
-      html+=`<div class="ag-item" onclick="agOpen('${e.id}')">
-        <div class="ag-time">${e.start}<br><span>${e.end}</span></div>
-        <div class="ag-bar" style="background:${c.color}"></div>
-        <div class="ag-main">
-          <div class="ag-title">${esc(e.title)}<span class="ag-cat" style="color:${c.color}">${c.name}</span></div>
-          ${e.loc?`<div class="ag-loc">📍 ${esc(e.loc)}</div>`:""}
-          ${e.desc?`<div class="ag-desc">${esc(e.desc)}</div>`:""}
-        </div>
-        <div class="ag-dur">${durLabel(e.start,e.end)}</div>
-      </div>`;
-    });
-    html+=`</div>`;
-  });
-  document.getElementById("agBody").innerHTML=html;
-  document.getElementById("agendaOverlay").classList.add("on");
+/* ---------- detail sections (sidebar pages) ---------- */
+function openDetailList(key){
+  curDetailKey=key;toggleSideNav(false);
+  const sec=DETAIL_SECTIONS[key];
+  document.getElementById("dlTitle").textContent=sec.icon+" "+sec.title;
+  document.getElementById("dlHint").textContent=sec.hint;
+  renderDetailCards();
+  document.getElementById("detailListOverlay").classList.add("on");
 }
-function closeAgenda(){document.getElementById("agendaOverlay").classList.remove("on");}
-function agOpen(id){closeAgenda();openView(id);}
-function printAgenda(){window.print();}
+function closeDetailList(){document.getElementById("detailListOverlay").classList.remove("on");}
+function renderDetailCards(){
+  const box=document.getElementById("dlCards"), list=detailData[curDetailKey]||[];
+  if(!list.length){box.innerHTML=`<div class="empty">아직 등록된 내용이 없어요. 「＋ 항목 추가」로 채워보세요.</div>`;return;}
+  box.innerHTML="";
+  list.forEach(b=>{
+    const el=document.createElement("div");el.className="card";
+    el.innerHTML=`<div class="c-title">${esc(b.title)}</div>
+      <div class="c-desc">${esc(b.desc||"")}</div>
+      <div class="c-tags">${b.url?`<a href="${esc(b.url)}" target="_blank" rel="noopener" onclick="event.stopPropagation()">🔗 링크</a>`:""}${b.loc?`<span>📍 ${esc(b.loc)}</span>`:""}${b.photos&&b.photos.length?`<span>🖼 ${b.photos.length}장</span>`:""}</div>`;
+    el.addEventListener("click",()=>openDetailView(b.id));
+    box.appendChild(el);
+  });
+}
+function openDetailView(id){
+  const b=(detailData[curDetailKey]||[]).find(x=>x.id===id);if(!b)return;
+  dCurrent=id;
+  document.getElementById("dvTitle").textContent=b.title;
+  buildCarousel(b.photos||[],{car:"dCarousel",track:"dTrack",counter:"dCounter",dots:"dDots"});
+  document.getElementById("dvDesc").textContent=b.desc||"내용이 없습니다.";
+  document.getElementById("dvLinks").innerHTML=(b.url?`<a class="map-link" href="${esc(b.url)}" target="_blank" rel="noopener">🔗 링크 열기</a>`:"")+
+    (b.loc?`<a class="map-link" href="${searchUrl(b.loc)}" target="_blank" rel="noopener">↗ 구글맵에서 보기</a>`:"");
+  const mw=document.getElementById("dvMapWrap");
+  if(b.loc&&b.loc.trim()){mw.style.display="block";document.getElementById("dvMap").src=embedSrc(b.loc.trim());}
+  else{mw.style.display="none";document.getElementById("dvMap").src="about:blank";}
+  document.getElementById("detailViewOverlay").classList.add("on");
+}
+function closeDetailView(){document.getElementById("detailViewOverlay").classList.remove("on");document.getElementById("dvMap").src="about:blank";}
+function editDetailCurrent(){const id=dCurrent;closeDetailView();openDetailForm(id);}
+function deleteDetailCurrent(){
+  if(!confirm("이 항목을 삭제할까요?"))return;
+  detailData[curDetailKey]=detailData[curDetailKey].filter(x=>x.id!==dCurrent);
+  persistDetail(curDetailKey);closeDetailView();renderDetailCards();toast("삭제되었습니다.");
+}
+function openDetailForm(id=null){
+  dEditId=id;detailFormPhotos=[];
+  const sec=DETAIL_SECTIONS[curDetailKey];
+  if(id){const b=detailData[curDetailKey].find(x=>x.id===id);
+    document.getElementById("dFormTitle").textContent=sec.title+" 수정";
+    fset("dTitle",b.title);fset("dDesc",b.desc||"");fset("dUrl",b.url||"");fset("dLoc",b.loc||"");detailFormPhotos=[...(b.photos||[])];
+  }else{document.getElementById("dFormTitle").textContent=sec.title+" 항목 추가";
+    fset("dTitle","");fset("dDesc","");fset("dUrl","");fset("dLoc","");}
+  fset("dPhotoUrl","");renderDetailThumbs();document.getElementById("detailFormOverlay").classList.add("on");
+}
+function closeDetailForm(){document.getElementById("detailFormOverlay").classList.remove("on");}
+function renderDetailThumbs(){document.getElementById("dThumbs").innerHTML=detailFormPhotos.map((s,i)=>`<div class="t"><img src="${s}"><button onclick="rmDetailPhoto(${i})">✕</button></div>`).join("");}
+function rmDetailPhoto(i){detailFormPhotos.splice(i,1);renderDetailThumbs();}
+function addDetailPhotoUrl(){const inp=document.getElementById("dPhotoUrl");const v=inp.value.trim();if(!v)return;detailFormPhotos.push(v);inp.value="";renderDetailThumbs();}
+function addDetailPhotoFiles(input){[...input.files].forEach(f=>{const r=new FileReader();r.onload=e=>resizeImage(e.target.result,d=>{detailFormPhotos.push(d);renderDetailThumbs();});r.readAsDataURL(f);});input.value="";}
+function saveDetailItem(){
+  const title=document.getElementById("dTitle").value.trim();if(!title){toast("제목을 입력하세요.");return;}
+  const obj={id:dEditId||uid(),title,desc:document.getElementById("dDesc").value,
+    url:document.getElementById("dUrl").value.trim(),loc:document.getElementById("dLoc").value.trim(),photos:detailFormPhotos};
+  if(dEditId)detailData[curDetailKey]=detailData[curDetailKey].map(x=>x.id===dEditId?obj:x);else detailData[curDetailKey].push(obj);
+  persistDetail(curDetailKey);closeDetailForm();renderDetailCards();toast(dEditId?"수정되었습니다.":"추가되었습니다.");
+}
 
-document.addEventListener("keydown",e=>{if(e.key==="Escape"){closeAgenda();closeView();closeForm();closePView();closeBacklogForm();closeLodgingForm();}});
+document.addEventListener("keydown",e=>{if(e.key==="Escape"){closeView();closeForm();closePView();closeBacklogForm();closeLodgingForm();closeDetailList();closeDetailView();closeDetailForm();}});
 initTopMap();render();
 </script>
 </body>
