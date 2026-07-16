@@ -228,7 +228,7 @@
     <div class="ic">🗼</div>
     <div>
       <h1>도쿄 해외연수 일정</h1>
-      <div class="sub">2026.09.14(월) ~ 09.18(금) · 참가 9명</div>
+      <div class="sub">2026.09.14(월) ~ 09.18(금) · 참가 9명<span id="syncBadge"></span></div>
     </div>
   </div>
   <div class="spacer"></div>
@@ -236,6 +236,7 @@
   <button class="btn sm" onclick="exportJSON()">내보내기</button>
   <button class="btn sm" onclick="document.getElementById('importFile').click()">불러오기</button>
   <input type="file" id="importFile" accept="application/json" style="display:none" onchange="importJSON(this)">
+  <button class="btn sm" onclick="migrateLocal()">📤 기기데이터 올리기</button>
 </header>
 
 <div class="wrap">
@@ -470,10 +471,23 @@
 
 <div class="toast" id="toast"></div>
 
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
 <script>
 /* ---------- config ---------- */
 const START_H=6, END_H=24, ROW_H=50, PXMIN=ROW_H/60, SNAP=30;
 const SAVED_LIST_URL="https://maps.app.goo.gl/p2pW28bvs6XwsYs59";
+/* ▼ 실시간 공유(Firebase) 설정 — 비우면(null) 이 기기에만 저장 ▼ */
+const FIREBASE_CONFIG={
+  apiKey:"AIzaSyCmVdvXIE1jGaALYTeNgBIOdBM42TQelt0",
+  authDomain:"toky-trip.firebaseapp.com",
+  databaseURL:"https://toky-trip-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId:"toky-trip",
+  storageBucket:"toky-trip.firebasestorage.app",
+  messagingSenderId:"748767875296",
+  appId:"1:748767875296:web:a00f7eea3c598e82504085"
+};
+const TRIP_ID="tokyo2026";
 const MYMAPS_MID="1O59R_FlNsb6EqQNAsSVZwUAOwPPK2q4";
 const MYMAPS_VIEW_URL=`https://www.google.com/maps/d/edit?mid=${MYMAPS_MID}&usp=sharing`;
 const MYMAPS_EMBED_URL=`https://www.google.com/maps/d/embed?mid=${MYMAPS_MID}`;
@@ -491,18 +505,37 @@ const DETAIL_SECTIONS={
 };
 
 /* ---------- state ---------- */
-let events=loadJSON(K_EV,seedEvents), backlog=loadJSON(K_BL,seedBacklog), lodging=loadJSON(K_LG,seedLodging);
+let events=[], backlog=[], lodging=[];
 let detailData={};
-Object.keys(DETAIL_SECTIONS).forEach(k=>{detailData[k]=loadJSON("tokyo_trip_2026_detail_"+k,()=>[]);});
+Object.keys(DETAIL_SECTIONS).forEach(k=>{detailData[k]=[];});
 let mobileDay=0, currentId=null, editId=null, blEditId=null, lgEditId=null, pCurrent=null;
 let curDetailKey=null, dEditId=null, dCurrent=null, detailFormPhotos=[];
 let formPhotos=[], slideIdx=0, slideCount=0, justDragged=0, drag=null, carIds={car:"vCarousel",track:"vTrack",counter:"vCounter",dots:"vDots"};
 
 function loadJSON(k,seed){try{const r=localStorage.getItem(k);if(r)return JSON.parse(r);}catch(e){}return seed();}
-function saveEvents(){try{localStorage.setItem(K_EV,JSON.stringify(events));}catch(e){toast("저장 공간이 가득 찼어요. 사진을 줄이거나 URL을 사용하세요.");}}
-function persistBacklog(){try{localStorage.setItem(K_BL,JSON.stringify(backlog));}catch(e){}}
-function persistLodging(){try{localStorage.setItem(K_LG,JSON.stringify(lodging));}catch(e){}}
-function persistDetail(k){try{localStorage.setItem("tokyo_trip_2026_detail_"+k,JSON.stringify(detailData[k]));}catch(e){}}
+let fbdb=null;
+function fbBase(c){return `trips/${TRIP_ID}/${c}`;}
+function toMap(arr){const o={};(arr||[]).forEach(x=>o[x.id]=x);return o;}
+function valArr(snap){const v=snap.val();return v?Object.values(v):[];}
+function saveEvents(){if(fbdb){fbdb.ref(fbBase("events")).set(toMap(events));return;}try{localStorage.setItem(K_EV,JSON.stringify(events));}catch(e){toast("저장 공간이 가득 찼어요. 사진을 줄이거나 URL을 사용하세요.");}}
+function persistBacklog(){if(fbdb){fbdb.ref(fbBase("backlog")).set(toMap(backlog));return;}try{localStorage.setItem(K_BL,JSON.stringify(backlog));}catch(e){}}
+function persistLodging(){if(fbdb){fbdb.ref(fbBase("lodging")).set(toMap(lodging));return;}try{localStorage.setItem(K_LG,JSON.stringify(lodging));}catch(e){}}
+function persistDetail(k){if(fbdb){fbdb.ref(fbBase("detail/"+k)).set(toMap(detailData[k]));return;}try{localStorage.setItem("tokyo_trip_2026_detail_"+k,JSON.stringify(detailData[k]));}catch(e){}}
+function initFirebase(){
+  firebase.initializeApp(FIREBASE_CONFIG);
+  fbdb=firebase.database();
+  fbdb.ref(fbBase("events")).on("value",s=>{events=valArr(s);render();});
+  fbdb.ref(fbBase("backlog")).on("value",s=>{backlog=valArr(s);render();});
+  fbdb.ref(fbBase("lodging")).on("value",s=>{lodging=valArr(s);render();});
+  Object.keys(DETAIL_SECTIONS).forEach(k=>fbdb.ref(fbBase("detail/"+k)).on("value",s=>{detailData[k]=valArr(s);if(curDetailKey===k&&document.getElementById("detailListOverlay").classList.contains("on"))renderDetailCards();}));
+  const sb=document.getElementById("syncBadge");if(sb)sb.innerHTML=' · <b style="color:#059669">실시간 공유 중</b>';
+}
+function boot(){
+  if(FIREBASE_CONFIG){try{initFirebase();return;}catch(e){toast("Firebase 연결 실패 — 설정을 확인하세요. 이 기기 저장으로 전환합니다.");}}
+  events=loadJSON(K_EV,seedEvents);backlog=loadJSON(K_BL,seedBacklog);lodging=loadJSON(K_LG,seedLodging);
+  Object.keys(DETAIL_SECTIONS).forEach(k=>{detailData[k]=loadJSON("tokyo_trip_2026_detail_"+k,()=>[]);});
+  render();
+}
 function uid(){return "e"+Math.random().toString(36).slice(2,9);}
 function seedEvents(){return[
   {id:uid(),day:0,start:"10:00",end:"12:00",cat:"visit",title:"오리엔테이션",loc:"Tokyo Station",desc:"연수 일정 안내 및 팀 편성.\n집합: 도쿄역 마루노우치 중앙 출구.",photos:[]},
@@ -906,8 +939,19 @@ function saveDetailItem(){
   persistDetail(curDetailKey);closeDetailForm();renderDetailCards();toast(dEditId?"수정되었습니다.":"추가되었습니다.");
 }
 
+function migrateLocal(){
+  if(!fbdb){toast("공유 모드가 아니에요. FIREBASE_CONFIG를 확인하세요.");return;}
+  if(!confirm("이 기기에 저장된 기존 일정·상세 데이터를 공유 저장소로 올릴까요? 같은 id 항목은 덮어씁니다."))return;
+  try{
+    const e=JSON.parse(localStorage.getItem(K_EV)||"[]");if(e.length){events=e;saveEvents();}
+    const b=JSON.parse(localStorage.getItem(K_BL)||"[]");if(b.length){backlog=b;persistBacklog();}
+    const l=JSON.parse(localStorage.getItem(K_LG)||"[]");if(l.length){lodging=l;persistLodging();}
+    Object.keys(DETAIL_SECTIONS).forEach(k=>{const d=JSON.parse(localStorage.getItem("tokyo_trip_2026_detail_"+k)||"[]");if(d.length){detailData[k]=d;persistDetail(k);}});
+    toast("기기 데이터를 공유 저장소로 올렸어요.");
+  }catch(err){toast("올리기 실패: "+err.message);}
+}
 document.addEventListener("keydown",e=>{if(e.key==="Escape"){closeView();closeForm();closePView();closeBacklogForm();closeLodgingForm();closeDetailList();closeDetailView();closeDetailForm();}});
-initTopMap();render();
+initTopMap();boot();
 </script>
 </body>
 </html>
