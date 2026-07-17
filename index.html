@@ -4,18 +4,27 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>도쿄 해외연수 일정 대시보드 (9/14~9/18)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@600;700&display=swap" rel="stylesheet">
+<link as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" rel="stylesheet">
 <style>
   :root{
-    --bg:#f6f7f9; --panel:#ffffff; --ink:#1f2430; --muted:#6b7280; --faint:#9aa1ac;
-    --line:#eceef1; --line2:#e2e5ea;
-    --accent:#2563eb; --accent-soft:#eff4ff;
-    --visit:#3b82f6; --meal:#f59e0b; --move:#10b981; --stay:#8b5cf6; --meet:#ef4444; --free:#64748b;
+    --bg:#f8f9fa; --panel:#ffffff; --ink:#1d1b1a; --muted:#4C4948; --faint:#7D7B6F;
+    --line:#eceef0; --line2:#DCDDDD;
+    --accent:#187FC4; --accent-soft:#e8f2fb; --accent-deep:#005083;
+    --secondary:#F08300; --secondary-light:#FABE00; --tertiary:#70B058; --tertiary-light:#C3CA00;
+    --visit:#187FC4; --meal:#F08300; --move:#70B058; --stay:#8b5cf6; --meet:#ef4444; --free:#64748b;
+    --sig:linear-gradient(90deg,#187FC4 0%,#70B058 50%,#F08300 100%);
   }
+  /* signature gradient bar (brand accent) */
+  .sigbar{position:fixed;top:0;left:0;right:0;height:4px;background:var(--sig);z-index:70;}
+  .sig-accent{position:absolute;top:0;left:0;right:0;height:3px;background:var(--sig);z-index:1;}
   *{box-sizing:border-box;}
   html,body{margin:0;}
   body{font-family:"Pretendard","Apple SD Gothic Neo","Malgun Gothic",system-ui,-apple-system,sans-serif;
-    background:var(--bg);color:var(--ink);-webkit-text-size-adjust:100%;}
-  header.top{position:sticky;top:0;z-index:30;background:rgba(255,255,255,.92);backdrop-filter:blur(8px);
+    background:var(--bg);color:var(--ink);-webkit-text-size-adjust:100%;padding-top:4px;}
+  header.top{position:sticky;top:4px;z-index:30;background:rgba(255,255,255,.92);backdrop-filter:blur(8px);
     border-bottom:1px solid var(--line2);padding:12px 20px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;}
   .brand{display:flex;align-items:center;gap:11px;}
   .brand .ic{width:34px;height:34px;border-radius:10px;background:var(--accent-soft);color:var(--accent);
@@ -27,7 +36,7 @@
     background:#fff;color:#374151;transition:.13s;white-space:nowrap;}
   .btn:hover{background:#f9fafb;border-color:#d7dbe0;}
   .btn.primary{background:var(--accent);color:#fff;border-color:var(--accent);}
-  .btn.primary:hover{background:#1d4ed8;border-color:#1d4ed8;}
+  .btn.primary:hover{background:var(--accent-deep);border-color:var(--accent-deep);}
   .btn.sm{padding:6px 11px;font-size:12.5px;}
   .btn.danger{background:#fff;color:#dc2626;border-color:#f3c9c9;}
   .btn.danger:hover{background:#fef2f2;}
@@ -36,9 +45,10 @@
   /* app shell / left sidebar nav */
   .app-shell{display:flex;align-items:stretch;min-height:100vh;}
   .sidenav{width:210px;flex-shrink:0;background:#fff;border-right:1px solid var(--line2);
-    padding:18px 12px;position:sticky;top:0;align-self:flex-start;height:100vh;overflow-y:auto;z-index:40;}
-  .sidenav-brand{display:flex;align-items:center;gap:8px;font-weight:700;font-size:13.5px;
-    margin-bottom:14px;padding:2px 6px;color:var(--ink);}
+    padding:18px 12px;position:sticky;top:4px;align-self:flex-start;height:calc(100vh - 4px);overflow-y:auto;z-index:40;}
+  .sidenav-brand{display:flex;align-items:center;gap:8px;font-weight:800;font-size:14px;
+    margin-bottom:16px;padding:8px 8px;color:var(--ink);border-radius:10px;background:var(--accent-soft);}
+  .sidenav-brand span:first-child{filter:saturate(1.1);}
   .sidenav-list{display:flex;flex-direction:column;gap:2px;}
   .sidenav-item{display:flex;align-items:center;gap:9px;text-align:left;width:100%;border:0;
     background:transparent;border-radius:9px;padding:9px 10px;font-size:13px;font-weight:600;
@@ -104,9 +114,9 @@
   .event .resize-h.bottom{bottom:0;align-items:flex-end;}
   .event .resize-h::after{content:"";width:22px;height:3px;border-radius:3px;background:currentColor;opacity:0;transition:.12s;margin:2px 0;}
   .event:hover .resize-h::after{opacity:.35;}
-  .cat-visit{background:#E9F1FE;border-left-color:var(--visit);color:#1d4ed8;}
-  .cat-meal{background:#FEF4E2;border-left-color:var(--meal);color:#b45309;}
-  .cat-move{background:#E6F7F0;border-left-color:var(--move);color:#047857;}
+  .cat-visit{background:#E8F2FB;border-left-color:var(--visit);color:#005083;}
+  .cat-meal{background:#FEF1E0;border-left-color:var(--meal);color:#b45309;}
+  .cat-move{background:#EDF6E8;border-left-color:var(--move);color:#3f7d2e;}
   .cat-stay{background:#F1ECFE;border-left-color:var(--stay);color:#6d28d9;}
   .cat-meet{background:#FDECEC;border-left-color:var(--meet);color:#b91c1c;}
   .cat-free{background:#EEF1F5;border-left-color:var(--free);color:#475569;}
@@ -202,11 +212,92 @@
   .toggle-sw .t-thumb{position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:#fff;
     box-shadow:0 1px 5px rgba(0,0,0,.25);transition:transform .22s;}
   .toggle-sw input:checked~.t-thumb{transform:translateX(18px);}
-  /* map touch blocker — prevents accidental iframe interaction while scrolling */
   .map-iframe-wrap{position:relative;}
-  .map-touch-block{position:absolute;inset:0;z-index:2;touch-action:pan-y;}
+
+  /* ===== brand dashboard (Stitch-inspired) ===== */
+  /* hero header */
+  .hero{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:flex-end;gap:22px;margin:6px 2px 22px;}
+  .hero .h-left{min-width:0;}
+  .hero .tags{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;}
+  .hero .tag{padding:4px 10px;border-radius:6px;font-size:11px;font-weight:800;letter-spacing:.4px;
+    background:var(--surface,#f1f3f5);color:var(--muted);border:1px solid var(--line2);text-transform:uppercase;}
+  .hero .tag.dark{background:var(--ink);color:#fff;border-color:var(--ink);}
+  .hero h1.title{font-family:"Noto Serif KR",serif;font-size:30px;line-height:1.2;font-weight:700;
+    letter-spacing:-.5px;margin:0 0 8px;color:var(--ink);}
+  .hero p.subtitle{margin:0;color:var(--muted);font-size:14.5px;max-width:40rem;}
+  .statcard{display:flex;align-items:stretch;gap:22px;background:#fff;border:1px solid var(--line2);
+    border-radius:14px;padding:16px 20px;box-shadow:0 2px 10px rgba(30,41,59,.05);}
+  .statcard .st{display:flex;flex-direction:column;gap:5px;min-width:0;}
+  .statcard .st .lbl{font-size:10.5px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--faint);}
+  .statcard .st .lbl.accent{color:var(--accent);}
+  .statcard .st .val{display:flex;align-items:center;gap:7px;font-size:14.5px;font-weight:700;color:var(--ink);}
+  .statcard .st .val .mut{color:var(--faint);font-weight:500;}
+  .statcard .divider{width:1px;background:var(--line2);}
+  .statcard .prog{width:110px;height:6px;background:var(--line);border-radius:99px;overflow:hidden;}
+  .statcard .prog i{display:block;height:100%;background:var(--sig);border-radius:99px;}
+  .pin{color:var(--accent);}
+
+  /* section card generic + accent */
+  .panel-card{background:var(--panel);border:1px solid var(--line2);border-radius:14px;
+    box-shadow:0 2px 10px rgba(30,41,59,.05);position:relative;overflow:hidden;}
+
+  /* collapsible map */
+  .mapcard{position:relative;}
+  .mapcard .bar{cursor:pointer;user-select:none;}
+  .mapcard .bar .chev{margin-left:6px;color:var(--accent);font-weight:800;transition:transform .22s;font-size:13px;}
+  .mapcard.collapsed .chev{transform:rotate(180deg);}
+  .mapcard .map-body{transition:max-height .28s ease,opacity .2s ease;overflow:hidden;max-height:640px;opacity:1;}
+  .mapcard.collapsed .map-body{max-height:0;opacity:0;}
+  .mapcard .bar .live{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;font-weight:700;color:var(--muted);}
+  .mapcard .bar .live .dot{width:8px;height:8px;border-radius:50%;background:var(--secondary);
+    box-shadow:0 0 0 3px rgba(240,131,0,.18);}
+
+  /* grid card accent + toolstrip */
+  .grid-scroll{position:relative;box-shadow:0 2px 10px rgba(30,41,59,.05);}
+  .toolstrip{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;
+    padding:13px 16px;border-bottom:1px solid var(--line2);background:var(--surface-lowest,#fdfdfd);}
+  .toolstrip .ts-left{display:flex;align-items:center;gap:18px;flex-wrap:wrap;}
+  .toolstrip .ts-title{font-weight:800;font-size:14px;display:flex;align-items:center;gap:8px;color:var(--ink);}
+  .toolstrip .leg{display:flex;align-items:center;gap:14px;flex-wrap:wrap;}
+  .toolstrip .leg .dot{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:500;color:var(--muted);}
+  .toolstrip .leg .sw{width:11px;height:11px;border-radius:50%;display:inline-block;}
+  .toolstrip .eb-hint{font-size:11.5px;color:var(--faint);}
+
+  /* day header today highlight */
+  .grid-head .cell.today{background:#fff;box-shadow:inset 0 3px 0 var(--accent);}
+  .grid-head .cell.today span{color:var(--accent);}
+  .grid-head .cell.today small{color:var(--accent);opacity:.85;}
+  .grid-head .cell .today-pill{display:inline-block;margin-left:6px;font-size:9.5px;font-weight:800;
+    color:var(--accent);background:var(--accent-soft);border:1px solid rgba(24,127,196,.25);
+    border-radius:6px;padding:1px 5px;vertical-align:middle;}
+  .day-col.today{background:rgba(24,127,196,.035);}
+
+  /* cards polish */
+  .card{box-shadow:0 1px 4px rgba(30,41,59,.04);}
+  .card.kind-visit{border-left:3px solid var(--visit);}
+  .card.kind-food{border-left:3px solid var(--meal);}
+  .card.kind-lodging{border-left:3px solid var(--stay);}
+
+  /* footer */
+  .site-foot{position:relative;margin:56px 0 8px;padding:26px 4px 6px;border-top:1px solid var(--line2);
+    display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:18px;color:var(--muted);}
+  .site-foot .f-brand{display:flex;align-items:center;gap:14px;}
+  .site-foot .f-logo{display:flex;align-items:center;gap:9px;font-weight:800;font-size:14px;color:var(--ink);}
+  .site-foot .f-vline{width:1px;height:26px;background:var(--line2);}
+  .site-foot .f-copy{font-size:12px;line-height:1.5;color:var(--faint);}
+  .site-foot .f-links{display:flex;gap:20px;font-size:12px;font-weight:600;}
+  .site-foot .f-links a{color:var(--faint);text-decoration:none;transition:.12s;}
+  .site-foot .f-links a:hover{color:var(--accent);}
 
   @media(max-width:760px){
+    .hero h1.title{font-size:23px;}
+    .statcard{width:100%;gap:14px;padding:13px 15px;}
+    .statcard .prog{width:80px;}
+    .toolstrip{padding:11px 13px;}
+    .toolstrip .eb-hint{display:none;}
+    .toolstrip .ts-left{gap:12px;}
+    .hero{gap:16px;}
+    .site-foot{flex-direction:column;align-items:flex-start;}
     .app-shell{display:block;}
     .sidenav{position:fixed;left:0;top:0;transform:translateX(-100%);transition:transform .22s ease;
       box-shadow:0 0 0 rgba(0,0,0,0);}
@@ -231,6 +322,7 @@
 </style>
 </head>
 <body>
+<div class="sigbar"></div>
 <div class="app-shell">
   <div class="sidenav-backdrop" id="sideNavBackdrop" onclick="toggleSideNav(false)"></div>
   <nav class="sidenav" id="sideNav">
@@ -264,43 +356,75 @@
 
 <div class="wrap" id="pageHome">
 
-  <!-- TOP MAP -->
-  <div class="mapcard">
-    <div class="bar">
+  <!-- HERO / DASHBOARD HEADER -->
+  <div class="hero">
+    <div class="h-left">
+      <div class="tags">
+        <span class="tag">도쿄 해외연수 · PROJECT.01</span>
+        <span class="tag dark">9/14 – 9/18</span>
+      </div>
+      <h1 class="title">2026 따뜻한동행 해외연수 대시보드</h1>
+      <p class="subtitle">글로벌 사회복지 혁신 탐방 — 5일간의 종합 일정표입니다.</p>
+    </div>
+    <div class="statcard">
+      <div class="st">
+        <span class="lbl">거점</span>
+        <span class="val"><span class="material-pin pin">📍</span> 일본 도쿄</span>
+      </div>
+      <div class="divider"></div>
+      <div class="st">
+        <span class="lbl accent" id="tripStatusLbl">연수 진행</span>
+        <span class="val">
+          <span id="tripStatusVal">—</span>
+          <span class="prog"><i id="tripProgBar" style="width:0%"></i></span>
+        </span>
+      </div>
+    </div>
+  </div>
+
+  <!-- TOP MAP (collapsible) -->
+  <div class="mapcard panel-card" id="mapCard">
+    <div class="sig-accent"></div>
+    <div class="bar" onclick="toggleTopMap(event)">
       <b>방문지 지도</b>
-      <span class="hint">드래그·확대해서 볼 수 있어요</span>
-      <span class="map-link" onclick="resetTopMap()">🗺 전체 핀 보기</span>
-      <a class="list-link" id="savedListLink" target="_blank" rel="noopener">📍 저장한 방문지 목록 열기</a>
+      <span class="live"><span class="dot"></span>드래그·확대해서 볼 수 있어요</span>
+      <span class="map-link" onclick="event.stopPropagation();resetTopMap()">🗺 전체 핀 보기</span>
+      <a class="list-link" id="savedListLink" target="_blank" rel="noopener" onclick="event.stopPropagation()">📍 저장한 방문지 목록 열기</a>
+      <span class="chev">▲</span>
     </div>
-    <div class="map-iframe-wrap">
-      <iframe id="topMap" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
-      <div id="mapTouchBlock" class="map-touch-block"></div>
+    <div class="map-body">
+      <div class="map-iframe-wrap">
+        <iframe id="topMap" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
+      </div>
     </div>
-  </div>
-
-  <div class="legend">
-    <span style="color:var(--faint)">범례</span>
-    <span class="dot"><i class="sw" style="background:var(--visit)"></i>방문</span>
-    <span class="dot"><i class="sw" style="background:var(--meal)"></i>식사</span>
-    <span class="dot"><i class="sw" style="background:var(--move)"></i>이동</span>
-    <span class="dot"><i class="sw" style="background:var(--stay)"></i>숙소</span>
-    <span class="dot"><i class="sw" style="background:var(--meet)"></i>회의/연수</span>
-    <span class="dot"><i class="sw" style="background:var(--free)"></i>자유</span>
-    <span class="tip">일정을 드래그해 옮기고, 위·아래 손잡이로 시간을 조절하세요(30분 단위).</span>
-  </div>
-
-  <div class="edit-bar">
-    <label class="toggle-sw" title="편집 모드 켜기/끄기">
-      <input type="checkbox" id="editModeToggle" onchange="setEditMode(this.checked)">
-      <span class="t-track"></span>
-      <span class="t-thumb"></span>
-    </label>
-    <span class="eb-label" id="editModeLabel">보기 전용</span>
   </div>
 
   <div class="daytabs" id="dayTabs"></div>
 
-  <div class="grid-scroll">
+  <div class="grid-scroll panel-card">
+    <div class="sig-accent"></div>
+    <div class="toolstrip">
+      <div class="ts-left">
+        <span class="ts-title"><span>🗓️</span> 주간 일정표</span>
+        <div class="leg">
+          <span class="dot"><i class="sw" style="background:var(--visit)"></i>방문</span>
+          <span class="dot"><i class="sw" style="background:var(--meal)"></i>식사</span>
+          <span class="dot"><i class="sw" style="background:var(--move)"></i>이동</span>
+          <span class="dot"><i class="sw" style="background:var(--stay)"></i>숙소</span>
+          <span class="dot"><i class="sw" style="background:var(--meet)"></i>회의/연수</span>
+          <span class="dot"><i class="sw" style="background:var(--free)"></i>자유</span>
+        </div>
+      </div>
+      <div class="edit-bar" style="margin:0">
+        <span class="eb-hint">드래그로 옮기고 손잡이로 시간 조절 (30분)</span>
+        <label class="toggle-sw" title="편집 모드 켜기/끄기">
+          <input type="checkbox" id="editModeToggle" onchange="setEditMode(this.checked)">
+          <span class="t-track"></span>
+          <span class="t-thumb"></span>
+        </label>
+        <span class="eb-label" id="editModeLabel">보기 전용</span>
+      </div>
+    </div>
     <div class="grid-head" id="gridHead"></div>
     <div class="grid-body" id="gridBody"></div>
   </div>
@@ -332,6 +456,22 @@
       <p class="section-hint" id="sectionHint"></p>
       <div class="cards" id="sectionCards"></div>
     </div>
+  </div>
+
+  <div class="wrap" style="padding-top:0">
+    <footer class="site-foot">
+      <div class="sig-accent" style="height:2px"></div>
+      <div class="f-brand">
+        <div class="f-logo"><span>🗼</span> 따뜻한동행</div>
+        <div class="f-vline"></div>
+        <p class="f-copy">© 2026 따뜻한동행 해외연수<br>일정 관리 · 방문지 정보 시스템</p>
+      </div>
+      <div class="f-links">
+        <a href="#" onclick="navigateTo('visit');return false;">방문지</a>
+        <a href="#" onclick="navigateTo('lodging');return false;">숙소</a>
+        <a href="#" onclick="navigateTo('history');return false;">지역 역사</a>
+      </div>
+    </footer>
   </div>
   </div>
 </div>
@@ -557,6 +697,7 @@ let events=[], backlog=[], lodging=[];
 let detailData={};
 Object.keys(DETAIL_SECTIONS).forEach(k=>{detailData[k]=[];});
 let editMode=false;
+let TODAY_IDX=-1;
 let currentPage='home';
 let mobileDay=0, currentId=null, editId=null, blEditId=null, lgEditId=null, pCurrent=null;
 let curDetailKey=null, dEditId=null, dCurrent=null, detailFormPhotos=[];
@@ -632,7 +773,6 @@ function setEditMode(on){
   const lbl=document.getElementById("editModeLabel");
   lbl.textContent=on?"편집 모드":"보기 전용";
   lbl.classList.toggle("on",on);
-  document.getElementById("mapTouchBlock").style.display=on?"none":"block";
 }
 
 /* ---------- side nav ---------- */
@@ -646,6 +786,31 @@ function toggleSideNav(force){
 function initTopMap(){document.getElementById("savedListLink").href=MYMAPS_VIEW_URL;document.getElementById("topMap").src=MYMAPS_EMBED_URL;}
 function resetTopMap(){document.getElementById("topMap").src=MYMAPS_EMBED_URL;window.scrollTo({top:0,behavior:"smooth"});}
 function showOnTop(){const ev=events.find(x=>x.id===currentId);if(ev&&ev.loc){document.getElementById("topMap").src=embedSrc(ev.loc);closeView();window.scrollTo({top:0,behavior:"smooth"});toast("상단 지도에 표시했어요.");}}
+function toggleTopMap(e){if(e)e.stopPropagation();document.getElementById("mapCard").classList.toggle("collapsed");}
+
+/* ---------- trip status (실제 날짜 기준) ---------- */
+const TRIP_START=new Date(2026,8,14), TRIP_END=new Date(2026,8,18); // 2026-09-14 ~ 09-18
+function computeTodayIdx(){
+  const now=new Date();now.setHours(0,0,0,0);
+  const oneDay=86400000;
+  if(now<TRIP_START||now>TRIP_END)return -1;
+  return Math.round((now-TRIP_START)/oneDay);
+}
+function updateTripStatus(){
+  const now=new Date();now.setHours(0,0,0,0);
+  const oneDay=86400000;
+  const lbl=document.getElementById("tripStatusLbl"),val=document.getElementById("tripStatusVal"),bar=document.getElementById("tripProgBar");
+  if(!lbl||!val||!bar)return;
+  if(now<TRIP_START){
+    const dday=Math.round((TRIP_START-now)/oneDay);
+    lbl.textContent="연수 시작까지";val.innerHTML=`D-${dday}`;bar.style.width="0%";
+  }else if(now>TRIP_END){
+    lbl.textContent="연수 종료";val.innerHTML=`전체 완료 <span class="mut">/ 5일</span>`;bar.style.width="100%";
+  }else{
+    const idx=Math.round((now-TRIP_START)/oneDay);
+    lbl.textContent="연수 진행";val.innerHTML=`${idx+1}일차 <span class="mut">/ 5일</span>`;bar.style.width=((idx+1)/5*100)+"%";
+  }
+}
 
 /* ---------- render ---------- */
 function render(){
@@ -653,13 +818,13 @@ function render(){
   tabs.innerHTML=DAYS.map((d,i)=>`<button class="${i===mobileDay?'active':''}" onclick="setMobileDay(${i})">${d.label}<small>${d.dow}</small></button>`).join("");
   const head=document.getElementById("gridHead");
   head.innerHTML=`<div class="cell corner"></div>`+DAYS.map((d,i)=>
-    `<div class="cell daycell ${i===mobileDay?'mcol-show':''}" data-day="${i}"><span>${d.label}</span><small>${d.dow}요일</small></div>`).join("");
+    `<div class="cell daycell ${i===mobileDay?'mcol-show':''} ${i===TODAY_IDX?'today':''}" data-day="${i}"><span>${d.label}</span><small>${d.dow}요일${i===TODAY_IDX?'<span class="today-pill">오늘</span>':''}</small></div>`).join("");
   const body=document.getElementById("gridBody");
   let html=`<div class="time-col">`;
   for(let h=START_H;h<END_H;h++)html+=`<div class="time-cell" style="height:${ROW_H}px"><span>${String(h).padStart(2,"0")}:00</span></div>`;
   html+=`</div>`;
   DAYS.forEach((d,di)=>{
-    html+=`<div class="day-col ${di===mobileDay?'mcol-show':''}" data-day="${di}" style="height:${(END_H-START_H)*ROW_H}px"
+    html+=`<div class="day-col ${di===mobileDay?'mcol-show':''} ${di===TODAY_IDX?'today':''}" data-day="${di}" style="height:${(END_H-START_H)*ROW_H}px"
       onclick="onColClick(event,${di})" ondragover="onDragOver(event,this)" ondragleave="this.classList.remove('drop-hot')" ondrop="onDrop(event,${di})">`;
     for(let h=START_H;h<END_H;h++)html+=`<div class="hour-line" style="height:${ROW_H}px"></div>`;
     html+=`</div>`;
@@ -802,8 +967,8 @@ function renderBacklog(){
   box.innerHTML="";
   backlog.forEach(b=>{
     const kind=b.kind||"visit";
-    const kb=kind==="food"?`<span style="color:#b45309">🍜 식당</span>`:`<span style="color:#1d4ed8">🗺️ 방문지</span>`;
-    const el=document.createElement("div");el.className="card";el.draggable=true;
+    const kb=kind==="food"?`<span style="color:#b45309">🍜 식당</span>`:`<span style="color:#005083">🗺️ 방문지</span>`;
+    const el=document.createElement("div");el.className="card kind-"+(kind==="food"?"food":"visit");el.draggable=true;
     el.innerHTML=`<span class="grip">⠿</span><div class="c-title">${esc(b.title)}</div>
       <div class="c-desc">${esc(b.desc||"")}</div>
       <div class="c-tags">${kb}${b.url?`<a href="${esc(b.url)}" target="_blank" rel="noopener" onclick="event.stopPropagation()">🔗 홈페이지</a>`:""}${b.loc?`<span>📍 ${esc(b.loc)}</span>`:""}${b.photos&&b.photos.length?`<span>🖼 ${b.photos.length}</span>`:""}</div>`;
@@ -818,7 +983,7 @@ function renderLodging(){
   if(!lodging.length){box.innerHTML=`<div class="empty">아직 숙소가 없어요. 「＋ 숙소 추가」로 등록하세요.</div>`;return;}
   box.innerHTML="";
   lodging.forEach(b=>{
-    const el=document.createElement("div");el.className="card";
+    const el=document.createElement("div");el.className="card kind-lodging";
     el.innerHTML=`<div class="c-title"><span class="lg-ic">🏨</span>${esc(b.title)}</div>
       ${b.period?`<div class="c-period">${esc(b.period)}</div>`:""}
       <div class="c-desc">${esc(b.desc||"")}</div>
@@ -1116,6 +1281,8 @@ function pasteEvent(){
 }
 document.addEventListener("pointermove",e=>{mx=e.clientX;my=e.clientY;},{passive:true});
 document.addEventListener("pointerover",e=>{const el=e.target&&e.target.closest?e.target.closest(".event"):null;hoverEventId=el?el.dataset.id:null;});
+TODAY_IDX=computeTodayIdx();if(TODAY_IDX>=0)mobileDay=TODAY_IDX;
+updateTripStatus();
 initTopMap();boot();
 </script>
 </body>
