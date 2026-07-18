@@ -3,10 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>도쿄 해외연수 일정 대시보드 (9/14~9/18)</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@600;700&display=swap" rel="stylesheet">
+<title>일본 해외연수 일정 대시보드 (9/14~9/18)</title>
 <link as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" rel="stylesheet">
 <style>
   :root{
@@ -46,9 +43,13 @@
   .app-shell{display:flex;align-items:stretch;min-height:100vh;}
   .sidenav{width:210px;flex-shrink:0;background:#fff;border-right:1px solid var(--line2);
     padding:18px 12px;position:sticky;top:4px;align-self:flex-start;height:calc(100vh - 4px);overflow-y:auto;z-index:40;}
-  .sidenav-brand{display:flex;align-items:center;gap:8px;font-weight:800;font-size:14px;
-    margin-bottom:16px;padding:8px 8px;color:var(--ink);border-radius:10px;background:var(--accent-soft);}
-  .sidenav-brand span:first-child{filter:saturate(1.1);}
+  .sidenav-brand{display:flex;flex-direction:column;align-items:flex-start;gap:7px;
+    margin-bottom:16px;padding:4px 6px 14px;border-bottom:1px solid var(--line);color:var(--ink);}
+  .sidenav-brand img{width:100%;max-width:152px;height:auto;display:block;}
+  .sidenav-brand .sb-cap{font-size:11.5px;font-weight:700;color:var(--faint);letter-spacing:.01em;padding-left:2px;}
+  /* header + footer logo */
+  .brand-logo{height:30px;width:auto;display:block;}
+  .site-foot .f-logo img{height:30px;width:auto;display:block;}
   .sidenav-list{display:flex;flex-direction:column;gap:2px;}
   .sidenav-item{display:flex;align-items:center;gap:9px;text-align:left;width:100%;border:0;
     background:transparent;border-radius:9px;padding:9px 10px;font-size:13px;font-weight:600;
@@ -222,8 +223,8 @@
   .hero .tag{padding:4px 10px;border-radius:6px;font-size:11px;font-weight:800;letter-spacing:.4px;
     background:var(--surface,#f1f3f5);color:var(--muted);border:1px solid var(--line2);text-transform:uppercase;}
   .hero .tag.dark{background:var(--ink);color:#fff;border-color:var(--ink);}
-  .hero h1.title{font-family:"Noto Serif KR",serif;font-size:30px;line-height:1.2;font-weight:700;
-    letter-spacing:-.5px;margin:0 0 8px;color:var(--ink);}
+  .hero h1.title{font-family:"Pretendard","Apple SD Gothic Neo",sans-serif;font-size:31px;line-height:1.18;
+    font-weight:800;letter-spacing:-.9px;margin:0 0 8px;color:var(--ink);}
   .hero p.subtitle{margin:0;color:var(--muted);font-size:14.5px;max-width:40rem;}
   .statcard{display:flex;align-items:stretch;gap:22px;background:#fff;border:1px solid var(--line2);
     border-radius:14px;padding:16px 20px;box-shadow:0 2px 10px rgba(30,41,59,.05);}
@@ -326,7 +327,10 @@
 <div class="app-shell">
   <div class="sidenav-backdrop" id="sideNavBackdrop" onclick="toggleSideNav(false)"></div>
   <nav class="sidenav" id="sideNav">
-    <div class="sidenav-brand" onclick="navigateTo('home')"><span>🗼</span> 도쿄 연수</div>
+    <div class="sidenav-brand" onclick="navigateTo('home')" style="cursor:pointer">
+      <img src="logo.png" alt="따뜻한동행 Walk Together">
+      <span class="sb-cap">🗼 일본 해외연수 일정</span>
+    </div>
     <div class="sidenav-list">
       <button class="sidenav-item" data-page="home" onclick="navigateTo('home')">🗓️ 일정표</button>
       <button class="sidenav-item" data-page="visit" onclick="navigateTo('visit')">🗺️ 방문지 상세보기</button>
@@ -340,9 +344,9 @@
 <header class="top">
   <button class="btn sm menu-btn" onclick="toggleSideNav()">☰</button>
   <div class="brand">
-    <div class="ic">🗼</div>
+    <img class="brand-logo" src="logo.png" alt="따뜻한동행 Walk Together">
     <div>
-      <h1>도쿄 해외연수 일정</h1>
+      <h1>일본 해외연수 일정</h1>
       <div class="sub">2026.09.14(월) ~ 09.18(금) · 참가 9명<span id="syncBadge"></span></div>
     </div>
   </div>
@@ -360,7 +364,7 @@
   <div class="hero">
     <div class="h-left">
       <div class="tags">
-        <span class="tag">도쿄 해외연수 · PROJECT.01</span>
+        <span class="tag">일본 해외연수 · PROJECT.01</span>
         <span class="tag dark">9/14 – 9/18</span>
       </div>
       <h1 class="title">2026 따뜻한동행 해외연수 대시보드</h1>
@@ -369,7 +373,7 @@
     <div class="statcard">
       <div class="st">
         <span class="lbl">거점</span>
-        <span class="val"><span class="material-pin pin">📍</span> 일본 도쿄</span>
+        <span class="val"><span class="material-pin pin">📍</span> 도쿄 · 시즈오카 · 오사카</span>
       </div>
       <div class="divider"></div>
       <div class="st">
@@ -462,7 +466,7 @@
     <footer class="site-foot">
       <div class="sig-accent" style="height:2px"></div>
       <div class="f-brand">
-        <div class="f-logo"><span>🗼</span> 따뜻한동행</div>
+        <div class="f-logo"><img src="logo.png" alt="따뜻한동행 Walk Together"></div>
         <div class="f-vline"></div>
         <p class="f-copy">© 2026 따뜻한동행 해외연수<br>일정 관리 · 방문지 정보 시스템</p>
       </div>
