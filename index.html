@@ -467,6 +467,13 @@
   .memo-post .pm .who{font-weight:800;color:var(--accent-deep);}
   .memo-post .pm .del{margin-left:auto;color:#dc2626;font-weight:700;cursor:pointer;}
   .memo-post.mine{background:var(--accent-soft);border-color:transparent;}
+  .memo-post.pending{opacity:.8;border-style:dashed;background:#fffdf5;}
+  .memo-post.pending .stat{color:#b45309;font-weight:800;}
+  .memo-post.failed{opacity:1;border-color:#fca5a5;background:#fef2f2;border-style:solid;}
+  .memo-post.failed .stat{color:#dc2626;font-weight:800;}
+  .memo-post .pm .retry{color:var(--accent);font-weight:800;cursor:pointer;}
+  .memo-warn{font-size:11.5px;color:#b91c1c;font-weight:700;background:#fef2f2;border:1px solid #fca5a5;
+    border-radius:9px;padding:8px 10px;margin:8px 0;line-height:1.55;}
 
   /* 오늘 탭 날짜 네비 */
   .fm-daynav{display:flex;align-items:center;gap:5px;margin:-4px 2px 13px;}
@@ -934,6 +941,8 @@ function initFirebase(){
   fbdb.ref(fbBase("lodging")).on("value",s=>{lodging=valArr(s);if(!drag)render();if(currentPage==='lodging')renderDetailCards();});
   Object.keys(DETAIL_SECTIONS).forEach(k=>fbdb.ref(fbBase("detail/"+k)).on("value",s=>{detailData[k]=valArr(s);if(currentPage===k)renderDetailCards();}));
   const sb=document.getElementById("syncBadge");if(sb)sb.innerHTML=' · <b style="color:#059669">실시간 공유 중</b>';
+  // 연결이 살아나면 못 보낸 공유 메모 자동 재전송
+  try{ fbdb.ref(".info/connected").on("value",s=>{ if(s.val()===true) setTimeout(memoFlushPending,600); }); }catch(e){}
 }
 function boot(){
   if(FIREBASE_CONFIG){try{initFirebase();return;}catch(e){toast("Firebase 연결 실패 — 설정을 확인하세요. 이 기기 저장으로 전환합니다.");}}
@@ -2093,7 +2102,20 @@ function shClearAdj2(){ const tr=document.getElementById("fmSheetTrack"); if(tr)
    메모  ·  개인 = 리치텍스트 문서(30초 자동저장) / 공유 = 게시글 피드(저장 시 글 추가)
    ========================================================================== */
 let _memoId=null,_memoMode=localStorage.getItem("tw_memomode")||"p",_memoRef=null,_memoShared={},_memoDirty=false,_memoAutoT=null;
+let _memoRemoteCache=null;                       // 개인 메모: 다른 기기 최신본 임시 보관
+const _memoInflight=new Set();                   // 공유 메모: Firebase 전송 중인 임시글 id
+const _memoFailed=new Set();                     // 공유 메모: 전송 실패로 표시된 임시글 id
 const MEMO_ALLOWED={B:1,STRONG:1,U:1,I:1,EM:1,BR:1,DIV:1,P:1,SPAN:1,UL:1,OL:1,LI:1};
+/* 이 기기 고유 ID (개인 메모 백업 키) */
+function twUid(){ let u=localStorage.getItem("tw_uid");
+  if(!u){ u="u"+Date.now().toString(36)+Math.random().toString(36).slice(2,7); try{localStorage.setItem("tw_uid",u);}catch(e){} }
+  return u; }
+/* 개인 메모 백업 소유자 키 — 이름이 있으면 이름 기준(기기 바뀌어도 복구), 없으면 이 기기 */
+function pmemoOwnerKey(){
+  const n=(localStorage.getItem("tw_name")||"").trim().toLowerCase().replace(/\s+/g,"");
+  return fbKey(n?("n_"+n):("d_"+twUid()));
+}
+function pmemoRef(id){ return fbdb.ref(fbBase("pmemos")+"/"+pmemoOwnerKey()+"/"+fbKey(id)); }
 function fmAuthor(){
   let n=localStorage.getItem("tw_name");
   if(!n){ n=(prompt("공유 메모에 표시할 이름을 입력하세요 (최초 1회)")||"").trim(); if(n)localStorage.setItem("tw_name",n); }
@@ -2120,14 +2142,64 @@ function memoHtmlToText(html){
   d.querySelectorAll("div,p,li").forEach(el=>el.appendChild(document.createTextNode("\n")));
   return (d.textContent||"").replace(/\n{3,}/g,"\n\n").replace(/[ \t]+\n/g,"\n").trim();
 }
-/* ---- 개인 문서 저장소 ---- */
+/* ---- 개인 문서 저장소 (이 기기 1차 + Firebase 2차 백업) ---- */
 function memoPDocGet(id){ return localStorage.getItem("tw_memodoc_p_"+id); }
-function memoPDocSet(id,html){ try{localStorage.setItem("tw_memodoc_p_"+id,html);}catch(e){toast("저장 공간이 부족해요.");} }
+function memoPDocSet(id,html){
+  let localOk=true;
+  try{ localStorage.setItem("tw_memodoc_p_"+id,html); localStorage.setItem("tw_memodoc_pts_"+id,String(Date.now())); }
+  catch(e){ localOk=false; toast("이 폰에 저장하지 못했어요 — 내용을 복사해 두세요."); }
+  memoShowSaveWarn(!localOk);
+  if(fbdb){ try{ pmemoRef(id).set({html:html,ts:Date.now()}); }catch(e){} }   // 2차 백업(조용히)
+}
+function memoShowSaveWarn(on){
+  const w=document.getElementById("fmMemoWarn"); if(!w)return;
+  w.style.display=on?"block":"none";
+  if(on)w.textContent="⚠ 이 폰에 메모를 저장하지 못했습니다(저장공간 부족일 수 있어요). 중요한 내용은 복사해 두세요.";
+}
+function memoRemoteNote(html){
+  const r=document.getElementById("fmMemoRemote"); if(!r)return;
+  if(html){ r.style.display="block"; r.innerHTML=html; } else { r.style.display="none"; r.innerHTML=""; }
+}
 function memoMigrateP(id){ try{const a=JSON.parse(localStorage.getItem("tw_memo_p_"+id)||"[]");
   if(a&&a.length)return a.map(x=>"<div>"+esc(x.text||"")+"</div>").join(""); }catch(e){} return ""; }
 /* ---- 공유 게시글 저장소(옛 모델 복원: firebase memos push / localStorage 목록) ---- */
 function memoSGet(id){ try{return JSON.parse(localStorage.getItem("tw_memo_s_"+id)||"[]");}catch(e){return[];} }
 function memoSSet(id,a){ try{localStorage.setItem("tw_memo_s_"+id,JSON.stringify(a));}catch(e){} }
+
+/* ---- 공유 메모 전송 대기열 (신호 없을 때 잃지 않도록 이 폰에 보관 후 재전송) ---- */
+function memoPendingAll(){ try{return JSON.parse(localStorage.getItem("tw_memo_pending")||"[]");}catch(e){return[];} }
+function memoPendingSet(a){ try{localStorage.setItem("tw_memo_pending",JSON.stringify(a));}catch(e){} }
+function memoMarkFailed(tempId){ _memoInflight.delete(tempId); _memoFailed.add(tempId); }
+function memoFlushPending(){
+  const q=memoPendingAll(); if(!q.length)return;
+  if(!fbdb){   // 공유 저장소 미연결: 이 폰의 공유 목록으로 이동
+    q.forEach(it=>{ const a=memoSGet(it.sheetId); a.push({id:it.tempId,name:it.name,html:it.html,ts:it.ts}); memoSSet(it.sheetId,a); });
+    memoPendingSet([]); renderPostList(); return;
+  }
+  q.forEach(it=>{
+    if(_memoInflight.has(it.tempId))return;
+    _memoInflight.add(it.tempId); _memoFailed.delete(it.tempId);
+    fbdb.ref(fbBase("memos")+"/"+fbKey(it.sheetId)).push({name:it.name,html:it.html,ts:it.ts})
+      .then(()=>{ _memoInflight.delete(it.tempId);
+        memoPendingSet(memoPendingAll().filter(x=>x.tempId!==it.tempId)); renderPostList(); })
+      .catch(()=>{ memoMarkFailed(it.tempId); renderPostList(); });
+  });
+  renderPostList();
+}
+function memoRetry(tempId){ _memoFailed.delete(tempId); renderPostList(); memoFlushPending(); }
+function memoPendDel(tempId){
+  if(!confirm("이 메모를 삭제할까요?"))return;
+  _memoFailed.delete(tempId); _memoInflight.delete(tempId);
+  memoPendingSet(memoPendingAll().filter(x=>x.tempId!==tempId)); renderPostList();
+}
+/* ---- 공유 메모 작성 중 임시저장 (탭 전환·시트 닫아도 복원) ---- */
+function memoDraftKey(id){ return "tw_memo_draft_"+id; }
+function memoDraftSave(){
+  if(_memoMode!=="s")return; const ce=document.getElementById("fmMemoCompose"); if(!ce)return;
+  const h=ce.innerHTML;
+  try{ (h&&memoHtmlToText(h))?localStorage.setItem(memoDraftKey(_memoId),h):localStorage.removeItem(memoDraftKey(_memoId)); }catch(e){}
+}
+function memoDraftClear(id){ try{localStorage.removeItem(memoDraftKey(id));}catch(e){} }
 
 function openMemo(id){
   _memoId=id; _memoDirty=false; memoStopShared();
@@ -2138,6 +2210,7 @@ function openMemo(id){
 function memoSetMode(m){
   if(_memoMode===m)return;
   if(_memoMode==="p"&&_memoDirty) memoSavePersonal(true);  // 전환 전 개인 메모 자동 저장
+  if(_memoMode==="s") memoDraftSave();                     // 전환 전 공유 작성 중 글 임시저장
   _memoMode=m; localStorage.setItem("tw_memomode",m); _memoDirty=false;
   memoStopShared(); renderMemo();
   if(m==="s") memoStartShared(); else memoLoadPersonal();
@@ -2146,6 +2219,7 @@ function memoStopShared(){ if(_memoRef){ try{_memoRef.off();}catch(e){} _memoRef
 /* 시트 닫기/탭 전환 시: 개인 메모 미저장분 자동 저장 + 타이머·리스너 정리 */
 function memoOnCloseSave(){
   if(_memoMode==="p"&&_memoDirty){ const ed=document.getElementById("fmMemoEditor"); if(ed)memoSavePersonal(true); }
+  if(_memoMode==="s") memoDraftSave();
   memoStopAutosave(); memoStopShared();
 }
 
@@ -2160,25 +2234,33 @@ function renderMemo(){
     `<button type="button" class="mt" onmousedown="return memoCmd(event,'insertUnorderedList')" title="목록">• 목록</button>`+
     `</div>`;
   if(_memoMode==="p"){
-    h+=`<div class="memo-help">개인 메모는 이 기기에만 저장돼요. <b>30초마다 자동 저장</b>됩니다.</div>`+
+    h+=`<div class="memo-help">개인 메모는 이 폰에 저장되고, ${fbdb?"이름 기준으로 자동 백업돼요":"이 폰에만 저장돼요"}. <b>30초마다 자동 저장</b>됩니다.</div>`+
+      `<div class="memo-warn" id="fmMemoWarn" style="display:none"></div>`+
       tools+
       `<div class="memo-editor" id="fmMemoEditor" contenteditable="true" oninput="memoOnInput()" data-ph="자유롭게 메모하세요…"></div>`+
+      `<div class="memo-remote" id="fmMemoRemote" style="display:none"></div>`+
       `<div class="memo-foot"><span class="memo-status" id="fmMemoStatus"></span>`+
       `<button type="button" class="memo-save" onclick="memoSavePersonal(false)">저장</button></div>`;
   }else{
     h+=`<div class="memo-help">${fbdb?"공유 메모는 11명 전원에게 게시글처럼 올라가요.":"공유 저장소에 연결돼 있지 않아 이 기기에만 쌓입니다."}</div>`+
       `<div class="memo-compose">`+tools+
-      `<div class="ce" id="fmMemoCompose" contenteditable="true" data-ph="팀에 공유할 내용을 쓰고 올리기를 누르세요…"></div></div>`+
+      `<div class="ce" id="fmMemoCompose" contenteditable="true" oninput="memoDraftSave()" data-ph="팀에 공유할 내용을 쓰고 올리기를 누르세요…"></div></div>`+
       `<div class="memo-foot"><span class="memo-status" id="fmMemoStatus"></span>`+
       `<button type="button" class="memo-save" onclick="memoPost()">올리기</button></div>`+
       `<div class="memo-postlist" id="fmMemoList"></div>`;
   }
   w.innerHTML=h;
+  if(_memoMode==="s"){
+    const ce=document.getElementById("fmMemoCompose");
+    let d=null; try{ d=localStorage.getItem(memoDraftKey(_memoId)); }catch(e){}
+    if(ce&&d){ ce.innerHTML=memoSanitize(d); }
+  }
 }
 function memoActiveEditor(){ return document.getElementById(_memoMode==="p"?"fmMemoEditor":"fmMemoCompose"); }
 function memoOnInput(){
   if(_memoMode!=="p")return;
-  _memoDirty=true; const s=document.getElementById("fmMemoStatus"); if(s){s.textContent="● 저장 안 됨";s.className="memo-status unsaved";}
+  _memoDirty=true; memoRemoteNote("");   // 편집 시작 → 다른 기기 알림 숨김
+  const s=document.getElementById("fmMemoStatus"); if(s){s.textContent="● 저장 안 됨";s.className="memo-status unsaved";}
 }
 function memoCmd(e,cmd){
   e.preventDefault();
@@ -2191,9 +2273,40 @@ function memoCmd(e,cmd){
 /* ---- 개인 문서 ---- */
 function memoLoadPersonal(){
   const ed=document.getElementById("fmMemoEditor"); if(!ed)return;
+  memoRemoteNote(""); _memoRemoteCache=null;
   let html=memoPDocGet(_memoId); if(html==null)html=memoMigrateP(_memoId);
   ed.innerHTML=memoSanitize(html||""); _memoDirty=false;
   const s=document.getElementById("fmMemoStatus"); if(s){ s.textContent=html?"저장됨":""; s.className="memo-status"+(html?" saved":""); }
+  memoTryRemoteRestore(_memoId, html||"");
+}
+/* Firebase 백업본 확인 — 로컬이 비었으면 자동 복구, 로컬보다 최신이면 안내 */
+function memoTryRemoteRestore(id, localHtml){
+  if(!fbdb)return;
+  const localTs=+(localStorage.getItem("tw_memodoc_pts_"+id)||0);
+  const localEmpty=!memoHtmlToText(localHtml||"");
+  pmemoRef(id).once("value").then(s=>{
+    const v=s.val(); if(!v||!v.html||_memoId!==id)return;
+    if(!memoHtmlToText(v.html))return;
+    const ed=document.getElementById("fmMemoEditor"); if(!ed||_memoDirty)return;
+    const clean=memoSanitize(v.html);
+    if(localEmpty){
+      ed.innerHTML=clean;
+      try{ localStorage.setItem("tw_memodoc_p_"+id,clean); localStorage.setItem("tw_memodoc_pts_"+id,String(v.ts||Date.now())); }catch(e){}
+      memoRemoteNote("☁️ 다른 기기에 저장했던 메모를 불러왔어요.");
+    }else if((v.ts||0) > localTs+2000 && clean!==memoSanitize(localHtml)){
+      _memoRemoteCache={id,html:clean,ts:v.ts||Date.now()};
+      memoRemoteNote('☁️ 다른 기기에서 더 최근에 수정한 메모가 있어요. <a onclick="memoUseRemote()">그 버전으로 보기</a>');
+    }
+  }).catch(()=>{});
+}
+function memoUseRemote(){
+  if(!_memoRemoteCache||_memoRemoteCache.id!==_memoId)return;
+  const ed=document.getElementById("fmMemoEditor"); if(!ed)return;
+  const clean=memoSanitize(_memoRemoteCache.html);
+  ed.innerHTML=clean;
+  try{ localStorage.setItem("tw_memodoc_p_"+_memoId,clean); localStorage.setItem("tw_memodoc_pts_"+_memoId,String(_memoRemoteCache.ts||Date.now())); }catch(e){}
+  _memoDirty=false; _memoRemoteCache=null; memoRemoteNote("");
+  const s=document.getElementById("fmMemoStatus"); if(s){ s.textContent="저장됨"; s.className="memo-status saved"; }
 }
 function memoSavePersonal(auto){
   const ed=document.getElementById("fmMemoEditor"); if(!ed)return;
@@ -2211,16 +2324,19 @@ function memoStartShared(){
     _memoRef=fbdb.ref(fbBase("memos")+"/"+fbKey(_memoId));
     _memoRef.on("value",s=>{ _memoShared=s.val()||{}; renderPostList(); });
   }else{ renderPostList(); }
+  memoFlushPending();   // 지난 번에 못 보낸 글 재전송 시도
 }
 function memoPost(){
   const ce=document.getElementById("fmMemoCompose"); if(!ce)return;
   const html=memoSanitize(ce.innerHTML);
   if(!memoHtmlToText(html)){ toast("내용을 입력해 주세요."); return; }
-  const ts=Date.now(), name=fmAuthor();
-  if(fbdb){ (_memoRef||fbdb.ref(fbBase("memos")+"/"+fbKey(_memoId))).push({name,html,ts}); }
-  else{ const a=memoSGet(_memoId); a.push({id:"m"+ts,name,html,ts}); memoSSet(_memoId,a); renderPostList(); }
-  ce.innerHTML="";
-  toast("메모를 올렸어요.");
+  const item={ tempId:"p"+Date.now().toString(36)+Math.random().toString(36).slice(2,6),
+    sheetId:_memoId, html, ts:Date.now(), name:fmAuthor() };
+  const q=memoPendingAll(); q.push(item); memoPendingSet(q);   // 먼저 이 폰에 확보
+  ce.innerHTML=""; memoDraftClear(_memoId);
+  renderPostList();
+  memoFlushPending();
+  toast(navigator.onLine===false ? "신호가 오면 자동으로 올려요." : "메모를 올리는 중…");
 }
 function renderPostList(){
   const box=document.getElementById("fmMemoList"); if(!box)return;
@@ -2228,14 +2344,25 @@ function renderPostList(){
   if(fbdb) items=Object.keys(_memoShared).map(k=>({k,name:_memoShared[k].name,html:_memoShared[k].html,text:_memoShared[k].text,ts:_memoShared[k].ts}));
   else items=memoSGet(_memoId).map(x=>({k:x.id,name:x.name,html:x.html,text:x.text,ts:x.ts}));
   items.sort((a,b)=>(b.ts||0)-(a.ts||0));
-  if(!items.length){ box.innerHTML=`<div class="memo-help">아직 올라온 메모가 없어요.</div>`; return; }
   const me=localStorage.getItem("tw_name")||"";
-  box.innerHTML=items.map(it=>{
+  const pend=memoPendingAll().filter(x=>x.sheetId===_memoId).sort((a,b)=>(b.ts||0)-(a.ts||0));
+  if(!items.length && !pend.length){ box.innerHTML=`<div class="memo-help">아직 올라온 메모가 없어요.</div>`; return; }
+  let h=pend.map(it=>{
+    const failed=_memoFailed.has(it.tempId);
+    return `<div class="memo-post pending${failed?" failed":""}"><div class="pb">${memoSanitize(it.html)}</div>`+
+      `<div class="pm"><span class="who">${esc(it.name||"나")}</span>`+
+      (failed
+        ? `<span class="stat">⚠ 전송 실패</span><span class="retry" onclick="memoRetry('${it.tempId}')">다시 시도</span><span class="del" onclick="memoPendDel('${it.tempId}')">삭제</span>`
+        : `<span class="stat">전송 중…</span>`)+
+      `</div></div>`;
+  }).join("");
+  h+=items.map(it=>{
     const body = it.html!=null ? memoSanitize(it.html) : esc(it.text||"");  // 옛 글은 text 필드
     return `<div class="memo-post${me&&it.name===me?" mine":""}"><div class="pb">${body}</div>`+
       `<div class="pm"><span class="who">${esc(it.name||"익명")}</span><span>${fmTime(it.ts)}</span>`+
       `<span class="del" onclick="memoDel('${it.k}')">삭제</span></div></div>`;
   }).join("");
+  box.innerHTML=h;
 }
 function memoDel(k){
   if(!confirm("이 메모를 삭제할까요?"))return;
@@ -2298,6 +2425,8 @@ async function shareMemos(){
 TODAY_IDX=computeTodayIdx();if(TODAY_IDX>=0)mobileDay=TODAY_IDX;
 updateTripStatus();
 initTopMap();boot();fmMaybeAutoEnter();
+window.addEventListener("online",()=>setTimeout(memoFlushPending,400));
+setTimeout(memoFlushPending,3000);
 </script>
 </body>
 </html>
