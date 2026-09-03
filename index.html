@@ -2,8 +2,15 @@
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>일본 해외연수 일정 대시보드 (9/14~9/18)</title>
+<link rel="manifest" href="./manifest.json">
+<meta name="theme-color" content="#187FC4">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="연수 일정">
+<link rel="apple-touch-icon" href="./icon-180.png">
+<link rel="icon" type="image/png" href="./icon-192.png">
 <link as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" rel="stylesheet">
 <style>
   :root{
@@ -323,7 +330,7 @@
 
   /* ===================== 현장 모드 (모바일) ===================== */
   #fieldMode{display:none;position:fixed;inset:0;z-index:60;background:var(--bg);overflow-y:auto;
-    -webkit-overflow-scrolling:touch;padding-bottom:70px;}
+    -webkit-overflow-scrolling:touch;padding-bottom:calc(72px + env(safe-area-inset-bottom,0px));}
   body.fm-open #fieldMode{display:block;}
   body.fm-open{overflow:hidden;}
   @media(max-width:760px){ body.fm-open .app-shell{display:none;} }
@@ -385,7 +392,8 @@
 
   /* bottom tab bar */
   .fm-tabs{position:fixed;left:0;right:0;bottom:0;z-index:65;display:grid;grid-template-columns:repeat(5,1fr);
-    background:#fff;border-top:1px solid var(--line2);max-width:520px;margin:0 auto;}
+    background:#fff;border-top:1px solid var(--line2);max-width:520px;margin:0 auto;
+    padding-bottom:env(safe-area-inset-bottom,0px);}
   body:not(.fm-open) .fm-tabs{display:none;}
   .fm-tabs button{border:0;background:transparent;display:flex;flex-direction:column;align-items:center;gap:3px;
     padding:8px 0 9px;font-size:10px;font-weight:700;color:var(--faint);cursor:pointer;}
@@ -402,7 +410,7 @@
   .fm-sheet.on .panel{transform:translateY(0);}
   .sh-grip{padding:9px 0 5px;display:flex;justify-content:center;flex:none;cursor:grab;touch-action:none;}
   .sh-grip span{width:38px;height:5px;border-radius:3px;background:#d1d5db;display:block;}
-  .sh-scroll{flex:1 1 auto;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:4px 16px 26px;position:relative;}
+  .sh-scroll{flex:1 1 auto;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:4px 16px calc(26px + env(safe-area-inset-bottom,0px));position:relative;}
   .sh-track{position:relative;}
   .sh-page.adj{position:absolute;top:0;left:0;right:0;}
   .fm-sheet .sh-x{position:absolute;right:12px;top:2px;border:0;background:#f3f4f6;border-radius:9px;width:30px;height:30px;
@@ -423,6 +431,8 @@
   .sh-mapwrap .sh-map{max-height:220px;transition:max-height .28s ease;overflow:hidden;}
   .sh-mapwrap.collapsed .sh-map{max-height:0;}
   .sh-map iframe{width:100%;height:220px;border:0;display:block;}
+  .sh-map .sh-mapoff{display:none;padding:18px 14px;font-size:12px;color:var(--faint);text-align:center;line-height:1.7;background:#f6f8f9;}
+  .sh-map .sh-mapoff a{color:var(--accent);font-weight:700;}
 
   /* 메모 (노션형 리치텍스트 문서) */
   .memo-h{display:flex;align-items:center;justify-content:space-between;margin:6px 0 9px;}
@@ -1926,17 +1936,30 @@ function closeFieldSheet(){
   sheet.classList.remove("on");
   setTimeout(()=>{ if(!sheet.classList.contains("on")){ sheet.style.display="none"; panel.style.transform=""; } },380);
 }
-/* 접이식 지도 블록 (기본 접힘) */
+/* 접이식 지도 블록 (기본 접힘 · 펼칠 때 로드 · 오프라인이면 길찾기 링크로 대체) */
 function mapBlock(loc){
   if(!loc)return "";
   return `<div class="sh-mapwrap collapsed">`+
     `<button class="sh-maptoggle" onclick="toggleSheetMap(this)"><span class="lbl">🗺️ 지도 보기</span><span class="ar">▾</span></button>`+
-    `<div class="sh-map"><iframe loading="lazy" referrerpolicy="no-referrer-when-downgrade" src="${embedSrc(loc)}"></iframe></div></div>`;
+    `<div class="sh-map">`+
+      `<iframe loading="lazy" referrerpolicy="no-referrer-when-downgrade" data-src="${embedSrc(loc)}"></iframe>`+
+      `<div class="sh-mapoff">인터넷이 없어 지도를 불러올 수 없어요.<br>`+
+        `<a href="${searchUrl(loc)}" target="_blank" rel="noopener">🧭 길찾기 앱으로 열기</a></div>`+
+    `</div></div>`;
 }
 function toggleSheetMap(btn){
   const w=btn.closest(".sh-mapwrap"); if(!w)return;
   const collapsed=w.classList.toggle("collapsed");
   const l=w.querySelector(".sh-maptoggle .lbl"); if(l)l.textContent=collapsed?"🗺️ 지도 보기":"🗺️ 지도 접기";
+  if(collapsed)return;
+  const ifr=w.querySelector("iframe"), off=w.querySelector(".sh-mapoff");
+  if(navigator.onLine===false){
+    if(ifr)ifr.style.display="none";
+    if(off)off.style.display="block";
+  }else{
+    if(off)off.style.display="none";
+    if(ifr){ ifr.style.display=""; if(!ifr.getAttribute("src")&&ifr.dataset.src) ifr.setAttribute("src",ifr.dataset.src); }
+  }
 }
 /* ---- 상세 HTML 빌더 ---- */
 function buildOrgSheet(id){
@@ -2427,6 +2450,10 @@ updateTripStatus();
 initTopMap();boot();fmMaybeAutoEnter();
 window.addEventListener("online",()=>setTimeout(memoFlushPending,400));
 setTimeout(memoFlushPending,3000);
+/* 오프라인 지원: 한 번 열어본 폰은 인터넷 없이도 앱이 열림 */
+if("serviceWorker" in navigator){
+  window.addEventListener("load",()=>{ navigator.serviceWorker.register("./service-worker.js").catch(()=>{}); });
+}
 </script>
 </body>
 </html>

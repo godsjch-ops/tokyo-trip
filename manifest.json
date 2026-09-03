@@ -1,0 +1,17 @@
+{
+  "name": "따뜻한동행 일본 해외연수 일정",
+  "short_name": "연수 일정",
+  "description": "2026 따뜻한동행 일본 해외연수 일정·방문기관·숙소·메모 (현장 모드)",
+  "lang": "ko",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#f8f9fa",
+  "theme_color": "#187FC4",
+  "icons": [
+    { "src": "./icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "./icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "./icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
