@@ -320,6 +320,109 @@
     .modal{border-radius:14px;} .map-box iframe{height:200px;}
     .legend .tip{display:none;}
   }
+
+  /* ===================== 현장 모드 (모바일) ===================== */
+  #fieldMode{display:none;position:fixed;inset:0;z-index:60;background:var(--bg);overflow-y:auto;
+    -webkit-overflow-scrolling:touch;padding-bottom:70px;}
+  body.fm-open #fieldMode{display:block;}
+  body.fm-open{overflow:hidden;}
+  @media(max-width:760px){ body.fm-open .app-shell{display:none;} }
+  .fm-wrap{max-width:520px;margin:0 auto;}
+  .fm-top{position:sticky;top:0;z-index:5;background:rgba(255,255,255,.94);backdrop-filter:blur(8px);
+    border-bottom:1px solid var(--line2);padding:10px 14px;display:flex;align-items:center;gap:10px;}
+  .fm-top .fm-date{font-size:15px;font-weight:800;letter-spacing:-.3px;}
+  .fm-top .fm-dsub{font-size:11.5px;color:var(--faint);margin-top:1px;}
+  .fm-top .sp{flex:1;}
+  .fm-exit{border:1px solid var(--line2);background:#fff;border-radius:8px;padding:7px 10px;font-size:12px;
+    font-weight:700;color:#374151;cursor:pointer;white-space:nowrap;}
+  .fm-meals{display:flex;gap:6px;padding:9px 14px 2px;flex-wrap:wrap;}
+  .fm-meal{font-size:11px;font-weight:700;color:var(--muted);background:#fff;border:1px solid var(--line);
+    border-radius:999px;padding:3px 9px;}
+  .fm-body{padding:12px 14px 20px;}
+  .fm-sel{width:100%;margin:4px 0 12px;font-size:13px;font-weight:600;}
+  .fm-dcount{font-size:12px;color:var(--accent);font-weight:700;background:var(--accent-soft);
+    border-radius:8px;padding:8px 11px;margin-bottom:12px;}
+
+  .fm-now-label{display:flex;align-items:center;gap:6px;font-size:11.5px;font-weight:800;color:var(--accent);margin:2px 0 7px;}
+  .fm-nowcard{background:#fff;border:1px solid var(--line2);border-radius:14px;padding:14px 14px 13px;position:relative;
+    overflow:hidden;box-shadow:0 6px 18px rgba(24,127,196,.10);margin-bottom:14px;}
+  .fm-nowcard .st{position:absolute;left:0;top:0;bottom:0;width:4px;}
+  .fm-nowcard .t{font-size:16px;font-weight:800;letter-spacing:-.2px;margin:2px 0 3px;}
+  .fm-nowcard .m{font-size:12px;color:var(--muted);}
+  .fm-nowcard .acts{display:flex;gap:8px;margin-top:11px;flex-wrap:wrap;}
+  .fm-btn{flex:1;min-width:120px;display:flex;align-items:center;justify-content:center;gap:6px;padding:11px 0;
+    border-radius:10px;font-size:13px;font-weight:700;border:1px solid var(--line2);background:#fff;color:#374151;
+    cursor:pointer;text-decoration:none;min-height:44px;}
+  .fm-btn.primary{background:var(--accent);border-color:var(--accent);color:#fff;}
+
+  .fm-sec{font-size:11.5px;font-weight:800;color:var(--faint);letter-spacing:.04em;margin:18px 2px 9px;}
+  .fm-tl{display:grid;grid-template-columns:44px 18px 1fr;gap:9px;}
+  .fm-tl .tm{font-size:11px;font-weight:600;color:var(--faint);text-align:right;padding-top:12px;}
+  .fm-tl .md{position:relative;}
+  .fm-tl .md::before{content:"";position:absolute;left:8px;top:0;bottom:-11px;width:2px;background:var(--line2);}
+  .fm-tl .md i{position:absolute;left:3px;top:12px;width:12px;height:12px;border-radius:50%;background:#fff;
+    border:2px solid var(--line2);}
+  .fm-tl.done .md i{background:var(--line2);}
+  .fm-tl.cur .md i{background:var(--accent);border-color:#fff;box-shadow:0 0 0 3px var(--accent-soft);}
+  .fm-tl.last .md::before{display:none;}
+  .fm-card{border:1px solid var(--line);border-radius:11px;background:#fff;padding:10px 12px;margin-bottom:11px;cursor:pointer;}
+  .fm-tl.done .fm-card{opacity:.5;}
+  .fm-tl.cur .fm-card{border-color:var(--accent);background:var(--accent-soft);}
+  .fm-cat{display:inline-block;font-size:10px;font-weight:800;color:#fff;border-radius:999px;padding:2px 8px;}
+  .fm-ct{font-size:13.5px;font-weight:700;margin:5px 0 2px;letter-spacing:-.2px;}
+  .fm-cs{font-size:11.5px;color:var(--faint);}
+  .fm-orglink{display:inline-flex;align-items:center;gap:4px;margin-top:7px;font-size:11.5px;font-weight:800;color:var(--accent);}
+
+  .fm-item{border:1px solid var(--line);border-radius:12px;background:#fff;padding:12px 13px;margin-bottom:9px;cursor:pointer;}
+  .fm-item .h{display:flex;align-items:baseline;gap:7px;}
+  .fm-item .h b{font-size:14px;font-weight:800;letter-spacing:-.2px;}
+  .fm-item .badge2{font-size:10px;font-weight:800;color:var(--accent-deep);background:var(--accent-soft);border-radius:6px;padding:2px 6px;white-space:nowrap;}
+  .fm-item .d{font-size:11.5px;color:var(--faint);margin-top:4px;line-height:1.5;}
+  .fm-item.tonight{border-color:var(--stay);box-shadow:0 4px 14px rgba(139,92,246,.14);}
+  .fm-note-empty{font-size:12.5px;color:var(--faint);background:#fff;border:1px dashed var(--line2);border-radius:12px;
+    padding:18px;text-align:center;line-height:1.6;}
+
+  /* bottom tab bar */
+  .fm-tabs{position:fixed;left:0;right:0;bottom:0;z-index:65;display:grid;grid-template-columns:repeat(5,1fr);
+    background:#fff;border-top:1px solid var(--line2);max-width:520px;margin:0 auto;}
+  body:not(.fm-open) .fm-tabs{display:none;}
+  .fm-tabs button{border:0;background:transparent;display:flex;flex-direction:column;align-items:center;gap:3px;
+    padding:8px 0 9px;font-size:10px;font-weight:700;color:var(--faint);cursor:pointer;}
+  .fm-tabs button.on{color:var(--accent);}
+  .fm-tabs svg{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:1.75;stroke-linecap:round;stroke-linejoin:round;}
+
+  /* field sheet (기관/숙소 상세 + 메모) — 현장 모드 위에 표시 */
+  .fm-sheet{position:fixed;inset:0;z-index:75;background:rgba(17,24,39,.5);display:none;}
+  .fm-sheet.on{display:block;}
+  .fm-sheet .panel{position:absolute;left:0;right:0;bottom:0;max-height:92vh;overflow-y:auto;background:#fff;
+    border-radius:18px 18px 0 0;max-width:520px;margin:0 auto;padding:16px 16px 26px;}
+  .fm-sheet .sh-x{position:absolute;right:12px;top:12px;border:0;background:#f3f4f6;border-radius:9px;width:30px;height:30px;
+    font-size:15px;color:#6b7280;cursor:pointer;}
+  .fm-sheet h3{font-size:17px;font-weight:800;margin:2px 40px 4px 0;letter-spacing:-.3px;}
+  .fm-sheet .sh-sub{font-size:12px;color:var(--faint);margin-bottom:12px;}
+  .fm-sheet .sh-facts{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px;}
+  .fm-sheet .sh-facts span{font-size:11.5px;font-weight:600;color:var(--muted);background:#f6f8f9;border:1px solid var(--line);
+    border-radius:8px;padding:4px 8px;}
+  .fm-sheet .sh-desc{font-size:13px;line-height:1.65;color:var(--muted);white-space:pre-wrap;margin-bottom:12px;}
+  .fm-sheet .sh-acts{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;}
+  .fm-sheet .sh-map{border:1px solid var(--line2);border-radius:12px;overflow:hidden;margin-bottom:14px;}
+  .fm-sheet .sh-map iframe{width:100%;height:190px;border:0;display:block;}
+
+  .memo-h{display:flex;align-items:center;justify-content:space-between;margin:4px 0 9px;}
+  .memo-h b{font-size:14px;font-weight:800;}
+  .memo-seg{display:flex;gap:3px;background:#eef0f2;border-radius:9px;padding:3px;}
+  .memo-seg button{border:0;background:transparent;font-size:12px;font-weight:800;color:var(--faint);
+    padding:6px 12px;border-radius:7px;cursor:pointer;}
+  .memo-seg button.on{background:#fff;color:var(--accent);box-shadow:0 1px 3px rgba(0,0,0,.08);}
+  .memo-help{font-size:10.5px;color:var(--faint);line-height:1.5;margin-bottom:10px;}
+  .memo-item{border:1px solid var(--line);border-radius:10px;background:#fff;padding:10px 11px;margin-bottom:8px;}
+  .memo-item .mb{font-size:12.5px;line-height:1.6;color:var(--ink);white-space:pre-wrap;}
+  .memo-item .mm{display:flex;align-items:center;gap:8px;margin-top:6px;font-size:10.5px;color:var(--faint);}
+  .memo-item .mm .del{margin-left:auto;color:#dc2626;font-weight:700;cursor:pointer;}
+  .memo-comp{display:flex;gap:8px;align-items:flex-end;margin-top:10px;}
+  .memo-comp textarea{flex:1;min-height:44px;font-size:12.5px;}
+  .memo-comp button{background:var(--accent);color:#fff;border:0;border-radius:10px;padding:0 16px;font-size:13px;
+    font-weight:800;min-height:44px;cursor:pointer;white-space:nowrap;}
 </style>
 </head>
 <body>
@@ -351,7 +454,9 @@
     </div>
   </div>
   <div class="spacer"></div>
-  <button class="btn primary" onclick="openForm()">＋ 일정 추가</button>
+  <button class="btn primary" onclick="enterFieldMode()">📱 현장 모드</button>
+  <button class="btn" onclick="openForm()">＋ 일정 추가</button>
+  <button class="btn sm" onclick="loadOfficialItinerary()">📋 PDF 일정표 불러오기</button>
   <button class="btn sm" onclick="exportJSON()">내보내기</button>
   <button class="btn sm" onclick="document.getElementById('importFile').click()">불러오기</button>
   <input type="file" id="importFile" accept="application/json" style="display:none" onchange="importJSON(this)">
@@ -478,6 +583,32 @@
     </footer>
   </div>
   </div>
+</div>
+
+<!-- ===================== 현장 모드 (모바일) ===================== -->
+<div id="fieldMode">
+  <div class="fm-wrap">
+    <div class="fm-top">
+      <div>
+        <div class="fm-date" id="fmDate">현장 모드</div>
+        <div class="fm-dsub" id="fmDsub"></div>
+      </div>
+      <div class="sp"></div>
+      <button class="fm-exit" onclick="exitFieldMode()">대시보드 ▸</button>
+    </div>
+    <div class="fm-meals" id="fmMeals"></div>
+    <div class="fm-body" id="fmBody"></div>
+  </div>
+  <div class="fm-tabs" id="fmTabs">
+    <button data-tab="today" onclick="fieldTab('today')"><svg viewBox="0 0 24 24"><path d="M8 2v3M16 2v3M4 8h16M5 5h14a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1z"/></svg>오늘</button>
+    <button data-tab="orgs" onclick="fieldTab('orgs')"><svg viewBox="0 0 24 24"><path d="M3 21h18M5 21V8l7-4 7 4v13M9 21v-5h6v5M9 12h.01M15 12h.01"/></svg>기관</button>
+    <button data-tab="lodging" onclick="fieldTab('lodging')"><svg viewBox="0 0 24 24"><path d="M3 21h18M4 21V10h16v11M8 10V7a4 4 0 0 1 8 0v3M9 21v-4h6v4"/></svg>숙소</button>
+    <button data-tab="food" onclick="fieldTab('food')"><svg viewBox="0 0 24 24"><path d="M4 3v8a3 3 0 0 0 6 0V3M7 3v18M17 3c-1.7 0-3 2-3 5s1.3 4 3 4v9"/></svg>식당</button>
+    <button data-tab="all" onclick="fieldTab('all')"><svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></svg>전체</button>
+  </div>
+</div>
+<div class="fm-sheet" id="fmSheet" onclick="if(event.target===this)closeFieldSheet()">
+  <div class="panel" id="fmSheetPanel"></div>
 </div>
 
 <!-- VIEW: event -->
@@ -836,6 +967,7 @@ function render(){
   body.innerHTML=html;
   events.forEach(placeEvent);
   renderBacklog();renderLodging();
+  if(window.renderFieldIfActive)renderFieldIfActive();
 }
 function setMobileDay(i){mobileDay=i;render();}
 function placeEvent(ev){
@@ -943,23 +1075,27 @@ function onDrop(e,day){
 
 /* ---------- unified category stores ---------- */
 function catItems(key){
-  if(key==="visit")return backlog.filter(x=>(x.kind||"visit")==="visit");
+  if(key==="visit")return backlog.filter(x=>{const k=x.kind||"visit";return k==="visit"||k==="org";});
   if(key==="food")return backlog.filter(x=>x.kind==="food");
   if(key==="lodging")return lodging;
   return detailData[key]||[];
 }
 function catFind(key,id){
-  if(key==="visit"||key==="food")return backlog.find(x=>x.id===id);
+  if(key==="visit"||key==="food"||key==="org")return backlog.find(x=>x.id===id);
   if(key==="lodging")return lodging.find(x=>x.id===id);
   return (detailData[key]||[]).find(x=>x.id===id);
 }
 function catUpsert(key,obj){
-  if(key==="visit"||key==="food"){const i=backlog.findIndex(x=>x.id===obj.id);if(i>=0)backlog[i]=obj;else backlog.push(obj);persistBacklog();}
+  if(key==="visit"||key==="food"||key==="org"){
+    if(key==="org")obj.kind="org";
+    const i=backlog.findIndex(x=>x.id===obj.id);
+    if(i>=0)backlog[i]={...backlog[i],...obj};else backlog.push(obj);persistBacklog();
+  }
   else if(key==="lodging"){const i=lodging.findIndex(x=>x.id===obj.id);if(i>=0)lodging[i]=obj;else lodging.push(obj);persistLodging();}
   else{const i=detailData[key].findIndex(x=>x.id===obj.id);if(i>=0)detailData[key][i]=obj;else detailData[key].push(obj);persistDetail(key);}
 }
 function catRemove(key,id){
-  if(key==="visit"||key==="food"){backlog=backlog.filter(x=>x.id!==id);persistBacklog();}
+  if(key==="visit"||key==="food"||key==="org"){backlog=backlog.filter(x=>x.id!==id);persistBacklog();}
   else if(key==="lodging"){lodging=lodging.filter(x=>x.id!==id);persistLodging();}
   else{detailData[key]=detailData[key].filter(x=>x.id!==id);persistDetail(key);}
 }
@@ -967,11 +1103,12 @@ function catRemove(key,id){
 /* ---------- cards render ---------- */
 function renderBacklog(){
   const box=document.getElementById("backlog");
-  if(!backlog.length){box.innerHTML=`<div class="empty">아직 후보가 없어요. 「＋ 후보 추가」로 방문지·식당을 모아두세요.</div>`;return;}
+  const list=backlog.filter(b=>(b.kind||"visit")!=="org");  // 방문기관(org)은 "방문지 상세보기"·현장 모드에서 관리
+  if(!list.length){box.innerHTML=`<div class="empty">아직 후보가 없어요. 「＋ 후보 추가」로 방문지·식당을 모아두세요.</div>`;return;}
   box.innerHTML="";
-  backlog.forEach(b=>{
+  list.forEach(b=>{
     const kind=b.kind||"visit";
-    const kb=kind==="food"?`<span style="color:#b45309">🍜 식당</span>`:`<span style="color:#005083">🗺️ 방문지</span>`;
+    const kb=kind==="food"?`<span style="color:#b45309">🍜 식당</span>`:kind==="org"?`<span style="color:#187FC4">🏛️ 방문기관</span>`:`<span style="color:#005083">🗺️ 방문지</span>`;
     const el=document.createElement("div");el.className="card kind-"+(kind==="food"?"food":"visit");el.draggable=true;
     el.innerHTML=`<span class="grip">⠿</span><div class="c-title">${esc(b.title)}</div>
       <div class="c-desc">${esc(b.desc||"")}</div>
@@ -1220,7 +1357,7 @@ function openDetailForm(key,id=null){
   const isHubo=(key==="visit"||key==="food");
   document.getElementById("dKindRow").style.display=isHubo?"block":"none";
   document.getElementById("dPeriodRow").style.display=(key==="lodging")?"block":"none";
-  const label=key==="lodging"?"숙소":key==="food"?"식당":key==="visit"?"방문지":(DETAIL_SECTIONS[key]?DETAIL_SECTIONS[key].title:"항목");
+  const label=key==="lodging"?"숙소":key==="food"?"식당":key==="visit"?"방문지":key==="org"?"방문기관":(DETAIL_SECTIONS[key]?DETAIL_SECTIONS[key].title:"항목");
   document.getElementById("dFormTitle").textContent=label+(id?" 수정":" 추가");
   if(isHubo)document.getElementById("dKind").value=key;
   if(id){const b=catFind(key,id);
@@ -1257,7 +1394,7 @@ function migrateLocal(){
   }catch(err){toast("올리기 실패: "+err.message);}
 }
 document.addEventListener("keydown",e=>{
-  if(e.key==="Escape"){closeView();closeForm();closePView();closeBacklogForm();closeLodgingForm();closeDetailList();closeDetailView();closeDetailForm();return;}
+  if(e.key==="Escape"){closeFieldSheet();closeView();closeForm();closePView();closeBacklogForm();closeLodgingForm();closeDetailList();closeDetailView();closeDetailForm();return;}
   const tag=e.target&&e.target.tagName;
   if(tag==="INPUT"||tag==="TEXTAREA"||tag==="SELECT")return;
   if(!editMode)return;
@@ -1285,9 +1422,397 @@ function pasteEvent(){
 }
 document.addEventListener("pointermove",e=>{mx=e.clientX;my=e.clientY;},{passive:true});
 document.addEventListener("pointerover",e=>{const el=e.target&&e.target.closest?e.target.closest(".event"):null;hoverEventId=el?el.dataset.id:null;});
+
+/* ======================================================================
+   현장 모드 (모바일) + 최신 일정표 데이터 (PDF: 2026-08-27 확정본)
+   ====================================================================== */
+const OFFICIAL_ORGS=[
+ {id:"org-1",kind:"org",day:0,time:"14:00",field:"스포츠·예술·복지 NPO",host:"",title:"① Sports of Heart",
+  url:"https://s-heart.org/",loc:"Sports of Heart 東京",
+  desc:"장애·비장애가 함께하는 스포츠·예술·문화 축제를 여는 NPO. 다양성(다이버시티) 사회 만들기 캠페인.\n· 세부 프로그램은 현지에서 보완"},
+ {id:"org-2",kind:"org",day:0,time:"15:30",field:"사회복지·개호복지 교육",host:"김재근·김원경 교수",title:"② 메지로대학(目白大学) 방문·강연",
+  url:"https://www.mejiro.ac.jp/",loc:"目白大学",
+  desc:"사회복지·심리·개호복지 분야 교육기관. 한인 교수(김재근·김원경) 강연 예정.\n· 공식 URL·방문 캠퍼스 확인 필요"},
+ {id:"org-3",kind:"org",day:1,time:"09:00–10:30",field:"프로보노 중개 NPO",host:"",title:"③ 서비스그랜트 재팬",
+  url:"https://www.servicegrant.or.jp/",loc:"サービスグラント 東京",
+  desc:"직장인의 전문 역량을 비영리단체에 연결하는 '프로보노' 중개 NPO. 프로젝트형 자원봉사 모델.\n· 세부 내용은 현지에서 보완"},
+ {id:"org-4",kind:"org",day:1,time:"14:00",field:"서비스형 고령자주택",host:"",title:"④ 유이마루 타마다이라의모리",
+  url:"https://yui-marl.jp/tamadaira/",loc:"ゆいまーる多摩平の森 日野市",
+  desc:"오래된 공영단지를 재생한 서비스제공형 고령자주택(사코주). 지역 커뮤니티와 연계한 노후 거주 모델.\n· 세부 내용은 현지에서 보완"},
+ {id:"org-5",kind:"org",day:2,time:"09:50",field:"주간보호(자립지원형)",host:"",title:"⑤ 데이서비스 라스베가스",
+  url:"https://las-vegas.jp/shop/yokohamatsuzuki/",loc:"デイサービス ラスベガス 横浜都筑",
+  desc:"카지노·파칭코 콘셉트로 꾸민 자립지원형 주간보호센터(요코하마 츠즈키점). 게임을 재활 동기로 활용.\n· 세부 내용은 현지에서 보완"},
+ {id:"org-6",kind:"org",day:2,time:"14:00",field:"고향납세(ふるさと納税) 제도",host:"",title:"⑥ 고향납세 담당기관 ZOOM 회의",
+  url:"",loc:"",
+  desc:"일본 고향납세 제도를 운영·지원하는 담당 기관과 화상(ZOOM) 회의.\n· 담당 기관명 확인 필요 · 회의 링크는 가이드 안내"},
+ {id:"org-7",kind:"org",day:3,time:"10:00",field:"장애인 생활·취로 지원",host:"",title:"⑦ 교마루엔(きょうまる園)",
+  url:"https://kyomaru.net/",loc:"静岡県浜松市中央区鶴見町386-1",
+  desc:"장애인의 생활·취로(일자리)를 지원하는 복지시설. 하마마쓰 소재.\n· 세부 내용은 현지에서 보완"},
+ {id:"org-8",kind:"org",day:3,time:"16:00",field:"복지·개호 기기 전시",host:"",title:"⑧ ATC 에이지리스 센터",
+  url:"https://www.ageless.gr.jp",loc:"ATCエイジレスセンター 大阪",
+  desc:"오사카 ATC빌딩에 있는 서일본 최대급 복지·개호·배리어프리 기기 상설 전시장.\n· 세부 내용은 현지에서 보완"},
+ {id:"org-9",kind:"org",day:4,time:"10:00",field:"재일한국인 고령자 복지",host:"",title:"⑨ 고향의집·오사카(故郷の家)",
+  url:"https://www.kokorono.or.jp/",loc:"故郷の家 大阪",
+  desc:"재일 한국인 어르신을 위한 고령자 복지시설(특별양호노인홈). 사회복지법인 '마음의가족' 운영.\n· 세부 내용은 현지에서 보완"}
+];
+const OFFICIAL_SPOTS=[
+ {id:"spot-1",kind:"visit",title:"오다이바",url:"",loc:"お台場 東京",desc:"도쿄만 인공섬, '젊은이의 거리'. 도착일 시내 이동 중 관광."},
+ {id:"spot-2",kind:"visit",title:"야마시타 공원",url:"",loc:"山下公園 横浜",desc:"요코하마 개항의 상징인 해안 공원. ⑤·⑥ 사이 이동 중 관광."},
+ {id:"spot-3",kind:"visit",title:"이온몰 (오사카)",url:"",loc:"イオンモール 大阪",desc:"귀국일 쇼핑·자유시간. 몰 내 자유식."}
+];
+const OFFICIAL_LODGING=[
+ {id:"lg-1",title:"라비스타 온천호텔 (도쿄)",period:"9/14(월) – 9/16(수) · 2박",url:"",loc:"ラビスタ 東京",
+  desc:"도쿄 연수 거점. 온천 대욕장·조식 뷔페.\n· 정확한 지점(도쿄베이/나리타 등) 확인 필요"},
+ {id:"lg-2",title:"시즈오카 호텔",period:"9/16(수) – 9/17(목) · 1박",url:"",loc:"静岡駅 ホテル",
+  desc:"요코하마 견학 후 이동, 1박.\n· 정확한 호텔명 확인 필요"},
+ {id:"lg-3",title:"오사카 아트베이 호텔",period:"9/17(목) – 9/18(금) · 1박",url:"",loc:"アートベイホテル大阪",
+  desc:"오사카 연수·귀국 전 1박. (Art Bay Hotel Osaka)"}
+];
+const DAY_MEALS=[
+ {b:"–",l:"현지식",d:"현지식"},
+ {b:"호텔식",l:"현지식",d:"현지식"},
+ {b:"호텔식",l:"현지식",d:"현지식"},
+ {b:"호텔식",l:"에키벤(신칸센)",d:"현지식"},
+ {b:"호텔식",l:"이온몰 자유식",d:"–"}
+];
+function _oe(day,start,end,cat,title,loc,desc,ref){
+  return {id:"o-"+day+"-"+start.replace(":",""),day:day,start:start,end:end,cat:cat,
+    title:title,loc:loc||"",desc:desc||"",photos:[],ref:ref||""};
+}
+function buildOfficialEvents(){return[
+ _oe(0,"07:30","09:30","move","인천공항 집합·출국 수속","인천국제공항 제1터미널","M 카운터(3층 출국장). 가이드 박진희 010-5324-4557 / (일본)090-5453-7069"),
+ _oe(0,"09:30","12:15","move","제주항공 인천 → 나리타","",""),
+ _oe(0,"12:15","13:30","move","나리타공항 도착 · 시내로 이동","成田国際空港",""),
+ _oe(0,"13:30","14:00","free","오다이바 관광 (젊은이의 거리)","お台場 東京",""),
+ _oe(0,"14:00","15:00","meet","① Sports of Heart","Sports of Heart 東京","공식방문 1","org-1"),
+ _oe(0,"15:30","17:30","meet","② 메지로대학 방문·강연 (김재근·김원경 교수)","目白大学","공식방문 2 · 교수 강연","org-2"),
+ _oe(0,"18:00","19:30","meal","석식 (현지식)","",""),
+ _oe(0,"20:00","20:30","stay","라비스타 온천호텔 체크인","ラビスタ 東京",""),
+ _oe(1,"08:00","09:00","move","호텔 조식 후 견학지로 이동","",""),
+ _oe(1,"09:00","10:30","meet","③ 서비스그랜트 재팬","サービスグラント 東京","공식방문 3 (09:00–10:30)","org-3"),
+ _oe(1,"11:00","13:00","free","도쿄 시내 (일정 미정)","","가이드 안내"),
+ _oe(1,"13:00","14:00","meal","중식 (현지식)","",""),
+ _oe(1,"14:00","16:00","meet","④ 유이마루 타마다이라의모리","ゆいまーる多摩平の森 日野市","공식방문 4","org-4"),
+ _oe(1,"18:00","19:30","meal","석식 (현지식)","",""),
+ _oe(2,"08:30","09:30","move","호텔 출발 → 요코하마 츠즈키","",""),
+ _oe(2,"09:50","11:30","meet","⑤ 데이서비스 라스베가스 (파칭코형 주간보호)","デイサービス ラスベガス 横浜都筑","공식방문 5","org-5"),
+ _oe(2,"12:00","13:00","meal","중식 (현지식)","",""),
+ _oe(2,"13:00","14:00","free","야마시타 공원 (요코하마)","山下公園 横浜",""),
+ _oe(2,"14:00","15:00","meet","⑥ 고향납세 담당기관 ZOOM 회의","","공식방문 6 · 화상회의","org-6"),
+ _oe(2,"15:00","18:00","move","요코하마 → 시즈오카 이동","",""),
+ _oe(2,"18:30","20:00","meal","석식 (현지식) · 호텔 주변 산책","",""),
+ _oe(3,"08:30","09:30","move","호텔 출발 (하마마쓰)","",""),
+ _oe(3,"10:00","12:00","meet","⑦ 교마루엔","静岡県浜松市中央区鶴見町386-1","공식방문 7","org-7"),
+ _oe(3,"12:00","14:30","move","신칸센 하마마쓰 → 오사카 (열차 내 에키벤 중식)","",""),
+ _oe(3,"16:00","17:30","meet","⑧ ATC 에이지리스 센터","ATCエイジレスセンター 大阪","공식방문 8","org-8"),
+ _oe(3,"18:30","20:00","meal","석식 (현지식) · 호텔 체크인","アートベイホテル大阪",""),
+ _oe(4,"08:30","09:30","move","호텔 출발","",""),
+ _oe(4,"10:00","11:30","meet","⑨ 고향의집·오사카","故郷の家 大阪","공식방문 9","org-9"),
+ _oe(4,"11:30","14:00","free","쇼핑·자유시간 (이온몰) · 몰 내 자유식","イオンモール 大阪",""),
+ _oe(4,"14:00","16:00","move","간사이공항으로 이동","関西国際空港",""),
+ _oe(4,"17:00","19:00","move","제주항공 간사이 → 인천","",""),
+ _oe(4,"19:00","19:30","move","인천공항 도착 · 해산","인천국제공항","")
+];}
+function loadOfficialItinerary(){
+  try{exportJSON();}catch(e){}
+  if(!confirm("현재 일정·방문기관·숙소 데이터를 최신 일정표(PDF)로 전면 교체합니다.\n\n· 방금 백업 JSON이 다운로드됐어요. 되돌리려면 상단 '불러오기'로 그 파일을 여세요.\n· 개인/공유 메모는 그대로 유지됩니다.\n\n계속할까요?"))return;
+  events=buildOfficialEvents();
+  const keepFood=backlog.filter(x=>x.kind==="food");
+  backlog=OFFICIAL_ORGS.map(o=>Object.assign({},o))
+    .concat(OFFICIAL_SPOTS.map(o=>Object.assign({},o)))
+    .concat(keepFood);
+  lodging=OFFICIAL_LODGING.map(o=>Object.assign({},o));
+  saveEvents();persistBacklog();persistLodging();render();
+  toast("최신 일정표를 불러왔습니다. (9개 방문기관 포함)");
+}
+
+/* ---------- field mode core ---------- */
+let fmState={tab:localStorage.getItem("tw_ftab")||"today",day:0};
+function fmMaybeAutoEnter(){
+  const v=localStorage.getItem("tw_view");
+  if(v==="field" || (v!=="dash" && window.matchMedia("(max-width:760px)").matches)) enterFieldMode();
+}
+function enterFieldMode(){
+  document.body.classList.add("fm-open");
+  localStorage.setItem("tw_view","field");
+  const t=computeTodayIdx();
+  fmState.day = t>=0 ? t : (fmState.day||0);
+  fieldTab(fmState.tab||"today");
+  window.scrollTo(0,0);
+}
+function exitFieldMode(){
+  document.body.classList.remove("fm-open");
+  localStorage.setItem("tw_view","dash");
+  closeFieldSheet();
+}
+function fieldTab(name){
+  if(name==="all"){exitFieldMode();const g=document.querySelector(".grid-scroll");if(g)g.scrollIntoView({behavior:"smooth"});return;}
+  fmState.tab=name;localStorage.setItem("tw_ftab",name);
+  document.querySelectorAll("#fmTabs button").forEach(b=>b.classList.toggle("on",b.dataset.tab===name));
+  renderField();
+}
+function renderFieldIfActive(){ if(document.body.classList.contains("fm-open")) renderField(); }
+function renderField(){
+  renderFmTop();
+  const box=document.getElementById("fmBody");if(!box)return;
+  const t=fmState.tab;
+  box.innerHTML = t==="orgs"?viewFieldOrgs() : t==="lodging"?viewFieldLodging() : t==="food"?viewFieldFood() : viewFieldToday();
+}
+function renderFmTop(){
+  const dEl=document.getElementById("fmDate"),sub=document.getElementById("fmDsub"),meals=document.getElementById("fmMeals");
+  if(!dEl)return;
+  const trip=computeTodayIdx();
+  if(fmState.tab==="today"){
+    const di=fmState.day,d=DAYS[di]||DAYS[0],m=DAY_MEALS[di]||{};
+    dEl.textContent=`${d.label} (${d.dow})`;
+    let s=`${di+1}일차 / 5일`;
+    if(trip<0){const now=new Date();now.setHours(0,0,0,0);const dd=Math.round((TRIP_START-now)/86400000);
+      s += dd>0?` · 연수 D-${dd}`:" · 연수 종료";}
+    else if(trip===di) s=`${di+1}일차 · 오늘`;
+    sub.textContent=s;
+    meals.innerHTML=`<span class="fm-meal">🥣 조식 ${esc(m.b||"–")}</span><span class="fm-meal">🍚 중식 ${esc(m.l||"–")}</span><span class="fm-meal">🍶 석식 ${esc(m.d||"–")}</span>`;
+  }else{
+    dEl.textContent={orgs:"방문 기관",lodging:"숙소",food:"식사"}[fmState.tab]||"현장 모드";
+    sub.textContent="2026 따뜻한동행 해외연수 · 9명";
+    meals.innerHTML="";
+  }
+}
+function viewFieldToday(){
+  const di=fmState.day, trip=computeTodayIdx();
+  const evs=events.filter(e=>e.day===di).slice().sort((a,b)=>toMin(a.start)-toMin(b.start));
+  let h=`<select class="fm-sel" onchange="fmState.day=+this.value;renderField()">`+
+    DAYS.map((d,i)=>`<option value="${i}"${i===di?" selected":""}>${i+1}일차 — ${d.label} (${d.dow})</option>`).join("")+`</select>`;
+  if(!evs.length) return h+`<div class="fm-note-empty">이 날 등록된 일정이 없어요.<br>상단 <b>📋 PDF 일정표 불러오기</b>로 최신 일정을 넣어주세요.</div>`;
+  const nowM = (trip===di) ? (new Date().getHours()*60+new Date().getMinutes()) : -1;
+  if(nowM>=0){
+    const cur=evs.find(e=>toMin(e.start)<=nowM&&nowM<toMin(e.end));
+    const nxt=evs.find(e=>toMin(e.start)>nowM);
+    const tg=cur||nxt;
+    if(tg){
+      const c=CAT[tg.cat]||CAT.visit;
+      h+=`<div class="fm-now-label">${cur?"● 지금 진행 중":"▶ 다음 일정"}</div>`+
+        `<div class="fm-nowcard"><span class="st" style="background:${c.color}"></span>`+
+        `<div class="fm-cs">${tg.start}–${tg.end} · ${c.name}</div>`+
+        `<div class="t">${esc(tg.title)}</div>`+
+        (tg.loc?`<div class="m">📍 ${esc(tg.loc)}</div>`:"")+
+        `<div class="acts">`+
+        (tg.loc?`<a class="fm-btn primary" href="${searchUrl(tg.loc)}" target="_blank" rel="noopener">🧭 길찾기</a>`:"")+
+        (tg.ref?`<button class="fm-btn" onclick="openOrgSheet('${tg.ref}')">🏛️ 기관 정보</button>`:"")+
+        `</div></div>`;
+    }
+  }
+  h+=`<div class="fm-sec">오늘의 타임라인</div>`;
+  evs.forEach((e,idx)=>{
+    const c=CAT[e.cat]||CAT.visit;
+    let cls="fm-tl"+(idx===evs.length-1?" last":"");
+    if(nowM>=0){ if(toMin(e.end)<=nowM)cls+=" done"; else if(toMin(e.start)<=nowM&&nowM<toMin(e.end))cls+=" cur"; }
+    h+=`<div class="${cls}"><div class="tm">${e.start}</div><div class="md"><i></i></div>`+
+      `<div class="fm-card" onclick="fmEventTap('${e.id}')">`+
+      `<span class="fm-cat" style="background:${c.color}">${c.name}</span>`+
+      `<div class="fm-ct">${esc(e.title)}</div>`+
+      `<div class="fm-cs">${e.start}–${e.end}${e.loc?" · "+esc(e.loc):""}</div>`+
+      (e.ref?`<span class="fm-orglink">🏛️ 기관 정보 보기 ›</span>`:"")+
+      `</div></div>`;
+  });
+  return h;
+}
+function viewFieldOrgs(){
+  const orgs=backlog.filter(x=>x.kind==="org").slice().sort((a,b)=>(a.day-b.day));
+  const spots=backlog.filter(x=>(x.kind||"visit")==="visit");
+  let h="";
+  if(!orgs.length){
+    h+=`<div class="fm-note-empty">방문 기관 정보가 아직 없어요.<br>상단 <b>📋 PDF 일정표 불러오기</b>를 눌러주세요.</div>`;
+  }else{
+    h+=`<div class="fm-sec">공식 방문 기관 ${orgs.length}곳</div>`;
+    orgs.forEach(o=>{
+      h+=`<div class="fm-item" onclick="openOrgSheet('${o.id}')"><div class="h"><b>${esc(o.title)}</b></div>`+
+        `<div class="d">${o.day!=null?(o.day+1)+"일차":""}${o.time?" · "+esc(o.time):""}${o.field?" · "+esc(o.field):""}</div></div>`;
+    });
+  }
+  if(spots.length){
+    h+=`<div class="fm-sec">관광 · 자유시간</div>`;
+    spots.forEach(s=>{
+      h+=`<div class="fm-item" onclick="openOrgSheet('${s.id}')"><div class="h"><b>${esc(s.title)}</b></div>`+
+        (s.desc?`<div class="d">${esc(s.desc)}</div>`:"")+`</div>`;
+    });
+  }
+  return h;
+}
+function fmPeriodCoversDay(period,di){
+  if(di<0||!period)return false;
+  const days=[...period.matchAll(/(\d+)\s*\/\s*(\d+)/g)].map(x=>+x[2]);
+  if(days.length<2)return false;
+  const today=14+di;
+  return days[0]<=today && today<days[days.length-1];
+}
+function viewFieldLodging(){
+  if(!lodging.length) return `<div class="fm-note-empty">숙소 정보가 아직 없어요.<br>상단 <b>📋 PDF 일정표 불러오기</b>를 눌러주세요.</div>`;
+  const di=computeTodayIdx();
+  let h=`<div class="fm-sec">숙소 ${lodging.length}곳</div>`;
+  lodging.forEach(l=>{
+    const tonight=fmPeriodCoversDay(l.period,di);
+    h+=`<div class="fm-item${tonight?" tonight":""}" onclick="openLodgingSheet('${l.id}')">`+
+      `<div class="h"><b>${esc(l.title)}</b>${tonight?`<span class="badge2">오늘 밤</span>`:""}</div>`+
+      (l.period?`<div class="d">🗓 ${esc(l.period)}</div>`:"")+
+      (l.desc?`<div class="d">${esc((l.desc||"").split("\n")[0])}</div>`:"")+`</div>`;
+  });
+  return h;
+}
+function viewFieldFood(){
+  const foods=backlog.filter(x=>x.kind==="food");
+  let h="";
+  if(!foods.length){
+    h+=`<div class="fm-note-empty">🍜 식당 정보는 준비 중이에요.<br>여행사에서 받는 대로 여기에 추가됩니다.<br><br>아래는 일정표 기준 식사 시간입니다.</div>`;
+  }else{
+    h+=`<div class="fm-sec">식당 ${foods.length}곳</div>`;
+    foods.forEach(f=>{
+      h+=`<div class="fm-item" onclick="openOrgSheet('${f.id}')"><div class="h"><b>${esc(f.title)}</b></div>`+
+        (f.desc?`<div class="d">${esc(f.desc)}</div>`:"")+(f.loc?`<div class="d">📍 ${esc(f.loc)}</div>`:"")+`</div>`;
+    });
+  }
+  h+=`<div class="fm-sec">일정표 식사 시간</div>`;
+  const meals=events.filter(e=>e.cat==="meal").slice().sort((a,b)=>(a.day-b.day)||(toMin(a.start)-toMin(b.start)));
+  if(!meals.length) h+=`<div class="fm-note-empty">일정표에 식사 블록이 없어요.</div>`;
+  meals.forEach(e=>{
+    h+=`<div class="fm-item"><div class="h"><b>${(DAYS[e.day]||{}).label||""} ${e.start}</b><span class="badge2">${esc(e.title)}</span></div>`+
+      (e.loc?`<div class="d">📍 ${esc(e.loc)}</div>`:"")+`</div>`;
+  });
+  return h;
+}
+
+/* ---------- field sheet (기관/숙소/일정 상세 + 메모) ---------- */
+function _sheetOpen(html,memoId){
+  document.getElementById("fmSheetPanel").innerHTML=html;
+  document.getElementById("fmSheet").classList.add("on");
+  if(memoId)openMemo(memoId);
+}
+function closeFieldSheet(){ memoStopShared(); const s=document.getElementById("fmSheet"); if(s)s.classList.remove("on"); }
+function openOrgSheet(id){
+  const o=backlog.find(x=>x.id===id); if(!o)return;
+  const facts=[];
+  if(o.day!=null)facts.push(`방문 ${o.day+1}일차`);
+  if(o.time)facts.push(o.time);
+  if(o.field)facts.push(o.field);
+  if(o.host)facts.push("강연 "+o.host);
+  const h=`<button class="sh-x" onclick="closeFieldSheet()">✕</button>`+
+    `<h3>${esc(o.title)}</h3>`+
+    (o.loc?`<div class="sh-sub">📍 ${esc(o.loc)}</div>`:"")+
+    (facts.length?`<div class="sh-facts">${facts.map(f=>`<span>${esc(f)}</span>`).join("")}</div>`:"")+
+    (o.desc?`<div class="sh-desc">${esc(o.desc)}</div>`:"")+
+    `<div class="sh-acts">`+
+      (o.url?`<a class="fm-btn primary" href="${esc(o.url)}" target="_blank" rel="noopener">🔗 공식 홈페이지</a>`:"")+
+      (o.loc?`<a class="fm-btn" href="${searchUrl(o.loc)}" target="_blank" rel="noopener">🧭 길찾기</a>`:"")+
+    `</div>`+
+    (o.loc?`<div class="sh-map"><iframe loading="lazy" referrerpolicy="no-referrer-when-downgrade" src="${embedSrc(o.loc)}"></iframe></div>`:"")+
+    `<div id="fmMemoWrap"></div>`;
+  _sheetOpen(h,"org:"+id);
+}
+function openLodgingSheet(id){
+  const l=lodging.find(x=>x.id===id); if(!l)return;
+  const h=`<button class="sh-x" onclick="closeFieldSheet()">✕</button>`+
+    `<h3>${esc(l.title)}</h3>`+
+    (l.period?`<div class="sh-sub">🗓 ${esc(l.period)}</div>`:"")+
+    (l.desc?`<div class="sh-desc">${esc(l.desc)}</div>`:"")+
+    `<div class="sh-acts">`+
+      (l.url?`<a class="fm-btn primary" href="${esc(l.url)}" target="_blank" rel="noopener">🔗 예약/홈페이지</a>`:"")+
+      (l.loc?`<a class="fm-btn" href="${searchUrl(l.loc)}" target="_blank" rel="noopener">🧭 길찾기</a>`:"")+
+    `</div>`+
+    (l.loc?`<div class="sh-map"><iframe loading="lazy" referrerpolicy="no-referrer-when-downgrade" src="${embedSrc(l.loc)}"></iframe></div>`:"")+
+    `<div id="fmMemoWrap"></div>`;
+  _sheetOpen(h,"lodging:"+id);
+}
+function fmEventTap(id){
+  const e=events.find(x=>x.id===id); if(!e)return;
+  if(e.ref && backlog.find(x=>x.id===e.ref)){ openOrgSheet(e.ref); return; }
+  const c=CAT[e.cat]||CAT.visit, d=DAYS[e.day]||{};
+  const h=`<button class="sh-x" onclick="closeFieldSheet()">✕</button>`+
+    `<h3>${esc(e.title)}</h3>`+
+    `<div class="sh-sub">${d.label||""} (${d.dow||""}) · ${e.start}–${e.end} · ${c.name}</div>`+
+    (e.loc?`<div class="sh-facts"><span>📍 ${esc(e.loc)}</span></div>`:"")+
+    (e.desc?`<div class="sh-desc">${esc(e.desc)}</div>`:"")+
+    (e.loc?`<div class="sh-acts"><a class="fm-btn" href="${searchUrl(e.loc)}" target="_blank" rel="noopener">🧭 길찾기</a></div>`:"")+
+    (e.loc?`<div class="sh-map"><iframe loading="lazy" referrerpolicy="no-referrer-when-downgrade" src="${embedSrc(e.loc)}"></iframe></div>`:"")+
+    `<div id="fmMemoWrap"></div>`;
+  _sheetOpen(h,"event:"+id);
+}
+
+/* ---------- 메모 (개인=localStorage / 공유=Firebase push) ---------- */
+let _memoId=null,_memoMode=localStorage.getItem("tw_memomode")||"p",_memoRef=null,_memoShared={};
+function fmAuthor(){
+  let n=localStorage.getItem("tw_name");
+  if(!n){ n=(prompt("공유 메모에 표시할 이름을 입력하세요 (최초 1회)")||"").trim(); if(n)localStorage.setItem("tw_name",n); }
+  return n||"익명";
+}
+function memoPGet(id){try{return JSON.parse(localStorage.getItem("tw_memo_p_"+id)||"[]");}catch(e){return[];}}
+function memoPSet(id,a){try{localStorage.setItem("tw_memo_p_"+id,JSON.stringify(a));}catch(e){toast("저장 공간이 부족해요.");}}
+function memoSLocalGet(id){try{return JSON.parse(localStorage.getItem("tw_memo_s_"+id)||"[]");}catch(e){return[];}}
+function memoSLocalSet(id,a){try{localStorage.setItem("tw_memo_s_"+id,JSON.stringify(a));}catch(e){}}
+function openMemo(id){
+  _memoId=id;
+  memoStopShared();
+  renderMemo();
+  if(_memoMode==="s")memoStartShared();
+}
+function memoSetMode(m){
+  _memoMode=m;localStorage.setItem("tw_memomode",m);
+  memoStopShared();renderMemo();
+  if(m==="s")memoStartShared();
+}
+function memoStartShared(){
+  if(fbdb){
+    _memoRef=fbdb.ref(fbBase("memos")+"/"+_memoId.replace(/[.#$\[\]/]/g,"_"));
+    _memoRef.on("value",s=>{ _memoShared=s.val()||{}; if(_memoMode==="s")renderMemoList(); });
+  }else{
+    renderMemoList();
+  }
+}
+function memoStopShared(){ if(_memoRef){ try{_memoRef.off();}catch(e){} _memoRef=null; } }
+function renderMemo(){
+  const w=document.getElementById("fmMemoWrap"); if(!w)return;
+  w.innerHTML=`<div class="memo-h"><b>메모</b>`+
+    `<div class="memo-seg"><button class="${_memoMode==="p"?"on":""}" onclick="memoSetMode('p')">개인</button>`+
+    `<button class="${_memoMode==="s"?"on":""}" onclick="memoSetMode('s')">공유</button></div></div>`+
+    `<div class="memo-help">${_memoMode==="p"
+      ?"개인 메모는 이 기기에만 저장돼요. 팀과 나누려면 [공유]로 바꾸세요."
+      :(fbdb?"공유 메모는 9명 전원에게 실시간으로 보여요.":"공유 저장소에 연결돼 있지 않아 이 기기에만 저장됩니다.")}</div>`+
+    `<div id="fmMemoList"></div>`+
+    `<div class="memo-comp"><textarea id="fmMemoInput" rows="1" placeholder="${_memoMode==="p"?"나만 볼 메모…":"팀에 공유할 메모…"}"></textarea>`+
+    `<button onclick="memoAdd()">저장</button></div>`;
+  renderMemoList();
+}
+function renderMemoList(){
+  const box=document.getElementById("fmMemoList"); if(!box)return;
+  let items=[];
+  if(_memoMode==="p") items=memoPGet(_memoId).map(x=>({k:x.id,text:x.text,who:"나",ts:x.ts}));
+  else if(fbdb) items=Object.keys(_memoShared).map(k=>({k,text:_memoShared[k].text,who:_memoShared[k].name||"익명",ts:_memoShared[k].ts}));
+  else items=memoSLocalGet(_memoId).map(x=>({k:x.id,text:x.text,who:x.name||"익명",ts:x.ts}));
+  items.sort((a,b)=>(b.ts||0)-(a.ts||0));
+  if(!items.length){ box.innerHTML=`<div class="memo-help">아직 메모가 없어요.</div>`; return; }
+  box.innerHTML=items.map(it=>`<div class="memo-item"><div class="mb">${esc(it.text)}</div>`+
+    `<div class="mm">${_memoMode==="s"?esc(it.who)+" · ":""}${fmTime(it.ts)}<span class="del" onclick="memoDel('${it.k}')">삭제</span></div></div>`).join("");
+}
+function memoAdd(){
+  const inp=document.getElementById("fmMemoInput"); if(!inp)return;
+  const t=(inp.value||"").trim(); if(!t)return;
+  const ts=Date.now();
+  if(_memoMode==="p"){ const a=memoPGet(_memoId); a.push({id:"m"+ts,text:t,ts}); memoPSet(_memoId,a); }
+  else if(fbdb){ fbdb.ref(fbBase("memos")+"/"+_memoId.replace(/[.#$\[\]/]/g,"_")).push({name:fmAuthor(),text:t,ts}); }
+  else { const a=memoSLocalGet(_memoId); a.push({id:"m"+ts,name:fmAuthor(),text:t,ts}); memoSLocalSet(_memoId,a); }
+  inp.value="";
+  if(!(_memoMode==="s"&&fbdb)) renderMemoList();
+}
+function memoDel(k){
+  if(!confirm("이 메모를 삭제할까요?"))return;
+  if(_memoMode==="p") memoPSet(_memoId,memoPGet(_memoId).filter(x=>x.id!==k));
+  else if(fbdb) fbdb.ref(fbBase("memos")+"/"+_memoId.replace(/[.#$\[\]/]/g,"_")+"/"+k).remove();
+  else memoSLocalSet(_memoId,memoSLocalGet(_memoId).filter(x=>x.id!==k));
+  if(!(_memoMode==="s"&&fbdb)) renderMemoList();
+}
+function fmTime(ts){ if(!ts)return""; const d=new Date(ts); return `${d.getMonth()+1}/${d.getDate()} ${d.getHours()}:${String(d.getMinutes()).padStart(2,"0")}`; }
+
 TODAY_IDX=computeTodayIdx();if(TODAY_IDX>=0)mobileDay=TODAY_IDX;
 updateTripStatus();
-initTopMap();boot();
+initTopMap();boot();fmMaybeAutoEnter();
 </script>
 </body>
 </html>
