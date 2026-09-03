@@ -333,6 +333,10 @@
     -webkit-overflow-scrolling:touch;padding-bottom:calc(72px + env(safe-area-inset-bottom,0px));}
   body.fm-open #fieldMode{display:block;}
   body.fm-open{overflow:hidden;}
+  /* 편집 잠금: 보기 전용(참가자)에서는 편집 UI 숨김 */
+  body.viewer .editor-only{display:none!important;}
+  body.viewer .m-foot{display:none!important;}
+  .editor-badge{background:var(--accent-soft)!important;color:var(--accent-deep)!important;border-color:transparent!important;}
   @media(max-width:760px){ body.fm-open .app-shell{display:none;} }
   .fm-wrap{max-width:520px;margin:0 auto;}
   .fm-top{position:sticky;top:0;z-index:5;background:rgba(255,255,255,.94);backdrop-filter:blur(8px);
@@ -560,13 +564,14 @@
     </div>
   </div>
   <div class="spacer"></div>
+  <button class="btn sm editor-badge" id="editorBadge" onclick="exitEditor()" style="display:none">✏️ 편집 가능 · 끄기</button>
   <button class="btn primary" onclick="enterFieldMode()">📱 현장 모드</button>
-  <button class="btn" onclick="openForm()">＋ 일정 추가</button>
-  <button class="btn sm" onclick="loadOfficialItinerary()">📋 PDF 일정표 불러오기</button>
-  <button class="btn sm" onclick="exportJSON()">내보내기</button>
-  <button class="btn sm" onclick="document.getElementById('importFile').click()">불러오기</button>
+  <button class="btn editor-only" onclick="openForm()">＋ 일정 추가</button>
+  <button class="btn sm editor-only" onclick="loadOfficialItinerary()">📋 PDF 일정표 불러오기</button>
+  <button class="btn sm editor-only" onclick="exportJSON()">내보내기</button>
+  <button class="btn sm editor-only" onclick="document.getElementById('importFile').click()">불러오기</button>
   <input type="file" id="importFile" accept="application/json" style="display:none" onchange="importJSON(this)">
-  <button class="btn sm" onclick="migrateLocal()">📤 기기데이터 올리기</button>
+  <button class="btn sm editor-only" onclick="migrateLocal()">📤 기기데이터 올리기</button>
 </header>
 
 <div class="wrap" id="pageHome">
@@ -630,7 +635,7 @@
           <span class="dot"><i class="sw" style="background:var(--free)"></i>자유</span>
         </div>
       </div>
-      <div class="edit-bar" style="margin:0">
+      <div class="edit-bar editor-only" style="margin:0">
         <span class="eb-hint">드래그로 옮기고 손잡이로 시간 조절 (30분)</span>
         <label class="toggle-sw" title="편집 모드 켜기/끄기">
           <input type="checkbox" id="editModeToggle" onchange="setEditMode(this.checked)">
@@ -646,14 +651,14 @@
 
   <!-- BACKLOG -->
   <h2 class="section"><span class="ic">📋</span> 아직 넣지 않은 후보 (방문지 · 식당)
-    <button class="btn primary sm add" onclick="openDetailForm('visit')">＋ 후보 추가</button>
+    <button class="btn primary sm add editor-only" onclick="openDetailForm('visit')">＋ 후보 추가</button>
   </h2>
   <div class="section-hint">카드를 위 일정표로 드래그하면 그 시간에 등록돼요(PC). 카드를 누르면 상세 정보가 열립니다.</div>
   <div class="cards" id="backlog"></div>
 
   <!-- LODGING -->
   <h2 class="section"><span class="ic">🏨</span> 숙소
-    <button class="btn primary sm add" onclick="openDetailForm('lodging')">＋ 숙소 추가</button>
+    <button class="btn primary sm add editor-only" onclick="openDetailForm('lodging')">＋ 숙소 추가</button>
   </h2>
   <div class="section-hint">머무는 숙소 정보를 모아두세요. 카드를 누르면 지도·홈페이지가 열립니다.</div>
   <div class="cards" id="lodging"></div>
@@ -666,7 +671,7 @@
       <div class="sec-page-head">
         <button class="btn sm" onclick="navigateTo('home')">← 일정으로</button>
         <div class="sec-page-title" id="sectionTitle"></div>
-        <button class="btn primary sm" onclick="openDetailForm(curDetailKey)">＋ 항목 추가</button>
+        <button class="btn primary sm editor-only" onclick="openDetailForm(curDetailKey)">＋ 항목 추가</button>
       </div>
       <p class="section-hint" id="sectionHint"></p>
       <div class="cards" id="sectionCards"></div>
@@ -755,7 +760,7 @@
   <div class="modal wide">
     <div class="m-head">
       <h2 id="dlTitle" style="flex:1"></h2>
-      <button class="btn primary sm" onclick="openDetailForm(curDetailKey)" style="margin-right:6px">＋ 항목 추가</button>
+      <button class="btn primary sm editor-only" onclick="openDetailForm(curDetailKey)" style="margin-right:6px">＋ 항목 추가</button>
       <button class="close-x" onclick="closeDetailList()">✕</button>
     </div>
     <div class="m-body">
@@ -920,6 +925,9 @@ const FIREBASE_CONFIG={
   appId:"1:748767875296:web:a00f7eea3c598e82504085"
 };
 const TRIP_ID="tokyo2026";
+/* ▼ 편집 잠금: 참가자는 보기 전용. 관리자는 주소 뒤 ?edit 로 열고 아래 PIN 1회 입력 ▼
+   (PIN은 원하는 값으로 바꾸세요. 기기에 저장되어 다음부터는 안 물어봅니다.) */
+const EDIT_PIN="1418";
 const MYMAPS_MID="1O59R_FlNsb6EqQNAsSVZwUAOwPPK2q4";
 const MYMAPS_VIEW_URL=`https://www.google.com/maps/d/edit?mid=${MYMAPS_MID}&usp=sharing`;
 const MYMAPS_EMBED_URL=`https://www.google.com/maps/d/embed?mid=${MYMAPS_MID}`;
@@ -941,6 +949,7 @@ let events=[], backlog=[], lodging=[];
 let detailData={};
 Object.keys(DETAIL_SECTIONS).forEach(k=>{detailData[k]=[];});
 let editMode=false;
+let IS_EDITOR=false;
 let TODAY_IDX=-1;
 let currentPage='home';
 let mobileDay=0, currentId=null, editId=null, blEditId=null, lgEditId=null, pCurrent=null;
@@ -1009,8 +1018,33 @@ function navigateTo(key){
   renderDetailCards();
 }
 
+/* ---------- 편집 잠금(참가자=보기 전용 / 관리자=?edit + PIN) ---------- */
+function initEditorGate(){
+  const url=(location.search+" "+location.hash);
+  if(/[?&#]\s*view(\b|=)/i.test(url)){ try{localStorage.removeItem("tw_editor");}catch(e){} }
+  else if(/[?&#]\s*edit(\b|=)/i.test(url) && localStorage.getItem("tw_editor")!=="granted"){
+    const p=(prompt("편집 모드 PIN을 입력하세요")||"").trim();
+    if(p===EDIT_PIN){ try{localStorage.setItem("tw_editor","granted");}catch(e){} }
+    else if(p){ alert("PIN이 올바르지 않습니다. 보기 전용으로 엽니다."); }
+  }
+  IS_EDITOR = (localStorage.getItem("tw_editor")==="granted");
+  document.body.classList.toggle("viewer", !IS_EDITOR);
+  const b=document.getElementById("editorBadge"); if(b)b.style.display=IS_EDITOR?"":"none";
+  if(!IS_EDITOR){ editMode=false; const t=document.getElementById("editModeToggle"); if(t)t.checked=false; }
+}
+function requireEditor(){
+  if(IS_EDITOR)return true;
+  toast("보기 전용 모드예요. 편집은 관리자만 할 수 있어요.");
+  return false;
+}
+function exitEditor(){
+  if(!confirm("이 기기에서 편집 모드를 끌까요? (다시 켜려면 주소 뒤에 ?edit)"))return;
+  try{localStorage.removeItem("tw_editor");}catch(e){}
+  location.href=location.pathname;
+}
 /* ---------- edit mode ---------- */
 function setEditMode(on){
+  if(on && !requireEditor()){ const t=document.getElementById("editModeToggle"); if(t)t.checked=false; return; }
   editMode=on;
   const lbl=document.getElementById("editModeLabel");
   lbl.textContent=on?"편집 모드":"보기 전용";
@@ -1284,10 +1318,11 @@ function updateSlide(){
   [...document.getElementById(carIds.dots).children].forEach((d,i)=>d.className=i===slideIdx?"on":"");
 }
 function editCurrent(){const id=currentId;closeView();openForm(id);}
-function deleteCurrent(){if(!confirm("이 일정을 삭제할까요?"))return;events=events.filter(x=>x.id!==currentId);saveEvents();closeView();render();toast("삭제되었습니다.");}
+function deleteCurrent(){if(!requireEditor())return;if(!confirm("이 일정을 삭제할까요?"))return;events=events.filter(x=>x.id!==currentId);saveEvents();closeView();render();toast("삭제되었습니다.");}
 
 /* ---------- event form ---------- */
 function openForm(id=null,preset=null){
+  if(!requireEditor())return;
   editId=id;formPhotos=[];
   document.getElementById("fDay").innerHTML=DAYS.map((d,i)=>`<option value="${i}">${d.label} (${d.dow})</option>`).join("");
   if(id){const ev=events.find(x=>x.id===id);
@@ -1333,19 +1368,23 @@ function openPView(kind,id){
   if(b.loc&&b.loc.trim()){mw.style.display="block";document.getElementById("pvMap").src=embedSrc(b.loc.trim());}
   else{mw.style.display="none";document.getElementById("pvMap").src="about:blank";}
   const foot=document.getElementById("pvFoot");
-  foot.innerHTML=`<button class="btn sm" onclick="editPCurrent()">✎ 수정</button>`+
-    (kind==="bl"?`<button class="btn primary sm" onclick="schedulePCurrent()">📅 일정으로 추가</button>`:"")+
-    `<button class="btn sm danger" onclick="deletePCurrent()">삭제</button>`;
+  foot.innerHTML=IS_EDITOR
+    ? (`<button class="btn sm" onclick="editPCurrent()">✎ 수정</button>`+
+       (kind==="bl"?`<button class="btn primary sm" onclick="schedulePCurrent()">📅 일정으로 추가</button>`:"")+
+       `<button class="btn sm danger" onclick="deletePCurrent()">삭제</button>`)
+    : "";
   document.getElementById("pViewOverlay").classList.add("on");
 }
 function closePView(){document.getElementById("pViewOverlay").classList.remove("on");document.getElementById("pvMap").src="about:blank";}
 function editPCurrent(){const {kind,id}=pCurrent;closePView();kind==="bl"?openBacklogForm(id):openLodgingForm(id);}
 function deletePCurrent(){
+  if(!requireEditor())return;
   const {kind,id}=pCurrent;if(!confirm("삭제할까요?"))return;
   if(kind==="bl"){backlog=backlog.filter(x=>x.id!==id);persistBacklog();}else{lodging=lodging.filter(x=>x.id!==id);persistLodging();}
   closePView();render();toast("삭제되었습니다.");
 }
 function schedulePCurrent(){
+  if(!requireEditor())return;
   const b=backlog.find(x=>x.id===pCurrent.id);if(!b)return;
   events.push({id:uid(),day:mobileDay,start:"12:00",end:"13:00",cat:"visit",title:b.title,loc:b.loc||"",desc:b.desc||"",photos:[]});
   backlog=backlog.filter(x=>x.id!==pCurrent.id);saveEvents();persistBacklog();closePView();render();
@@ -1354,6 +1393,7 @@ function schedulePCurrent(){
 
 /* ---------- backlog form ---------- */
 function openBacklogForm(id=null){
+  if(!requireEditor())return;
   blEditId=id;
   if(id){const b=backlog.find(x=>x.id===id);document.getElementById("blFormTitle").textContent="후보 수정";
     fset("blTitle",b.title);fset("blDesc",b.desc||"");fset("blUrl",b.url||"");fset("blLoc",b.loc||"");}
@@ -1370,6 +1410,7 @@ function saveBacklogItem(){
 
 /* ---------- lodging form ---------- */
 function openLodgingForm(id=null){
+  if(!requireEditor())return;
   lgEditId=id;
   if(id){const b=lodging.find(x=>x.id===id);document.getElementById("lgFormTitle").textContent="숙소 수정";
     fset("lgTitle",b.title);fset("lgPeriod",b.period||"");fset("lgDesc",b.desc||"");fset("lgUrl",b.url||"");fset("lgLoc",b.loc||"");}
@@ -1390,6 +1431,7 @@ function exportJSON(){
   const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="tokyo_trip_schedule.json";a.click();URL.revokeObjectURL(a.href);
 }
 function importJSON(input){
+  if(!requireEditor())return;
   const f=input.files[0];if(!f)return;const r=new FileReader();
   r.onload=e=>{try{const d=JSON.parse(e.target.result);
     if(Array.isArray(d))events=d;
@@ -1442,11 +1484,14 @@ function openDetailView(key,id){
   if(b.loc&&b.loc.trim()){mw.style.display="block";document.getElementById("dvMap").src=embedSrc(b.loc.trim());}
   else{mw.style.display="none";document.getElementById("dvMap").src="about:blank";}
   const isHubo=(key==="visit"||key==="food");
-  document.getElementById("dvFoot").innerHTML=(isHubo?`<button class="btn primary sm" onclick="scheduleDetailCurrent()">📅 일정으로 추가</button>`:"")+
-    `<button class="btn sm" onclick="editDetailCurrent()">✎ 수정</button><button class="btn sm danger" onclick="deleteDetailCurrent()">삭제</button>`;
+  document.getElementById("dvFoot").innerHTML=IS_EDITOR
+    ? ((isHubo?`<button class="btn primary sm" onclick="scheduleDetailCurrent()">📅 일정으로 추가</button>`:"")+
+       `<button class="btn sm" onclick="editDetailCurrent()">✎ 수정</button><button class="btn sm danger" onclick="deleteDetailCurrent()">삭제</button>`)
+    : "";
   document.getElementById("detailViewOverlay").classList.add("on");
 }
 function scheduleDetailCurrent(){
+  if(!requireEditor())return;
   const c=dCurrent, b=catFind(c.key,c.id);if(!b)return;
   events.push({id:uid(),day:mobileDay,start:"12:00",end:"13:00",cat:c.key==="food"?"meal":"visit",title:b.title,loc:b.loc||"",desc:b.desc||"",photos:[]});
   saveEvents();closeDetailView();render();
@@ -1455,11 +1500,13 @@ function scheduleDetailCurrent(){
 function closeDetailView(){document.getElementById("detailViewOverlay").classList.remove("on");document.getElementById("dvMap").src="about:blank";}
 function editDetailCurrent(){const c=dCurrent;closeDetailView();openDetailForm(c.key,c.id);}
 function deleteDetailCurrent(){
+  if(!requireEditor())return;
   if(!confirm("이 항목을 삭제할까요?"))return;
   catRemove(dCurrent.key,dCurrent.id);closeDetailView();render();renderDetailCards();
   toast("삭제되었습니다.");
 }
 function openDetailForm(key,id=null){
+  if(!requireEditor())return;
   dCurrent={key,id};dEditId=id;detailFormPhotos=[];
   const isHubo=(key==="visit"||key==="food");
   document.getElementById("dKindRow").style.display=isHubo?"block":"none";
@@ -1490,6 +1537,7 @@ function saveDetailItem(){
 }
 
 function migrateLocal(){
+  if(!requireEditor())return;
   if(!fbdb){toast("공유 모드가 아니에요. FIREBASE_CONFIG를 확인하세요.");return;}
   if(!confirm("이 기기에 저장된 기존 일정·상세 데이터를 공유 저장소로 올릴까요? 같은 id 항목은 덮어씁니다."))return;
   try{
@@ -1660,6 +1708,7 @@ function buildOfficialEvents(){return[
  _oe(4,"19:00","19:30","move","인천공항 도착·짐찾기·해산","仁川国際空港","")
 ];}
 function loadOfficialItinerary(){
+  if(!requireEditor())return;
   try{exportJSON();}catch(e){}
   if(!confirm("현재 일정·방문기관·숙소 데이터를 최신 일정표(PDF)로 전면 교체합니다.\n\n· 방금 백업 JSON이 다운로드됐어요. 되돌리려면 상단 '불러오기'로 그 파일을 여세요.\n· 개인/공유 메모는 그대로 유지됩니다.\n\n계속할까요?"))return;
   events=buildOfficialEvents();
@@ -2539,6 +2588,7 @@ async function shareMemos(){
 
 TODAY_IDX=computeTodayIdx();if(TODAY_IDX>=0)mobileDay=TODAY_IDX;
 updateTripStatus();
+initEditorGate();
 initTopMap();boot();fmMaybeAutoEnter();
 window.addEventListener("online",()=>setTimeout(memoFlushPending,400));
 setTimeout(memoFlushPending,3000);
