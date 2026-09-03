@@ -420,7 +420,14 @@
   .fm-sheet .sh-facts{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px;}
   .fm-sheet .sh-facts span{font-size:11.5px;font-weight:600;color:var(--muted);background:#f6f8f9;border:1px solid var(--line);
     border-radius:8px;padding:4px 8px;}
-  .fm-sheet .sh-desc{font-size:13px;line-height:1.65;color:var(--muted);white-space:pre-wrap;margin-bottom:12px;}
+  .fm-sheet .sh-desc{font-size:14.5px;line-height:1.72;color:var(--ink);white-space:pre-wrap;margin-bottom:13px;}
+  .fm-sheet .sh-tip{font-size:12px;line-height:1.55;color:var(--accent-deep);background:var(--accent-soft);
+    border-radius:9px;padding:9px 11px;margin-bottom:13px;}
+  .fm-sheet .sh-brief{margin-bottom:13px;}
+  .fm-sheet .sh-brief h4{font-size:11.5px;font-weight:800;color:var(--faint);letter-spacing:.04em;margin:12px 0 5px;}
+  .fm-sheet .sh-brief p{font-size:14px;line-height:1.68;color:var(--ink);white-space:pre-wrap;margin:0;}
+  .fm-sheet .sh-brief ul{margin:4px 0 0;padding-left:18px;}
+  .fm-sheet .sh-brief li{font-size:13.5px;line-height:1.62;color:var(--muted);margin-bottom:3px;}
   .fm-sheet .sh-acts{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;}
   /* 접이식 지도 */
   .sh-mapwrap{border:1px solid var(--line2);border-radius:12px;overflow:hidden;margin-bottom:14px;}
@@ -473,8 +480,9 @@
   .memo-post{border:1px solid var(--line);border-radius:11px;background:#fbfcfd;padding:10px 12px;}
   .memo-post .pb{font-size:13px;line-height:1.65;color:var(--ink);word-break:break-word;}
   .memo-post .pb u{text-decoration:underline;} .memo-post .pb b,.memo-post .pb strong{font-weight:800;}
-  .memo-post .pm{display:flex;align-items:center;gap:7px;margin-top:7px;font-size:10.5px;color:var(--faint);}
+  .memo-post .pm{display:flex;align-items:center;gap:7px;margin-top:7px;font-size:11px;color:var(--faint);}
   .memo-post .pm .who{font-weight:800;color:var(--accent-deep);}
+  .memo-post .pm .edit{margin-left:auto;color:var(--accent);font-weight:800;cursor:pointer;}
   .memo-post .pm .del{margin-left:auto;color:#dc2626;font-weight:700;cursor:pointer;}
   .memo-post.mine{background:var(--accent-soft);border-color:transparent;}
   .memo-post.pending{opacity:.8;border-style:dashed;background:#fffdf5;}
@@ -482,6 +490,12 @@
   .memo-post.failed{opacity:1;border-color:#fca5a5;background:#fef2f2;border-style:solid;}
   .memo-post.failed .stat{color:#dc2626;font-weight:800;}
   .memo-post .pm .retry{color:var(--accent);font-weight:800;cursor:pointer;}
+  .memo-post.editing{background:#fff;border-color:var(--accent);}
+  .memo-post.editing .ce{min-height:52px;max-height:200px;overflow-y:auto;font-size:14px;line-height:1.7;
+    color:var(--ink);outline:none;border:1px solid var(--line2);border-radius:9px;padding:9px 10px;margin:6px 0 8px;}
+  .memo-post.editing .memo-editrow{justify-content:flex-end;}
+  .memo-mini{background:var(--accent);color:#fff;border:0;border-radius:8px;padding:7px 16px;font-size:12px;font-weight:800;cursor:pointer;}
+  .memo-post.editing .cancel{color:var(--faint);font-weight:700;cursor:pointer;padding:6px 4px;}
   .memo-warn{font-size:11.5px;color:#b91c1c;font-weight:700;background:#fef2f2;border:1px solid #fca5a5;
     border-radius:9px;padding:8px 10px;margin:8px 0;line-height:1.55;}
 
@@ -1768,7 +1782,8 @@ function fmTimelineHtml(di){
         (tg.loc?`<div class="m">📍 ${esc(tg.loc)}</div>`:"")+
         `<div class="acts">`+
         (tg.loc?`<a class="fm-btn primary" href="${searchUrl(tg.loc)}" target="_blank" rel="noopener">🧭 길찾기</a>`:"")+
-        (tg.ref?`<button class="fm-btn" onclick="openOrgSheet('${tg.ref}')">🏛️ 기관 정보</button>`:"")+
+        (tg.ref?`<button class="fm-btn" onclick="openOrgSheet('${tg.ref}')">🏛️ 기관 정보</button>`
+              :(lodgingForEvent(tg)?`<button class="fm-btn" onclick="openLodgingSheet('${lodgingForEvent(tg).id}')">🏨 숙소 정보</button>`:""))+
         `</div></div>`;
     }
   }
@@ -1782,7 +1797,8 @@ function fmTimelineHtml(di){
       `<span class="fm-cat" style="background:${c.color}">${c.name}</span>`+
       `<div class="fm-ct">${esc(e.title)}</div>`+
       `<div class="fm-cs">${e.start}–${e.end}${e.loc?" · "+esc(e.loc):""}</div>`+
-      (e.ref?`<span class="fm-orglink">🏛️ 기관 정보 보기 ›</span>`:"")+
+      (e.ref?`<span class="fm-orglink">🏛️ 기관 정보 보기 ›</span>`
+           :(lodgingForEvent(e)?`<span class="fm-orglink">🏨 숙소 정보·메모 ›</span>`:""))+
       `</div></div>`;
   });
   return h;
@@ -1861,6 +1877,20 @@ function viewFieldOrgs(){
     });
   }
   return h;
+}
+/* 일정(숙소 관련 블록) ↔ 숙소 카드 연동: ref 우선, 없으면 장소/이름으로 매칭 */
+function lodgingForEvent(e){
+  if(!e)return null;
+  if(e.ref){ const r=lodging.find(l=>l.id===e.ref); if(r)return r; }
+  const loc=(e.loc||"").trim();
+  if(loc){
+    const m=lodging.find(l=>{
+      const ll=(l.loc||"").trim(), lt=(l.title||"").trim();
+      return (ll&&(ll.indexOf(loc)>=0||loc.indexOf(ll)>=0)) || (lt&&(lt.indexOf(loc)>=0||loc.indexOf(lt)>=0));
+    });
+    if(m)return m;
+  }
+  return null;
 }
 function fmPeriodCoversDay(period,di){
   if(di<0||!period)return false;
@@ -1992,6 +2022,7 @@ function buildLodgingSheet(id){
       (l.url?`<a class="fm-btn primary" href="${esc(l.url)}" target="_blank" rel="noopener">🔗 예약/홈페이지</a>`:"")+
       (l.loc?`<a class="fm-btn" href="${searchUrl(l.loc)}" target="_blank" rel="noopener">🧭 길찾기</a>`:"")+
     `</div>`+
+    `<div class="sh-tip">💡 체크인 방법·조식 시간·대욕장 이용 팁 등은 아래 <b>공유 메모</b>에 남겨 팀과 나눠요.</div>`+
     mapBlock(l.loc)+
     `<div id="fmMemoWrap"></div>`;
   return {html,memoId:"lodging:"+id};
@@ -1999,12 +2030,15 @@ function buildLodgingSheet(id){
 function buildEventSheet(id){
   const e=events.find(x=>x.id===id); if(!e)return null;
   const c=CAT[e.cat]||CAT.visit, d=DAYS[e.day]||{};
+  const org=e.ref&&backlog.find(x=>x.id===e.ref);
+  const lg=!org&&lodgingForEvent(e);
   const html=`<button class="sh-x" onclick="closeFieldSheet()">✕</button>`+
     `<h3>${esc(e.title)}</h3>`+
     `<div class="sh-sub">${d.label||""} (${d.dow||""}) · ${e.start}–${e.end} · ${c.name}</div>`+
     (e.loc?`<div class="sh-facts"><span>📍 ${esc(e.loc)}</span></div>`:"")+
     (e.desc?`<div class="sh-desc">${esc(e.desc)}</div>`:"")+
-    (e.ref&&backlog.find(x=>x.id===e.ref)?`<div class="sh-acts"><button class="fm-btn primary" onclick="openOrgSheet('${e.ref}')">🏛️ 기관 정보 보기</button></div>`:"")+
+    (org?`<div class="sh-acts"><button class="fm-btn primary" onclick="openOrgSheet('${e.ref}')">🏛️ 기관 정보 보기</button></div>`:"")+
+    (lg?`<div class="sh-acts"><button class="fm-btn primary" onclick="openLodgingSheet('${lg.id}')">🏨 숙소 정보·메모 보기</button></div>`:"")+
     (e.loc?`<div class="sh-acts"><a class="fm-btn" href="${searchUrl(e.loc)}" target="_blank" rel="noopener">🧭 길찾기</a></div>`:"")+
     mapBlock(e.loc)+
     `<div id="fmMemoWrap"></div>`;
@@ -2033,6 +2067,8 @@ function openEventSheet(id){ const b=buildEventSheet(id); if(!b)return; _sheetNa
 function fmEventTap(id){
   const e=events.find(x=>x.id===id); if(!e)return;
   if(e.ref && backlog.find(x=>x.id===e.ref)){ openOrgSheet(e.ref); return; }
+  const lg=lodgingForEvent(e);
+  if(lg){ openLodgingSheet(lg.id); return; }
   openEventSheet(id);
 }
 /* ---- 좌우 스와이프 미리보기(가벼운 버전: 지도·메모 제외) ---- */
@@ -2126,6 +2162,7 @@ function shClearAdj2(){ const tr=document.getElementById("fmSheetTrack"); if(tr)
    ========================================================================== */
 let _memoId=null,_memoMode=localStorage.getItem("tw_memomode")||"p",_memoRef=null,_memoShared={},_memoDirty=false,_memoAutoT=null;
 let _memoRemoteCache=null;                       // 개인 메모: 다른 기기 최신본 임시 보관
+let _memoEditing=null;                           // 공유 메모: 현재 수정 중인 글 id
 const _memoInflight=new Set();                   // 공유 메모: Firebase 전송 중인 임시글 id
 const _memoFailed=new Set();                     // 공유 메모: 전송 실패로 표시된 임시글 id
 const MEMO_ALLOWED={B:1,STRONG:1,U:1,I:1,EM:1,BR:1,DIV:1,P:1,SPAN:1,UL:1,OL:1,LI:1};
@@ -2279,7 +2316,10 @@ function renderMemo(){
     if(ce&&d){ ce.innerHTML=memoSanitize(d); }
   }
 }
-function memoActiveEditor(){ return document.getElementById(_memoMode==="p"?"fmMemoEditor":"fmMemoCompose"); }
+function memoActiveEditor(){
+  const ie=document.getElementById("fmMemoEditInput"); if(ie)return ie;   // 공유 글 수정 중
+  return document.getElementById(_memoMode==="p"?"fmMemoEditor":"fmMemoCompose");
+}
 function memoOnInput(){
   if(_memoMode!=="p")return;
   _memoDirty=true; memoRemoteNote("");   // 편집 시작 → 다른 기기 알림 숨김
@@ -2379,16 +2419,46 @@ function renderPostList(){
         : `<span class="stat">전송 중…</span>`)+
       `</div></div>`;
   }).join("");
+  let editingVal=null;
+  if(_memoEditing){ const ie=document.getElementById("fmMemoEditInput"); if(ie)editingVal=ie.innerHTML; }
   h+=items.map(it=>{
+    const mine=!!(me&&it.name===me);
+    if(mine && it.k===_memoEditing){
+      const val = editingVal!=null ? editingVal : (it.html!=null?memoSanitize(it.html):esc(it.text||""));
+      return `<div class="memo-post mine editing" data-k="${it.k}">`+
+        `<div class="memo-tools">`+
+          `<button type="button" class="mt" onmousedown="return memoCmd(event,'bold')" title="굵게"><b>B</b></button>`+
+          `<button type="button" class="mt" onmousedown="return memoCmd(event,'underline')" title="밑줄"><u>U</u></button>`+
+          `<button type="button" class="mt" onmousedown="return memoCmd(event,'insertUnorderedList')" title="목록">• 목록</button>`+
+        `</div>`+
+        `<div class="ce" id="fmMemoEditInput" contenteditable="true">${val}</div>`+
+        `<div class="pm memo-editrow"><button type="button" class="memo-mini" onclick="memoEditSave('${it.k}')">저장</button>`+
+        `<span class="cancel" onclick="memoEditCancel()">취소</span></div>`+
+        `</div>`;
+    }
     const body = it.html!=null ? memoSanitize(it.html) : esc(it.text||"");  // 옛 글은 text 필드
-    return `<div class="memo-post${me&&it.name===me?" mine":""}"><div class="pb">${body}</div>`+
-      `<div class="pm"><span class="who">${esc(it.name||"익명")}</span><span>${fmTime(it.ts)}</span>`+
+    return `<div class="memo-post${mine?" mine":""}" data-k="${it.k}"><div class="pb">${body}</div>`+
+      `<div class="pm"><span class="who">${esc(it.name||"익명")}</span><span>${fmTime(it.ts)}${it.edited?" · 수정됨":""}</span>`+
+      (mine?`<span class="edit" onclick="memoEditStart('${it.k}')">수정</span>`:"")+
       `<span class="del" onclick="memoDel('${it.k}')">삭제</span></div></div>`;
   }).join("");
   box.innerHTML=h;
+  if(_memoEditing){ const ie=document.getElementById("fmMemoEditInput"); if(ie)ie.focus(); }
+}
+function memoEditStart(k){ _memoEditing=k; renderPostList(); }
+function memoEditCancel(){ _memoEditing=null; renderPostList(); }
+function memoEditSave(k){
+  const ie=document.getElementById("fmMemoEditInput"); if(!ie)return;
+  const html=memoSanitize(ie.innerHTML);
+  if(!memoHtmlToText(html)){ toast("내용을 입력해 주세요."); return; }
+  if(fbdb){ (_memoRef||fbdb.ref(fbBase("memos")+"/"+fbKey(_memoId))).child(k).update({html,edited:true}); }
+  else{ memoSSet(_memoId, memoSGet(_memoId).map(x=>x.id===k?Object.assign({},x,{html,edited:true}):x)); }
+  _memoEditing=null; renderPostList();
+  toast("메모를 수정했어요.");
 }
 function memoDel(k){
   if(!confirm("이 메모를 삭제할까요?"))return;
+  if(_memoEditing===k)_memoEditing=null;
   if(fbdb) (_memoRef||fbdb.ref(fbBase("memos")+"/"+fbKey(_memoId))).child(k).remove();
   else{ memoSSet(_memoId,memoSGet(_memoId).filter(x=>x.id!==k)); renderPostList(); }
 }
