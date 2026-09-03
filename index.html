@@ -336,6 +336,7 @@
   .fm-exit{border:1px solid var(--line2);background:#fff;border-radius:8px;padding:7px 10px;font-size:12px;
     font-weight:700;color:#374151;cursor:pointer;white-space:nowrap;}
   .fm-meals{display:flex;gap:6px;padding:9px 14px 2px;flex-wrap:wrap;}
+  .fm-meals:empty{display:none;padding:0;}
   .fm-meal{font-size:11px;font-weight:700;color:var(--muted);background:#fff;border:1px solid var(--line);
     border-radius:999px;padding:3px 9px;}
   .fm-body{padding:12px 14px 20px;}
@@ -392,12 +393,20 @@
   .fm-tabs svg{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:1.75;stroke-linecap:round;stroke-linejoin:round;}
 
   /* field sheet (기관/숙소 상세 + 메모) — 현장 모드 위에 표시 */
-  .fm-sheet{position:fixed;inset:0;z-index:75;background:rgba(17,24,39,.5);display:none;}
-  .fm-sheet.on{display:block;}
-  .fm-sheet .panel{position:absolute;left:0;right:0;bottom:0;max-height:92vh;overflow-y:auto;background:#fff;
-    border-radius:18px 18px 0 0;max-width:520px;margin:0 auto;padding:16px 16px 26px;}
-  .fm-sheet .sh-x{position:absolute;right:12px;top:12px;border:0;background:#f3f4f6;border-radius:9px;width:30px;height:30px;
-    font-size:15px;color:#6b7280;cursor:pointer;}
+  .fm-sheet{position:fixed;inset:0;z-index:75;background:rgba(17,24,39,0);display:none;transition:background .32s ease;}
+  .fm-sheet.on{background:rgba(17,24,39,.5);}
+  .fm-sheet .panel{position:absolute;left:0;right:0;bottom:0;max-height:92vh;background:#fff;display:flex;flex-direction:column;
+    border-radius:18px 18px 0 0;max-width:520px;margin:0 auto;overflow:hidden;
+    transform:translateY(100%);transition:transform .4s cubic-bezier(.32,.72,0,1);
+    box-shadow:0 -8px 30px rgba(0,0,0,.18);will-change:transform;}
+  .fm-sheet.on .panel{transform:translateY(0);}
+  .sh-grip{padding:9px 0 5px;display:flex;justify-content:center;flex:none;cursor:grab;touch-action:none;}
+  .sh-grip span{width:38px;height:5px;border-radius:3px;background:#d1d5db;display:block;}
+  .sh-scroll{flex:1 1 auto;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:4px 16px 26px;position:relative;}
+  .sh-track{position:relative;}
+  .sh-page.adj{position:absolute;top:0;left:0;right:0;}
+  .fm-sheet .sh-x{position:absolute;right:12px;top:2px;border:0;background:#f3f4f6;border-radius:9px;width:30px;height:30px;
+    font-size:15px;color:#6b7280;cursor:pointer;z-index:2;}
   .fm-sheet h3{font-size:17px;font-weight:800;margin:2px 40px 4px 0;letter-spacing:-.3px;}
   .fm-sheet .sh-sub{font-size:12px;color:var(--faint);margin-bottom:12px;}
   .fm-sheet .sh-facts{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px;}
@@ -674,7 +683,10 @@
   </div>
 </div>
 <div class="fm-sheet" id="fmSheet" onclick="if(event.target===this)closeFieldSheet()">
-  <div class="panel" id="fmSheetPanel"></div>
+  <div class="panel" id="fmSheetPanel">
+    <div class="sh-grip" id="fmSheetGrip"><span></span></div>
+    <div class="sh-scroll" id="fmSheetScroll"></div>
+  </div>
 </div>
 
 <!-- VIEW: event -->
@@ -1620,6 +1632,7 @@ function enterFieldMode(){
   fmState.day = t>=0 ? t : (fmState.day||0);
   fieldTab(fmState.tab||"today");
   fmSetupSwipe();
+  fmSetupSheetGestures();
   window.scrollTo(0,0);
 }
 /* 오늘 타임라인: iOS풍 인터랙티브 스와이프 (손가락 따라 이동 + 다음 날 미리보기) */
@@ -1693,19 +1706,18 @@ function renderFmTop(){
   const dEl=document.getElementById("fmDate"),sub=document.getElementById("fmDsub"),meals=document.getElementById("fmMeals");
   if(!dEl)return;
   const trip=computeTodayIdx();
+  if(meals)meals.innerHTML="";  // 상단 식사 카테고리 줄은 표시하지 않음
   if(fmState.tab==="today"){
-    const di=fmState.day,d=DAYS[di]||DAYS[0],m=DAY_MEALS[di]||{};
+    const di=fmState.day,d=DAYS[di]||DAYS[0];
     dEl.textContent=`${d.label} (${d.dow})`;
     let s=`${di+1}일차 / 5일`;
     if(trip<0){const now=new Date();now.setHours(0,0,0,0);const dd=Math.round((TRIP_START-now)/86400000);
       s += dd>0?` · 연수 D-${dd}`:" · 연수 종료";}
     else if(trip===di) s=`${di+1}일차 · 오늘`;
     sub.textContent=s;
-    meals.innerHTML=`<span class="fm-meal">🥣 조식 ${esc(m.b||"–")}</span><span class="fm-meal">🍚 중식 ${esc(m.l||"–")}</span><span class="fm-meal">🍶 석식 ${esc(m.d||"–")}</span>`;
   }else{
     dEl.textContent={orgs:"방문 기관",lodging:"숙소",food:"식사",all:"메모 · 설정"}[fmState.tab]||"현장 모드";
     sub.textContent=fmState.tab==="all"?"내 메모 모아보기 · 이름/다운로드 설정":"2026 따뜻한동행 해외연수 · 11명";
-    meals.innerHTML="";
   }
 }
 function viewFieldToday(){
@@ -1873,13 +1885,38 @@ function viewFieldFood(){
   return h;
 }
 
-/* ---------- field sheet (기관/숙소/일정 상세 + 메모) ---------- */
-function _sheetOpen(html,memoId){
-  document.getElementById("fmSheetPanel").innerHTML=html;
-  document.getElementById("fmSheet").classList.add("on");
-  if(memoId)openMemo(memoId);
+/* ==========================================================================
+   field sheet (기관/숙소/일정 상세 + 메모)
+   · iOS풍: 아래에서 슬라이드업, 손잡이 아래로 끌어 닫기, 좌우 스와이프로 이전/다음
+   ========================================================================== */
+let _sheetNav=null;   // {type, ids:[...], idx, open:(id)=>void}
+function _sheetShow(built){
+  if(!built)return;
+  const sheet=document.getElementById("fmSheet"), scroll=document.getElementById("fmSheetScroll");
+  memoOnCloseSave();   // 이전 메모 저장/정리 후 교체
+  scroll.innerHTML=`<div class="sh-track" id="fmSheetTrack"><div class="sh-page">${built.html}</div></div>`;
+  scroll.scrollTop=0;
+  const track=document.getElementById("fmSheetTrack"); if(track){track.style.transition="";track.style.transform="";}
+  const wasOpen=sheet.classList.contains("on");
+  const panel=document.getElementById("fmSheetPanel");
+  if(!wasOpen){
+    panel.style.transition=""; panel.style.transform="translateY(100%)"; sheet.style.background="";
+    sheet.style.display="block";
+    void panel.offsetHeight;           // 초기 상태 커밋(리플로우) → 트랜지션 발동
+    panel.style.transform="";          // CSS(.on)로 위임
+    sheet.classList.add("on");
+  }
+  if(built.memoId)openMemo(built.memoId);
 }
-function closeFieldSheet(){ memoOnCloseSave(); const s=document.getElementById("fmSheet"); if(s)s.classList.remove("on"); }
+function closeFieldSheet(){
+  const sheet=document.getElementById("fmSheet"); if(!sheet)return;
+  if(!sheet.classList.contains("on")){ sheet.style.display="none"; return; }
+  memoOnCloseSave();
+  const panel=document.getElementById("fmSheetPanel");
+  panel.style.transition=""; panel.style.transform=""; sheet.style.background="";
+  sheet.classList.remove("on");
+  setTimeout(()=>{ if(!sheet.classList.contains("on")){ sheet.style.display="none"; panel.style.transform=""; } },380);
+}
 /* 접이식 지도 블록 (기본 접힘) */
 function mapBlock(loc){
   if(!loc)return "";
@@ -1892,14 +1929,15 @@ function toggleSheetMap(btn){
   const collapsed=w.classList.toggle("collapsed");
   const l=w.querySelector(".sh-maptoggle .lbl"); if(l)l.textContent=collapsed?"🗺️ 지도 보기":"🗺️ 지도 접기";
 }
-function openOrgSheet(id){
-  const o=backlog.find(x=>x.id===id); if(!o)return;
+/* ---- 상세 HTML 빌더 ---- */
+function buildOrgSheet(id){
+  const o=backlog.find(x=>x.id===id); if(!o)return null;
   const facts=[];
   if(o.day!=null)facts.push(`방문 ${o.day+1}일차`);
   if(o.time)facts.push(o.time);
   if(o.field)facts.push(o.field);
   if(o.host)facts.push("강연 "+o.host);
-  const h=`<button class="sh-x" onclick="closeFieldSheet()">✕</button>`+
+  const html=`<button class="sh-x" onclick="closeFieldSheet()">✕</button>`+
     `<h3>${esc(o.title)}</h3>`+
     (o.loc?`<div class="sh-sub">📍 ${esc(o.loc)}</div>`:"")+
     (facts.length?`<div class="sh-facts">${facts.map(f=>`<span>${esc(f)}</span>`).join("")}</div>`:"")+
@@ -1910,11 +1948,11 @@ function openOrgSheet(id){
     `</div>`+
     mapBlock(o.loc)+
     `<div id="fmMemoWrap"></div>`;
-  _sheetOpen(h,"org:"+id);
+  return {html,memoId:"org:"+id};
 }
-function openLodgingSheet(id){
-  const l=lodging.find(x=>x.id===id); if(!l)return;
-  const h=`<button class="sh-x" onclick="closeFieldSheet()">✕</button>`+
+function buildLodgingSheet(id){
+  const l=lodging.find(x=>x.id===id); if(!l)return null;
+  const html=`<button class="sh-x" onclick="closeFieldSheet()">✕</button>`+
     `<h3>${esc(l.title)}</h3>`+
     (l.period?`<div class="sh-sub">🗓 ${esc(l.period)}</div>`:"")+
     (l.desc?`<div class="sh-desc">${esc(l.desc)}</div>`:"")+
@@ -1924,22 +1962,132 @@ function openLodgingSheet(id){
     `</div>`+
     mapBlock(l.loc)+
     `<div id="fmMemoWrap"></div>`;
-  _sheetOpen(h,"lodging:"+id);
+  return {html,memoId:"lodging:"+id};
 }
-function fmEventTap(id){
-  const e=events.find(x=>x.id===id); if(!e)return;
-  if(e.ref && backlog.find(x=>x.id===e.ref)){ openOrgSheet(e.ref); return; }
+function buildEventSheet(id){
+  const e=events.find(x=>x.id===id); if(!e)return null;
   const c=CAT[e.cat]||CAT.visit, d=DAYS[e.day]||{};
-  const h=`<button class="sh-x" onclick="closeFieldSheet()">✕</button>`+
+  const html=`<button class="sh-x" onclick="closeFieldSheet()">✕</button>`+
     `<h3>${esc(e.title)}</h3>`+
     `<div class="sh-sub">${d.label||""} (${d.dow||""}) · ${e.start}–${e.end} · ${c.name}</div>`+
     (e.loc?`<div class="sh-facts"><span>📍 ${esc(e.loc)}</span></div>`:"")+
     (e.desc?`<div class="sh-desc">${esc(e.desc)}</div>`:"")+
+    (e.ref&&backlog.find(x=>x.id===e.ref)?`<div class="sh-acts"><button class="fm-btn primary" onclick="openOrgSheet('${e.ref}')">🏛️ 기관 정보 보기</button></div>`:"")+
     (e.loc?`<div class="sh-acts"><a class="fm-btn" href="${searchUrl(e.loc)}" target="_blank" rel="noopener">🧭 길찾기</a></div>`:"")+
     mapBlock(e.loc)+
     `<div id="fmMemoWrap"></div>`;
-  _sheetOpen(h,"event:"+id);
+  return {html,memoId:"event:"+id};
 }
+/* ---- 좌우 스와이프용 이동 목록 ---- */
+function orgSortCmp(a,b){ return ((a.day==null?99:a.day)-(b.day==null?99:b.day))||String(a.time||"").localeCompare(String(b.time||"")); }
+function navForOrg(id){
+  const it=backlog.find(x=>x.id===id); const kind=it?(it.kind||"visit"):"org";
+  let list;
+  if(kind==="org") list=backlog.filter(x=>x.kind==="org").slice().sort(orgSortCmp);
+  else if(kind==="food") list=backlog.filter(x=>x.kind==="food");
+  else list=backlog.filter(x=>(x.kind||"visit")==="visit");
+  const ids=list.map(x=>x.id);
+  return {type:"org",ids,idx:ids.indexOf(id),open:openOrgSheet};
+}
+function navForLodging(id){ const ids=lodging.map(x=>x.id); return {type:"lodging",ids,idx:ids.indexOf(id),open:openLodgingSheet}; }
+function navForEvent(id){
+  const ids=events.slice().sort((a,b)=>(a.day-b.day)||(toMin(a.start)-toMin(b.start))).map(x=>x.id);
+  return {type:"event",ids,idx:ids.indexOf(id),open:openEventSheet};
+}
+/* ---- 오프너 ---- */
+function openOrgSheet(id){ const b=buildOrgSheet(id); if(!b)return; _sheetNav=navForOrg(id); _sheetShow(b); }
+function openLodgingSheet(id){ const b=buildLodgingSheet(id); if(!b)return; _sheetNav=navForLodging(id); _sheetShow(b); }
+function openEventSheet(id){ const b=buildEventSheet(id); if(!b)return; _sheetNav=navForEvent(id); _sheetShow(b); }
+function fmEventTap(id){
+  const e=events.find(x=>x.id===id); if(!e)return;
+  if(e.ref && backlog.find(x=>x.id===e.ref)){ openOrgSheet(e.ref); return; }
+  openEventSheet(id);
+}
+/* ---- 좌우 스와이프 미리보기(가벼운 버전: 지도·메모 제외) ---- */
+function sheetPreview(id,type){
+  if(type==="lodging"){ const l=lodging.find(x=>x.id===id); if(!l)return"";
+    return `<h3>${esc(l.title)}</h3>`+(l.period?`<div class="sh-sub">🗓 ${esc(l.period)}</div>`:"")+
+      (l.desc?`<div class="sh-desc">${esc(l.desc)}</div>`:""); }
+  if(type==="event"){ const e=events.find(x=>x.id===id); if(!e)return""; const c=CAT[e.cat]||CAT.visit,d=DAYS[e.day]||{};
+    return `<h3>${esc(e.title)}</h3><div class="sh-sub">${d.label||""} · ${e.start}–${e.end} · ${c.name}</div>`+
+      (e.loc?`<div class="sh-facts"><span>📍 ${esc(e.loc)}</span></div>`:"")+(e.desc?`<div class="sh-desc">${esc(e.desc)}</div>`:""); }
+  const o=backlog.find(x=>x.id===id); if(!o)return"";
+  const facts=[]; if(o.day!=null)facts.push(`방문 ${o.day+1}일차`); if(o.time)facts.push(o.time); if(o.field)facts.push(o.field);
+  return `<h3>${esc(o.title)}</h3>`+(o.loc?`<div class="sh-sub">📍 ${esc(o.loc)}</div>`:"")+
+    (facts.length?`<div class="sh-facts">${facts.map(f=>`<span>${esc(f)}</span>`).join("")}</div>`:"")+
+    (o.desc?`<div class="sh-desc">${esc(o.desc)}</div>`:"");
+}
+/* ---- 시트 제스처: 세로=끌어 닫기 / 가로=이전·다음 ---- */
+let _shG=null;
+function fmSetupSheetGestures(){
+  const panel=document.getElementById("fmSheetPanel"); if(!panel||panel._g)return; panel._g=1;
+  panel.addEventListener("touchstart",shTStart,{passive:false});
+  panel.addEventListener("touchmove",shTMove,{passive:false});
+  panel.addEventListener("touchend",shTEnd,{passive:true});
+  panel.addEventListener("touchcancel",shTEnd,{passive:true});
+}
+function shTStart(e){
+  if(e.touches.length!==1){_shG=null;return;}
+  const t=e.touches[0], scroll=document.getElementById("fmSheetScroll");
+  _shG={x:t.clientX,y:t.clientY,lock:null,onGrip:!!(e.target.closest&&e.target.closest(".sh-grip")),
+    atTop:scroll?scroll.scrollTop<=0:true,dx:0,dy:0,dir:0,adj:null,valid:false,
+    panel:document.getElementById("fmSheetPanel"),track:document.getElementById("fmSheetTrack"),
+    sheet:document.getElementById("fmSheet")};
+  _shG.w=(_shG.track&&_shG.track.clientWidth)||_shG.panel.clientWidth||1;
+  _shG.panel.style.transition="none";
+  if(_shG.track)_shG.track.style.transition="none";
+}
+function shTMove(e){
+  if(!_shG)return; const t=e.touches[0]; const dx=t.clientX-_shG.x, dy=t.clientY-_shG.y;
+  if(!_shG.lock){
+    if(Math.abs(dx)<8&&Math.abs(dy)<8)return;
+    if(Math.abs(dx)>Math.abs(dy)*1.2) _shG.lock="h";
+    else if(dy>0 && (_shG.onGrip||_shG.atTop)) _shG.lock="v";
+    else _shG.lock="scroll";
+  }
+  if(_shG.lock==="scroll")return;
+  e.preventDefault();
+  if(_shG.lock==="v"){
+    const eff=Math.max(0,dy); _shG.dy=eff;
+    _shG.panel.style.transform=`translateY(${eff}px)`;
+    _shG.sheet.style.background=`rgba(17,24,39,${Math.max(0,0.5-eff/700)})`;
+  }else{
+    const nav=_sheetNav; const dir=dx<0?1:-1; const ni=nav?nav.idx+dir:-1; const valid=!!nav&&ni>=0&&ni<nav.ids.length;
+    if(valid){ if(_shG.dir!==dir||!_shG.adj){ shClearAdj(); _shG.adj=shMakeAdj(nav,ni,dir); _shG.dir=dir; } }
+    else { shClearAdj(); _shG.dir=dir; }
+    _shG.dx=dx; _shG.valid=valid;
+    if(_shG.track)_shG.track.style.transform=`translateX(${valid?dx:dx*0.3}px)`;
+  }
+}
+function shMakeAdj(nav,ni,dir){
+  const track=_shG.track; if(!track)return null;
+  const d=document.createElement("div"); d.className="sh-page adj"; d.innerHTML=sheetPreview(nav.ids[ni],nav.type);
+  d.style.transform=`translateX(${dir>0?_shG.w:-_shG.w}px)`; track.appendChild(d); return d;
+}
+function shClearAdj(){ if(_shG&&_shG.adj){_shG.adj.remove();_shG.adj=null;} }
+function shTEnd(){
+  if(!_shG)return; const s=_shG; _shG=null;
+  if(s.lock==="v"){
+    s.panel.style.transition="transform .34s cubic-bezier(.32,.72,0,1)";
+    if(s.dy>110){
+      s.panel.style.transform="translateY(100%)"; s.sheet.style.background="rgba(17,24,39,0)"; s.sheet.classList.remove("on");
+      setTimeout(()=>{ s.sheet.style.display="none"; s.panel.style.transform=""; s.panel.style.transition=""; s.sheet.style.background=""; memoOnCloseSave(); },360);
+    }else{ s.panel.style.transform="translateY(0)"; s.sheet.style.background=""; }
+  }else if(s.lock==="h"){
+    if(!s.track){return;}
+    s.track.style.transition=FM_EASE;
+    const go=s.valid&&Math.abs(s.dx)>Math.min(70,s.w*0.2);
+    if(go){ const dir=s.dir, ni=_sheetNav.idx+dir;
+      s.track.style.transform=`translateX(${dir>0?-s.w:s.w}px)`;
+      let done=false; const commit=()=>{ if(done)return;done=true; s.track.removeEventListener("transitionend",commit); _sheetNav.open(_sheetNav.ids[ni]); };
+      s.track.addEventListener("transitionend",commit); setTimeout(commit,440);
+    }else{ s.track.style.transform="translateX(0)";
+      const back=()=>{ s.track.removeEventListener("transitionend",back); shClearAdj2(); };
+      s.track.addEventListener("transitionend",back); setTimeout(back,440);
+    }
+  }
+}
+function shClearAdj2(){ const tr=document.getElementById("fmSheetTrack"); if(tr){const a=tr.querySelector(".sh-page.adj");if(a)a.remove();} }
 
 /* ==========================================================================
    메모  ·  개인 = 리치텍스트 문서(30초 자동저장) / 공유 = 게시글 피드(저장 시 글 추가)

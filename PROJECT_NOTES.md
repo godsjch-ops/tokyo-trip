@@ -58,7 +58,11 @@
   - 숙소: `lodging` 카드, 오늘 밤 숙소 강조(`fmPeriodCoversDay`). 시트에 접이식 지도 + 메모.
   - 식당: `kind:"food"` 없으면 "준비 중" 안내 + 일정표 meal 블록 목록.
   - 전체(메모·설정): 내 이름 설정(`saveMyName`), 내 메모 .txt 다운로드(`downloadMemos`)/공유(`shareMemos`, Web Share→카카오톡), **내 메모 모아보기**(`collectMyMemos`가 `tw_memodoc_p_*` 스캔 → 카드, 탭하면 `openSheetById`로 해당 시트 열기). "PC 대시보드로 전환"(`exitFieldMode`).
+- **상세 시트(iOS풍)**: `.fm-sheet>.panel(.sh-grip+.sh-scroll>.sh-track>.sh-page)`. 열기=아래에서 슬라이드업(`_sheetShow`가 리플로우 후 `.on` 토글, 백드롭 페이드). 빌더 `buildOrgSheet/buildLodgingSheet/buildEventSheet`→`{html,memoId}`, 오프너 `openOrgSheet/openLodgingSheet/openEventSheet`가 `_sheetNav`(같은 종류 목록+idx+open) 설정 후 표시.
+  - **끌어 닫기 + 좌우 이동**: `fmSetupSheetGestures()`가 `#fmSheetPanel`에 터치 바인딩. 첫 이동으로 방향 lock — 세로(손잡이 또는 스크롤 top에서 아래로)=패널 translateY 따라가다 110px↑ 놓으면 닫힘(백드롭 동반 페이드), 가로=`.sh-track` 이동 + 인접 항목 가벼운 미리보기(`sheetPreview`, 지도·메모 제외) 표시하다 임계 넘으면 `_sheetNav.open`으로 이전/다음 항목 전환. 스크롤은 lock='scroll'로 통과.
+  - `fmEventTap`: `ref` 있으면 기관 시트로(연동 유지), 없으면 `openEventSheet`. 이벤트 시트에도 `ref`면 "🏛️ 기관 정보 보기" 버튼.
 - **접이식 지도**: 시트 지도는 `mapBlock(loc)`로 생성(기본 접힘), `toggleSheetMap()`으로 펼침/접힘. loc 없으면 미표시.
+- 상단 식사 카테고리 줄(`.fm-meals`)은 표시하지 않음(`renderFmTop`에서 비움, `:empty{display:none}`).
 - **메모** (기관/숙소/일정 시트 공용) — 개인/공유 모드 분리, sheetId 예: `org:org-5`, `lodging:lg-2`, `event:o-2-0950`(기관 탭·일정표 어디서 열든 같은 sheetId).
   - **개인 = 노션형 리치텍스트 문서 + 30초 자동저장**: `contenteditable` 1개 + 툴바(굵게/밑줄/목록, `execCommand`). `memoStartAutosave()`가 30초마다 dirty면 `memoSavePersonal(true)`로 조용히 저장 후 "✓ 자동저장 완료" 잠깐 표시. 시트 닫기/탭 전환/모드 전환 시에도 자동 저장(`memoOnCloseSave`). 저장소 `localStorage` `tw_memodoc_p_<sheetId>`(HTML). 에디터 스크롤바 상시 노출(`.memo-editor{overflow-y:scroll}`+webkit 스타일).
   - **공유 = 게시글 피드**(저장=글 추가): 작성 `contenteditable`(`.memo-compose`) + 툴바 + 올리기 → `memoPost()`가 Firebase `trips/tokyo2026/memos/<sheetId>` **push**(옛 모델 복원). fbdb 없으면 `tw_memo_s_<sheetId>` 목록 폴백. `renderPostList()`가 최신순 카드(작성자·시각·삭제, 내 글 강조). 옛 글의 `text` 필드도 호환 렌더.
