@@ -405,24 +405,57 @@
     border-radius:8px;padding:4px 8px;}
   .fm-sheet .sh-desc{font-size:13px;line-height:1.65;color:var(--muted);white-space:pre-wrap;margin-bottom:12px;}
   .fm-sheet .sh-acts{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;}
-  .fm-sheet .sh-map{border:1px solid var(--line2);border-radius:12px;overflow:hidden;margin-bottom:14px;}
-  .fm-sheet .sh-map iframe{width:100%;height:190px;border:0;display:block;}
+  /* 접이식 지도 */
+  .sh-mapwrap{border:1px solid var(--line2);border-radius:12px;overflow:hidden;margin-bottom:14px;}
+  .sh-maptoggle{width:100%;display:flex;align-items:center;justify-content:space-between;background:#f6f8f9;
+    border:0;padding:11px 13px;font-size:13px;font-weight:700;color:#374151;cursor:pointer;}
+  .sh-maptoggle .ar{transition:transform .2s;color:var(--faint);}
+  .sh-mapwrap:not(.collapsed) .sh-maptoggle .ar{transform:rotate(180deg);}
+  .sh-mapwrap .sh-map{max-height:220px;transition:max-height .28s ease;overflow:hidden;}
+  .sh-mapwrap.collapsed .sh-map{max-height:0;}
+  .sh-map iframe{width:100%;height:220px;border:0;display:block;}
 
-  .memo-h{display:flex;align-items:center;justify-content:space-between;margin:4px 0 9px;}
+  /* 메모 (노션형 리치텍스트 문서) */
+  .memo-h{display:flex;align-items:center;justify-content:space-between;margin:6px 0 9px;}
   .memo-h b{font-size:14px;font-weight:800;}
   .memo-seg{display:flex;gap:3px;background:#eef0f2;border-radius:9px;padding:3px;}
   .memo-seg button{border:0;background:transparent;font-size:12px;font-weight:800;color:var(--faint);
     padding:6px 12px;border-radius:7px;cursor:pointer;}
   .memo-seg button.on{background:#fff;color:var(--accent);box-shadow:0 1px 3px rgba(0,0,0,.08);}
-  .memo-help{font-size:10.5px;color:var(--faint);line-height:1.5;margin-bottom:10px;}
-  .memo-item{border:1px solid var(--line);border-radius:10px;background:#fff;padding:10px 11px;margin-bottom:8px;}
-  .memo-item .mb{font-size:12.5px;line-height:1.6;color:var(--ink);white-space:pre-wrap;}
-  .memo-item .mm{display:flex;align-items:center;gap:8px;margin-top:6px;font-size:10.5px;color:var(--faint);}
-  .memo-item .mm .del{margin-left:auto;color:#dc2626;font-weight:700;cursor:pointer;}
-  .memo-comp{display:flex;gap:8px;align-items:flex-end;margin-top:10px;}
-  .memo-comp textarea{flex:1;min-height:44px;font-size:12.5px;}
-  .memo-comp button{background:var(--accent);color:#fff;border:0;border-radius:10px;padding:0 16px;font-size:13px;
-    font-weight:800;min-height:44px;cursor:pointer;white-space:nowrap;}
+  .memo-help{font-size:10.5px;color:var(--faint);line-height:1.5;margin-bottom:9px;}
+  .memo-tools{display:flex;gap:6px;margin-bottom:8px;}
+  .memo-tools .mt{min-width:38px;height:36px;border:1px solid var(--line2);background:#fff;border-radius:9px;
+    font-size:14px;cursor:pointer;color:#374151;display:flex;align-items:center;justify-content:center;}
+  .memo-tools .mt:active{background:var(--accent-soft);}
+  .memo-editor{min-height:130px;max-height:44vh;overflow-y:auto;border:1px solid var(--line2);border-radius:12px;
+    padding:12px 13px;font-size:13.5px;line-height:1.75;color:var(--ink);background:#fff;-webkit-user-select:text;user-select:text;}
+  .memo-editor:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft);}
+  .memo-editor:empty:before{content:attr(data-ph);color:var(--faint);pointer-events:none;}
+  .memo-editor u{text-decoration:underline;} .memo-editor b,.memo-editor strong{font-weight:800;}
+  .memo-foot{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:10px;}
+  .memo-status{font-size:11px;color:var(--faint);}
+  .memo-status.unsaved{color:#dc2626;font-weight:700;} .memo-status.saved{color:#059669;font-weight:700;}
+  .memo-save{background:var(--accent);color:#fff;border:0;border-radius:10px;padding:10px 22px;font-size:13px;
+    font-weight:800;min-height:42px;cursor:pointer;white-space:nowrap;}
+  .memo-remote{font-size:11px;color:#b45309;margin-top:9px;line-height:1.5;}
+  .memo-remote a{color:var(--accent);font-weight:700;text-decoration:underline;cursor:pointer;}
+
+  /* 오늘 탭 날짜 네비 + 스와이프 */
+  .fm-daynav{display:flex;align-items:center;gap:5px;margin:-4px 2px 13px;}
+  .fm-daynav .dot{width:7px;height:7px;border-radius:50%;background:var(--line2);transition:all .2s;}
+  .fm-daynav .dot.on{background:var(--accent);width:18px;border-radius:4px;}
+  .fm-daynav .hint{margin-left:auto;font-size:10.5px;color:var(--faint);}
+  @keyframes fmSlideL{from{opacity:.35;transform:translateX(26px);}to{opacity:1;transform:none;}}
+  @keyframes fmSlideR{from{opacity:.35;transform:translateX(-26px);}to{opacity:1;transform:none;}}
+  .fm-body.fm-swipe-l{animation:fmSlideL .22s ease;}
+  .fm-body.fm-swipe-r{animation:fmSlideR .22s ease;}
+
+  /* 기관 탭 일자별 그룹 */
+  .fm-daygroup{margin-bottom:20px;}
+  .fm-dayhead{display:flex;align-items:center;gap:8px;font-size:12px;font-weight:800;color:var(--accent-deep);
+    margin:6px 2px 9px;}
+  .fm-dayhead:before{content:"";width:8px;height:8px;border-radius:50%;background:var(--accent);flex:none;}
+  .fm-dayhead .rt{margin-left:auto;font-weight:600;color:var(--faint);font-size:11px;}
 </style>
 </head>
 <body>
@@ -1553,7 +1586,29 @@ function enterFieldMode(){
   const t=computeTodayIdx();
   fmState.day = t>=0 ? t : (fmState.day||0);
   fieldTab(fmState.tab||"today");
+  fmSetupSwipe();
   window.scrollTo(0,0);
+}
+/* 오늘 타임라인: 손가락 좌우 스와이프로 날짜 이동 */
+let _fmTouch=null;
+function fmSetupSwipe(){
+  const b=document.getElementById("fmBody"); if(!b||b._swipe)return; b._swipe=1;
+  b.addEventListener("touchstart",e=>{
+    if(fmState.tab!=="today"||e.touches.length!==1){_fmTouch=null;return;}
+    const t=e.touches[0]; _fmTouch={x:t.clientX,y:t.clientY};
+  },{passive:true});
+  b.addEventListener("touchend",e=>{
+    if(!_fmTouch)return; const t=e.changedTouches[0];
+    const dx=t.clientX-_fmTouch.x, dy=t.clientY-_fmTouch.y; _fmTouch=null;
+    if(Math.abs(dx)>55 && Math.abs(dx)>Math.abs(dy)*1.6) fmSwipeDay(dx<0?1:-1);
+  },{passive:true});
+}
+function fmSwipeDay(dir){
+  const nd=fmState.day+dir; if(nd<0||nd>DAYS.length-1)return;
+  fmState.day=nd;
+  const b=document.getElementById("fmBody");
+  if(b){ b.classList.remove("fm-swipe-l","fm-swipe-r"); void b.offsetWidth; b.classList.add(dir>0?"fm-swipe-l":"fm-swipe-r"); }
+  renderField();
 }
 function exitFieldMode(){
   document.body.classList.remove("fm-open");
@@ -1597,6 +1652,8 @@ function viewFieldToday(){
   const evs=events.filter(e=>e.day===di).slice().sort((a,b)=>toMin(a.start)-toMin(b.start));
   let h=`<select class="fm-sel" onchange="fmState.day=+this.value;renderField()">`+
     DAYS.map((d,i)=>`<option value="${i}"${i===di?" selected":""}>${i+1}일차 — ${d.label} (${d.dow})</option>`).join("")+`</select>`;
+  h+=`<div class="fm-daynav">`+DAYS.map((d,i)=>`<span class="dot${i===di?" on":""}"></span>`).join("")+
+    `<span class="hint">← 좌우로 밀어 날짜 이동 →</span></div>`;
   if(!evs.length) return h+`<div class="fm-note-empty">이 날 등록된 일정이 없어요.<br>상단 <b>📋 PDF 일정표 불러오기</b>로 최신 일정을 넣어주세요.</div>`;
   const nowM = (trip===di) ? (new Date().getHours()*60+new Date().getMinutes()) : -1;
   if(nowM>=0){
@@ -1632,16 +1689,27 @@ function viewFieldToday(){
   return h;
 }
 function viewFieldOrgs(){
-  const orgs=backlog.filter(x=>x.kind==="org").slice().sort((a,b)=>(a.day-b.day));
+  const orgs=backlog.filter(x=>x.kind==="org").slice()
+    .sort((a,b)=>((a.day==null?99:a.day)-(b.day==null?99:b.day))||String(a.time||"").localeCompare(String(b.time||"")));
   const spots=backlog.filter(x=>(x.kind||"visit")==="visit");
   let h="";
   if(!orgs.length){
     h+=`<div class="fm-note-empty">방문 기관 정보가 아직 없어요.<br>상단 <b>📋 PDF 일정표 불러오기</b>를 눌러주세요.</div>`;
   }else{
-    h+=`<div class="fm-sec">공식 방문 기관 ${orgs.length}곳</div>`;
-    orgs.forEach(o=>{
-      h+=`<div class="fm-item" onclick="openOrgSheet('${o.id}')"><div class="h"><b>${esc(o.title)}</b></div>`+
-        `<div class="d">${o.day!=null?(o.day+1)+"일차":""}${o.time?" · "+esc(o.time):""}${o.field?" · "+esc(o.field):""}</div></div>`;
+    h+=`<div class="fm-sec">공식 방문 기관 ${orgs.length}곳 · 일자별</div>`;
+    // 일자별로 묶어서 살짝 떨어뜨려 표시
+    const byDay={};
+    orgs.forEach(o=>{ const k=(o.day==null?99:o.day); (byDay[k]=byDay[k]||[]).push(o); });
+    Object.keys(byDay).map(Number).sort((a,b)=>a-b).forEach(k=>{
+      const d=DAYS[k];
+      h+=`<div class="fm-daygroup"><div class="fm-dayhead">`+
+        (d?`${d.label} (${d.dow}) · ${k+1}일차`:"일자 미정")+
+        `<span class="rt">${byDay[k].length}곳</span></div>`;
+      byDay[k].forEach(o=>{
+        h+=`<div class="fm-item" onclick="openOrgSheet('${o.id}')"><div class="h"><b>${esc(o.title)}</b></div>`+
+          `<div class="d">${o.time?esc(o.time):""}${o.field?(o.time?" · ":"")+esc(o.field):""}</div></div>`;
+      });
+      h+=`</div>`;
     });
   }
   if(spots.length){
@@ -1702,6 +1770,18 @@ function _sheetOpen(html,memoId){
   if(memoId)openMemo(memoId);
 }
 function closeFieldSheet(){ memoStopShared(); const s=document.getElementById("fmSheet"); if(s)s.classList.remove("on"); }
+/* 접이식 지도 블록 (기본 접힘) */
+function mapBlock(loc){
+  if(!loc)return "";
+  return `<div class="sh-mapwrap collapsed">`+
+    `<button class="sh-maptoggle" onclick="toggleSheetMap(this)"><span class="lbl">🗺️ 지도 보기</span><span class="ar">▾</span></button>`+
+    `<div class="sh-map"><iframe loading="lazy" referrerpolicy="no-referrer-when-downgrade" src="${embedSrc(loc)}"></iframe></div></div>`;
+}
+function toggleSheetMap(btn){
+  const w=btn.closest(".sh-mapwrap"); if(!w)return;
+  const collapsed=w.classList.toggle("collapsed");
+  const l=w.querySelector(".sh-maptoggle .lbl"); if(l)l.textContent=collapsed?"🗺️ 지도 보기":"🗺️ 지도 접기";
+}
 function openOrgSheet(id){
   const o=backlog.find(x=>x.id===id); if(!o)return;
   const facts=[];
@@ -1718,7 +1798,7 @@ function openOrgSheet(id){
       (o.url?`<a class="fm-btn primary" href="${esc(o.url)}" target="_blank" rel="noopener">🔗 공식 홈페이지</a>`:"")+
       (o.loc?`<a class="fm-btn" href="${searchUrl(o.loc)}" target="_blank" rel="noopener">🧭 길찾기</a>`:"")+
     `</div>`+
-    (o.loc?`<div class="sh-map"><iframe loading="lazy" referrerpolicy="no-referrer-when-downgrade" src="${embedSrc(o.loc)}"></iframe></div>`:"")+
+    mapBlock(o.loc)+
     `<div id="fmMemoWrap"></div>`;
   _sheetOpen(h,"org:"+id);
 }
@@ -1732,7 +1812,7 @@ function openLodgingSheet(id){
       (l.url?`<a class="fm-btn primary" href="${esc(l.url)}" target="_blank" rel="noopener">🔗 예약/홈페이지</a>`:"")+
       (l.loc?`<a class="fm-btn" href="${searchUrl(l.loc)}" target="_blank" rel="noopener">🧭 길찾기</a>`:"")+
     `</div>`+
-    (l.loc?`<div class="sh-map"><iframe loading="lazy" referrerpolicy="no-referrer-when-downgrade" src="${embedSrc(l.loc)}"></iframe></div>`:"")+
+    mapBlock(l.loc)+
     `<div id="fmMemoWrap"></div>`;
   _sheetOpen(h,"lodging:"+id);
 }
@@ -1746,84 +1826,131 @@ function fmEventTap(id){
     (e.loc?`<div class="sh-facts"><span>📍 ${esc(e.loc)}</span></div>`:"")+
     (e.desc?`<div class="sh-desc">${esc(e.desc)}</div>`:"")+
     (e.loc?`<div class="sh-acts"><a class="fm-btn" href="${searchUrl(e.loc)}" target="_blank" rel="noopener">🧭 길찾기</a></div>`:"")+
-    (e.loc?`<div class="sh-map"><iframe loading="lazy" referrerpolicy="no-referrer-when-downgrade" src="${embedSrc(e.loc)}"></iframe></div>`:"")+
+    mapBlock(e.loc)+
     `<div id="fmMemoWrap"></div>`;
   _sheetOpen(h,"event:"+id);
 }
 
-/* ---------- 메모 (개인=localStorage / 공유=Firebase push) ---------- */
-let _memoId=null,_memoMode=localStorage.getItem("tw_memomode")||"p",_memoRef=null,_memoShared={};
+/* ---------- 메모 (노션형 리치텍스트 문서 · 개인=localStorage / 공유=Firebase) ---------- */
+let _memoId=null,_memoMode=localStorage.getItem("tw_memomode")||"p",_memoRef=null,_memoRemote=null,_memoDirty=false;
+const MEMO_ALLOWED={B:1,STRONG:1,U:1,I:1,EM:1,BR:1,DIV:1,P:1,SPAN:1,UL:1,OL:1,LI:1};
 function fmAuthor(){
   let n=localStorage.getItem("tw_name");
   if(!n){ n=(prompt("공유 메모에 표시할 이름을 입력하세요 (최초 1회)")||"").trim(); if(n)localStorage.setItem("tw_name",n); }
   return n||"익명";
 }
-function memoPGet(id){try{return JSON.parse(localStorage.getItem("tw_memo_p_"+id)||"[]");}catch(e){return[];}}
-function memoPSet(id,a){try{localStorage.setItem("tw_memo_p_"+id,JSON.stringify(a));}catch(e){toast("저장 공간이 부족해요.");}}
-function memoSLocalGet(id){try{return JSON.parse(localStorage.getItem("tw_memo_s_"+id)||"[]");}catch(e){return[];}}
-function memoSLocalSet(id,a){try{localStorage.setItem("tw_memo_s_"+id,JSON.stringify(a));}catch(e){}}
-function openMemo(id){
-  _memoId=id;
-  memoStopShared();
-  renderMemo();
-  if(_memoMode==="s")memoStartShared();
+function fmTime(ts){ if(!ts)return""; const d=new Date(ts); return `${d.getMonth()+1}/${d.getDate()} ${d.getHours()}:${String(d.getMinutes()).padStart(2,"0")}`; }
+function fbKey(id){ return id.replace(/[.#$\[\]/]/g,"_"); }
+/* 공유 메모는 다른 사람이 쓴 내용 = 신뢰 불가. 허용 태그만 남기고 속성 전부 제거 */
+function memoSanitize(html){
+  const root=document.createElement("div"); root.innerHTML=String(html||"");
+  const clean=node=>{ [...node.childNodes].forEach(ch=>{
+    if(ch.nodeType===3)return;
+    if(ch.nodeType!==1){ ch.remove(); return; }
+    if(!MEMO_ALLOWED[ch.tagName]){ const p=ch.parentNode; while(ch.firstChild)p.insertBefore(ch.firstChild,ch); p.removeChild(ch); return; }
+    [...ch.attributes].forEach(a=>ch.removeAttribute(a.name));
+    clean(ch);
+  }); };
+  for(let i=0;i<4;i++)clean(root);
+  return root.innerHTML;
 }
+/* 저장소 접근 */
+function memoPDocGet(id){ return localStorage.getItem("tw_memodoc_p_"+id); }
+function memoPDocSet(id,html){ try{localStorage.setItem("tw_memodoc_p_"+id,html);}catch(e){toast("저장 공간이 부족해요.");} }
+function memoSLocalGet(id){ try{return JSON.parse(localStorage.getItem("tw_memodoc_s_"+id)||"null");}catch(e){return null;} }
+function memoSLocalSet(id,obj){ try{localStorage.setItem("tw_memodoc_s_"+id,JSON.stringify(obj));}catch(e){} }
+/* 옛 목록형 메모 → 문서 HTML 로 1회 변환(데이터 유실 방지, 삭제하지 않음) */
+function memoMigrateP(id){ try{const a=JSON.parse(localStorage.getItem("tw_memo_p_"+id)||"[]");
+  if(a&&a.length)return a.map(x=>"<div>"+esc(x.text||"")+"</div>").join(""); }catch(e){} return ""; }
+function memoMigrateSLocal(id){ try{const a=JSON.parse(localStorage.getItem("tw_memo_s_"+id)||"[]");
+  if(a&&a.length)return {html:a.map(x=>"<div>"+esc((x.name?x.name+": ":"")+(x.text||""))+"</div>").join(""),name:"",ts:0}; }catch(e){} return null; }
+
+function openMemo(id){ _memoId=id; _memoDirty=false; _memoRemote=null; memoStopShared(); renderMemo(); if(_memoMode==="s")memoStartShared(); else memoLoadIntoEditor(); }
 function memoSetMode(m){
-  _memoMode=m;localStorage.setItem("tw_memomode",m);
-  memoStopShared();renderMemo();
-  if(m==="s")memoStartShared();
+  if(_memoMode===m)return;
+  if(_memoDirty && !confirm("저장하지 않은 메모가 있어요. 모드를 바꾸면 사라질 수 있어요. 계속할까요?"))return;
+  _memoMode=m; localStorage.setItem("tw_memomode",m); _memoDirty=false; _memoRemote=null;
+  memoStopShared(); renderMemo(); if(m==="s")memoStartShared(); else memoLoadIntoEditor();
 }
 function memoStartShared(){
-  if(fbdb){
-    _memoRef=fbdb.ref(fbBase("memos")+"/"+_memoId.replace(/[.#$\[\]/]/g,"_"));
-    _memoRef.on("value",s=>{ _memoShared=s.val()||{}; if(_memoMode==="s")renderMemoList(); });
-  }else{
-    renderMemoList();
-  }
+  if(!fbdb){ memoLoadIntoEditor(); return; }
+  _memoRef=fbdb.ref(fbBase("memodocs")+"/"+fbKey(_memoId));
+  let first=true;
+  _memoRef.on("value",s=>{
+    _memoRemote=s.val()||null;
+    if(first){ first=false;
+      if(!_memoRemote){ const old=memoMigrateFbOnce(_memoId); if(old)_memoRemote={html:old,name:"",ts:0,_mig:true}; }
+      memoLoadIntoEditor();
+    }else if(_memoMode==="s"){
+      if(!_memoDirty) memoLoadIntoEditor(); else memoShowRemoteNote();
+    }
+  });
 }
+let _memoFbMig={};
+function memoMigrateFbOnce(id){ return _memoFbMig[id]||""; }
 function memoStopShared(){ if(_memoRef){ try{_memoRef.off();}catch(e){} _memoRef=null; } }
+
 function renderMemo(){
   const w=document.getElementById("fmMemoWrap"); if(!w)return;
-  w.innerHTML=`<div class="memo-h"><b>메모</b>`+
+  w.innerHTML=`<div class="memo-h"><b>📝 메모</b>`+
     `<div class="memo-seg"><button class="${_memoMode==="p"?"on":""}" onclick="memoSetMode('p')">개인</button>`+
     `<button class="${_memoMode==="s"?"on":""}" onclick="memoSetMode('s')">공유</button></div></div>`+
     `<div class="memo-help">${_memoMode==="p"
-      ?"개인 메모는 이 기기에만 저장돼요. 팀과 나누려면 [공유]로 바꾸세요."
-      :(fbdb?"공유 메모는 11명 전원에게 실시간으로 보여요.":"공유 저장소에 연결돼 있지 않아 이 기기에만 저장됩니다.")}</div>`+
-    `<div id="fmMemoList"></div>`+
-    `<div class="memo-comp"><textarea id="fmMemoInput" rows="1" placeholder="${_memoMode==="p"?"나만 볼 메모…":"팀에 공유할 메모…"}"></textarea>`+
-    `<button onclick="memoAdd()">저장</button></div>`;
-  renderMemoList();
+      ?"개인 메모는 이 기기에만 저장돼요. 자유롭게 쓰고 <b>저장</b>을 누르세요."
+      :(fbdb?"공유 메모는 11명 전원에게 보여요. <b>저장</b>을 눌러야 반영됩니다.":"공유 저장소에 연결돼 있지 않아 이 기기에만 저장됩니다.")}</div>`+
+    `<div class="memo-tools">`+
+      `<button type="button" class="mt" onmousedown="return memoCmd(event,'bold')" title="굵게"><b>B</b></button>`+
+      `<button type="button" class="mt" onmousedown="return memoCmd(event,'underline')" title="밑줄"><u>U</u></button>`+
+      `<button type="button" class="mt" onmousedown="return memoCmd(event,'insertUnorderedList')" title="목록">• 목록</button>`+
+    `</div>`+
+    `<div class="memo-editor" id="fmMemoEditor" contenteditable="true" oninput="memoOnInput()" `+
+      `data-ph="${_memoMode==="p"?"자유롭게 메모하세요…":"팀에 공유할 내용을 자유롭게 작성하세요…"}"></div>`+
+    `<div class="memo-foot"><span class="memo-status" id="fmMemoStatus"></span>`+
+      `<button type="button" class="memo-save" onclick="memoSaveDoc()">저장</button></div>`+
+    `<div class="memo-remote" id="fmMemoRemote"></div>`;
 }
-function renderMemoList(){
-  const box=document.getElementById("fmMemoList"); if(!box)return;
-  let items=[];
-  if(_memoMode==="p") items=memoPGet(_memoId).map(x=>({k:x.id,text:x.text,who:"나",ts:x.ts}));
-  else if(fbdb) items=Object.keys(_memoShared).map(k=>({k,text:_memoShared[k].text,who:_memoShared[k].name||"익명",ts:_memoShared[k].ts}));
-  else items=memoSLocalGet(_memoId).map(x=>({k:x.id,text:x.text,who:x.name||"익명",ts:x.ts}));
-  items.sort((a,b)=>(b.ts||0)-(a.ts||0));
-  if(!items.length){ box.innerHTML=`<div class="memo-help">아직 메모가 없어요.</div>`; return; }
-  box.innerHTML=items.map(it=>`<div class="memo-item"><div class="mb">${esc(it.text)}</div>`+
-    `<div class="mm">${_memoMode==="s"?esc(it.who)+" · ":""}${fmTime(it.ts)}<span class="del" onclick="memoDel('${it.k}')">삭제</span></div></div>`).join("");
+function memoOnInput(){ _memoDirty=true; const s=document.getElementById("fmMemoStatus"); if(s){s.textContent="● 저장 안 됨";s.className="memo-status unsaved";} }
+function memoCmd(e,cmd){
+  e.preventDefault();
+  const ed=document.getElementById("fmMemoEditor"); if(ed)ed.focus();
+  try{document.execCommand("styleWithCSS",false,false);}catch(_){}
+  try{document.execCommand(cmd,false,null);}catch(_){}
+  memoOnInput(); return false;
 }
-function memoAdd(){
-  const inp=document.getElementById("fmMemoInput"); if(!inp)return;
-  const t=(inp.value||"").trim(); if(!t)return;
-  const ts=Date.now();
-  if(_memoMode==="p"){ const a=memoPGet(_memoId); a.push({id:"m"+ts,text:t,ts}); memoPSet(_memoId,a); }
-  else if(fbdb){ fbdb.ref(fbBase("memos")+"/"+_memoId.replace(/[.#$\[\]/]/g,"_")).push({name:fmAuthor(),text:t,ts}); }
-  else { const a=memoSLocalGet(_memoId); a.push({id:"m"+ts,name:fmAuthor(),text:t,ts}); memoSLocalSet(_memoId,a); }
-  inp.value="";
-  if(!(_memoMode==="s"&&fbdb)) renderMemoList();
+function memoLoadIntoEditor(){
+  const ed=document.getElementById("fmMemoEditor"); if(!ed)return;
+  let html="",meta="";
+  if(_memoMode==="p"){
+    html=memoPDocGet(_memoId);
+    if(html==null){ html=memoMigrateP(_memoId); }
+    if(html)meta="저장됨";
+  }else if(fbdb){
+    if(_memoRemote){ html=_memoRemote.html||""; meta=_memoRemote._mig?"이전 메모 불러옴(저장 필요)":("저장됨"+(_memoRemote.ts?" · "+(_memoRemote.name?esc(_memoRemote.name)+" ":"")+fmTime(_memoRemote.ts):"")); }
+  }else{
+    let o=memoSLocalGet(_memoId); if(!o)o=memoMigrateSLocal(_memoId);
+    if(o){ html=o.html||""; meta="저장됨"; }
+  }
+  ed.innerHTML=memoSanitize(html||"");
+  _memoDirty=false;
+  const s=document.getElementById("fmMemoStatus"); if(s){ s.textContent=meta; s.className="memo-status"+(meta&&meta.indexOf("저장 필요")<0?" saved":""); }
+  const rn=document.getElementById("fmMemoRemote"); if(rn)rn.innerHTML="";
 }
-function memoDel(k){
-  if(!confirm("이 메모를 삭제할까요?"))return;
-  if(_memoMode==="p") memoPSet(_memoId,memoPGet(_memoId).filter(x=>x.id!==k));
-  else if(fbdb) fbdb.ref(fbBase("memos")+"/"+_memoId.replace(/[.#$\[\]/]/g,"_")+"/"+k).remove();
-  else memoSLocalSet(_memoId,memoSLocalGet(_memoId).filter(x=>x.id!==k));
-  if(!(_memoMode==="s"&&fbdb)) renderMemoList();
+function memoShowRemoteNote(){
+  const rn=document.getElementById("fmMemoRemote"); if(!rn||!_memoRemote)return;
+  rn.innerHTML=`⚠️ ${esc(_memoRemote.name||"다른 사람")}님이 방금 수정했어요. `+
+    `<a onclick="memoLoadIntoEditor()">최신 내용 불러오기</a> (지금 편집 내용은 사라져요)`;
 }
-function fmTime(ts){ if(!ts)return""; const d=new Date(ts); return `${d.getMonth()+1}/${d.getDate()} ${d.getHours()}:${String(d.getMinutes()).padStart(2,"0")}`; }
+function memoSaveDoc(){
+  const ed=document.getElementById("fmMemoEditor"); if(!ed)return;
+  const html=memoSanitize(ed.innerHTML); const ts=Date.now();
+  if(_memoMode==="p"){ memoPDocSet(_memoId,html); }
+  else if(fbdb){ const name=fmAuthor(); _memoRef?_memoRef.set({html,name,ts}):fbdb.ref(fbBase("memodocs")+"/"+fbKey(_memoId)).set({html,name,ts}); _memoRemote={html,name,ts}; }
+  else{ const name=fmAuthor(); memoSLocalSet(_memoId,{html,name,ts}); }
+  _memoDirty=false;
+  const s=document.getElementById("fmMemoStatus"); if(s){ s.textContent="저장됨 · 방금"; s.className="memo-status saved"; }
+  const rn=document.getElementById("fmMemoRemote"); if(rn)rn.innerHTML="";
+  toast("메모를 저장했어요.");
+}
 
 TODAY_IDX=computeTodayIdx();if(TODAY_IDX>=0)mobileDay=TODAY_IDX;
 updateTripStatus();

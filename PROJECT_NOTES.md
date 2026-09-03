@@ -53,13 +53,19 @@
 - 폰 폭 ≤760px면 자동 진입, 어느 화면에서나 헤더 「📱 현장 모드」/「대시보드 ▸」로 전환. 마지막 선택은 `localStorage.tw_view`(field|dash).
 - 하단 탭 5개: **오늘 / 기관 / 숙소 / 식당 / 전체**. (전체 = 현장 모드 종료 후 주간 그리드로 스크롤)
   - 오늘: `computeTodayIdx()`로 오늘 필터. 여행 전이면 D-day + 날짜 셀렉터. 여행중이면 "지금 진행 중/다음" 카드 + 타임라인(지난 건 흐리게). `ref` 있는 일정엔 "기관 정보" 버튼.
-  - 기관: `backlog`의 `kind:"org"` 9곳 카드 → 시트(정보 + 공식 홈페이지 + 지도 + 길찾기 + 메모). 아래 관광(kind:"visit")도 표시.
-  - 숙소: `lodging` 카드, 오늘 밤 숙소 강조(`fmPeriodCoversDay`). 시트에 지도 + 메모.
+    - **날짜 스와이프**: 타임라인에서 손가락 좌우로 밀어 날짜 이동(`fmSetupSwipe()`/`fmSwipeDay()`, `#fmBody` touchstart/end, dx>55px·수평우세). 셀렉터 아래 날짜 점(`.fm-daynav`)으로 현재 일차 표시.
+  - 기관: `backlog`의 `kind:"org"` 9곳 카드를 **일자별 그룹**(`.fm-daygroup`+`.fm-dayhead`, 그룹 간 간격)으로 표시 → 시트(정보 + 공식 홈페이지 + 접이식 지도 + 길찾기 + 메모). 아래 관광(kind:"visit")도 표시.
+  - 숙소: `lodging` 카드, 오늘 밤 숙소 강조(`fmPeriodCoversDay`). 시트에 접이식 지도 + 메모.
   - 식당: `kind:"food"` 없으면 "준비 중" 안내 + 일정표 meal 블록 목록.
-- **메모** (기관/숙소/일정 시트 공용):
-  - 개인 = `localStorage` 키 `tw_memo_p_<sheetId>` (이 기기에만).
-  - 공유 = Firebase `trips/tokyo2026/memos/<sheetId>` — **항목 단위 `push()`** (동시편집 안전). fbdb 없으면 `tw_memo_s_<sheetId>` 폴백. 작성자명 `localStorage.tw_name`.
-  - sheetId 예: `org:org-5`, `lodging:lg-2`, `event:o-2-0950`.
+- **접이식 지도**: 시트 지도는 `mapBlock(loc)`로 생성(기본 접힘), `toggleSheetMap()`으로 펼침/접힘. loc 없으면 미표시.
+- **메모** (기관/숙소/일정 시트 공용) — **노션형 리치텍스트 문서**(자유 입력 → 저장 버튼):
+  - `contenteditable` 에디터 1개 + 툴바(굵게 `B`/밑줄 `U`/목록, `document.execCommand`) + 저장 버튼. 저장 안 하면 반영 안 됨(상태 표시).
+  - 개인 = `localStorage` 키 `tw_memodoc_p_<sheetId>` (HTML 문자열, 이 기기에만).
+  - 공유 = Firebase `trips/tokyo2026/memodocs/<sheetId>` = `{html,name,ts}`(저장 시 `set`). fbdb 없으면 `tw_memodoc_s_<sheetId>` 폴백. 작성자명 `localStorage.tw_name`.
+  - **보안**: 공유 메모=타인 작성=신뢰 불가 → `memoSanitize()`가 허용 태그(b/strong/u/i/em/br/div/p/span/ul/ol/li)만 남기고 속성 전부 제거(XSS 방지).
+  - 동시편집: 저장 안 한 상태(`_memoDirty`)에서 원격 변경 시 "최신 불러오기" 안내(`memoShowRemoteNote`), 편집 중이 아니면 자동 반영.
+  - 옛 목록형 메모(`tw_memo_p_`/`tw_memo_s_`)는 첫 로드 시 문서로 1회 변환(`memoMigrateP`/`memoMigrateSLocal`), 원본은 유지.
+  - sheetId 예: `org:org-5`, `lodging:lg-2`, `event:o-2-0950`. (기관 탭·일정표 어디서 열든 같은 sheetId → 메모 공유)
 - 헤더 「📋 PDF 일정표 불러오기」= `loadOfficialItinerary()`: JSON 백업 자동저장 → 확인 → `events`/`backlog`(org·spot)/`lodging`을 PDF 확정본으로 **전면 교체**(kind:"food"·메모는 보존). 상수: `OFFICIAL_ORGS / OFFICIAL_SPOTS / OFFICIAL_LODGING / DAY_MEALS / buildOfficialEvents()`.
 
 ### 저장·공유
