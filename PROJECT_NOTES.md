@@ -80,6 +80,7 @@
 7. **메모 UX 재설계**: 시트 = 브리핑 → `.sh-hinge`("여기부터 내 기록") → `.sh-memozone`(스크롤 시 떠오름) → 편집기. `#fmSheetJump` 플로팅 버튼으로 정보↔메모 이동. 편집기는 말풍선 없이 전면(`.memo-editor` 테두리·내부 스크롤 제거, min-height 280). 툴바 `position:sticky`, **B/U/제목(H3)/목록/색상 5종/이미지**. 이미지 = `memoCompressImage`(가로 900px·JPEG 0.55) → `<img data:>` 삽입, 개인·공유 공통. `memoSanitize`가 `IMG[src=data:image]`·`FONT[color=#hex]`·`SPAN[style=color/bg만]`·`H1~3` 허용(그 외 속성 제거 유지).
    - 다음 단계(보류): 기관 브리핑을 관리자 편집 모드에서 앱 내 직접 수정(현재는 `OFFICIAL_ORGS` 코드 상수, 초안 반영 후 전환 예정)
 8. **새 글 배지**: 공유 메모가 올라오면 하단 탭(기관·숙소)에 카톡식 빨간 숫자 배지, 해당 기관/숙소 카드 좌상단에 빨간 점. `memos_meta`(count·lastTs) 리스너 + 로컬 `tw_seen_<sheetId>`(마지막으로 본 글 개수) 비교. 시트에서 메모 영역까지 스크롤하면 읽음 처리. 최초 로드 시 이미 있던 글은 읽음 간주(`_memoMetaInit`).
+9. **사진 편집기**(`#mie` 오버레이 z90): 업로드하면 바로 넣지 않고 자르기(드래그 크롭 + 비율 자유/1:1/4:3/3:4) + 크기(작게480/보통800/크게1200/원본) 선택 후 캔버스로 재인코딩(JPEG 0.5~0.62). 이미 넣은 사진 탭 → 다시 편집. `memoImgEditOpen/Apply/Close`, `_ie` 상태, `memoCompressImage`는 폴백.
 
 ### 저장·공유
 - Firebase 실시간 동기화. 헤더에 "실시간 공유 중" 표시.

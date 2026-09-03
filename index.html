@@ -537,6 +537,41 @@
   .sh-jump:active{transform:translateX(-50%) scale(.95);}
   @media(prefers-reduced-motion:reduce){ .sh-memozone{opacity:1;transform:none;transition:none;} }
 
+  /* 사진 자르기 · 크기 조절 */
+  .mie{position:fixed;inset:0;z-index:90;background:rgba(17,24,39,.72);display:none;
+    flex-direction:column;padding:calc(14px + env(safe-area-inset-top,0px)) 12px calc(14px + env(safe-area-inset-bottom,0px));}
+  .mie.on{display:flex;}
+  .mie-card{background:#fff;border-radius:18px;max-width:520px;width:100%;margin:auto;overflow:hidden;
+    display:flex;flex-direction:column;max-height:100%;}
+  .mie-head{display:flex;align-items:center;justify-content:space-between;padding:13px 15px;border-bottom:1px solid var(--line);}
+  .mie-head b{font-size:15px;font-weight:800;}
+  .mie-head .x{border:0;background:#f3f4f6;border-radius:9px;width:30px;height:30px;font-size:15px;color:#6b7280;cursor:pointer;}
+  .mie-stage{position:relative;flex:1;min-height:0;background:#111418;display:flex;align-items:center;justify-content:center;
+    overflow:hidden;touch-action:none;user-select:none;-webkit-user-select:none;}
+  .mie-imgwrap{position:relative;line-height:0;}
+  .mie-imgwrap img{display:block;max-width:100%;max-height:52vh;-webkit-user-drag:none;}
+  .mie-crop{position:absolute;outline:2px solid #fff;box-shadow:0 0 0 9999px rgba(0,0,0,.55);cursor:move;}
+  .mie-crop:before{content:"";position:absolute;inset:0;
+    background-image:linear-gradient(rgba(255,255,255,.4) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.4) 1px,transparent 1px);
+    background-size:33.33% 33.33%;pointer-events:none;}
+  .mie-crop .hd{position:absolute;width:26px;height:26px;}
+  .mie-crop .hd:before{content:"";position:absolute;width:14px;height:14px;border:2.5px solid #fff;}
+  .mie-crop .hd.nw{left:-13px;top:-13px;} .mie-crop .hd.nw:before{left:11px;top:11px;border-right:0;border-bottom:0;}
+  .mie-crop .hd.ne{right:-13px;top:-13px;} .mie-crop .hd.ne:before{right:11px;top:11px;border-left:0;border-bottom:0;}
+  .mie-crop .hd.sw{left:-13px;bottom:-13px;} .mie-crop .hd.sw:before{left:11px;bottom:11px;border-right:0;border-top:0;}
+  .mie-crop .hd.se{right:-13px;bottom:-13px;} .mie-crop .hd.se:before{right:11px;bottom:11px;border-left:0;border-top:0;}
+  .mie-ctrl{padding:12px 15px 4px;}
+  .mie-row{display:flex;align-items:center;gap:7px;margin-bottom:10px;}
+  .mie-row .lb{font-size:11px;font-weight:800;color:var(--faint);width:38px;flex:none;letter-spacing:.03em;}
+  .mie-row .seg{display:flex;gap:5px;flex-wrap:wrap;}
+  .mie-row .seg button{border:1px solid var(--line2);background:#fff;border-radius:9px;padding:7px 11px;
+    font-size:12px;font-weight:700;color:#374151;cursor:pointer;}
+  .mie-row .seg button.on{background:var(--accent);border-color:var(--accent);color:#fff;}
+  .mie-foot{display:flex;gap:9px;padding:10px 15px calc(12px + env(safe-area-inset-bottom,0px));}
+  .mie-foot button{flex:1;padding:12px 0;border-radius:11px;font-size:14px;font-weight:800;cursor:pointer;border:1px solid var(--line2);background:#fff;color:#374151;}
+  .mie-foot .go{background:var(--accent);border-color:var(--accent);color:#fff;flex:1.6;}
+  .memo-editor img,.memo-compose .ce img,.memo-post.editing .ce img{cursor:pointer;}
+
   /* 오늘 탭 날짜 네비 */
   .fm-daynav{display:flex;align-items:center;gap:5px;margin:-4px 2px 13px;}
   .fm-daynav .dot{width:7px;height:7px;border-radius:50%;background:var(--line2);transition:all .2s;}
@@ -757,6 +792,36 @@
     <div class="sh-grip" id="fmSheetGrip"><span></span></div>
     <div class="sh-scroll" id="fmSheetScroll"></div>
     <button class="sh-jump" id="fmSheetJump" onclick="fmSheetJump()" hidden>✍️ 메모 쓰기</button>
+  </div>
+</div>
+
+<!-- 사진 자르기 · 크기 조절 -->
+<div class="mie" id="mie" onclick="if(event.target===this)memoImgEditClose()">
+  <div class="mie-card">
+    <div class="mie-head"><b>사진 편집</b><button class="x" onclick="memoImgEditClose()">✕</button></div>
+    <div class="mie-stage" id="mieStage">
+      <div class="mie-imgwrap" id="mieWrap">
+        <img id="mieImg" alt="">
+        <div class="mie-crop" id="mieCrop">
+          <span class="hd nw" data-h="nw"></span><span class="hd ne" data-h="ne"></span>
+          <span class="hd sw" data-h="sw"></span><span class="hd se" data-h="se"></span>
+        </div>
+      </div>
+    </div>
+    <div class="mie-ctrl">
+      <div class="mie-row"><span class="lb">비율</span><div class="seg" id="mieRatio">
+        <button data-r="free" class="on">자유</button><button data-r="1">1:1</button>
+        <button data-r="1.333">4:3</button><button data-r="0.75">3:4</button>
+      </div></div>
+      <div class="mie-row"><span class="lb">크기</span><div class="seg" id="mieSize">
+        <button data-s="480">작게</button><button data-s="800" class="on">보통</button>
+        <button data-s="1200">크게</button><button data-s="full">원본</button>
+      </div></div>
+    </div>
+    <div class="mie-foot">
+      <button onclick="memoImgEditClose()">취소</button>
+      <button class="go" onclick="memoImgEditApply()">넣기</button>
+    </div>
   </div>
 </div>
 
@@ -2256,6 +2321,8 @@ function fmSetupSheetGestures(){
   panel.addEventListener("touchcancel",shTEnd,{passive:true});
   panel.addEventListener("focusin",()=>fmSheetSyncJump());
   panel.addEventListener("focusout",()=>setTimeout(fmSheetSyncJump,60));
+  const sc=document.getElementById("fmSheetScroll");
+  if(sc) sc.addEventListener("click",memoImgTapEdit);
 }
 function shTStart(e){
   if(e.touches.length!==1){_shG=null;return;}
@@ -2569,7 +2636,7 @@ function memoInsertImage(e){
       if(!f)return;
       const ed=memoActiveEditor(); if(!ed)return;
       const rd=new FileReader();
-      rd.onload=ev=>memoCompressImage(ev.target.result,data=>{
+      rd.onload=ev=>memoImgEditOpen(ev.target.result,data=>{
         ed.focus();
         try{ document.execCommand("insertHTML",false,'<img src="'+data+'"><p><br></p>'); }
         catch(_){ ed.innerHTML+='<img src="'+data+'">'; }
@@ -2581,6 +2648,7 @@ function memoInsertImage(e){
   _memoImgInput.click();
   return false;
 }
+/* 폴백(편집기 못 열 때) — 그냥 축소·압축 */
 function memoCompressImage(src,cb){
   const img=new Image();
   img.onload=()=>{
@@ -2593,6 +2661,116 @@ function memoCompressImage(src,cb){
   };
   img.onerror=()=>toast("이미지를 처리할 수 없어요.");
   img.src=src;
+}
+/* ================= 사진 자르기 · 크기 조절 ================= */
+let _ie=null;
+function memoImgEditOpen(src,done){
+  const ov=document.getElementById("mie"), img=document.getElementById("mieImg");
+  if(!ov||!img){ memoCompressImage(src,done); return; }   // 안전장치
+  _ie={done,ratio:null,size:800,box:null,drag:null};
+  document.getElementById("mieRatio").querySelectorAll("button").forEach(b=>b.classList.toggle("on",b.dataset.r==="free"));
+  document.getElementById("mieSize").querySelectorAll("button").forEach(b=>b.classList.toggle("on",b.dataset.s==="800"));
+  ov.classList.add("on");
+  _ieBind();
+  img.onload=()=>{
+    const setup=()=>{
+      if(!_ie)return;
+      const vw=img.clientWidth, vh=img.clientHeight;
+      if(!vw||!vh){ requestAnimationFrame(setup); return; }
+      _ie.vw=vw; _ie.vh=vh; _ie.nat=img.naturalWidth;
+      const w=Math.min(vw,vh)*0.9;
+      _ie.box={x:(vw-w)/2, y:(vh-w)/2>0?(vh-w)/2:0, w:w, h:Math.min(w,vh)};
+      _ieClamp(); _ieApplyBox();
+    };
+    setup();
+  };
+  img.onerror=()=>{ toast("이미지를 처리할 수 없어요."); memoImgEditClose(); };
+  img.src=src;
+}
+function memoImgEditClose(){ const ov=document.getElementById("mie"); if(ov)ov.classList.remove("on"); _ie=null; }
+function _ieApplyBox(){
+  const c=document.getElementById("mieCrop"), b=_ie.box;
+  c.style.left=b.x+"px"; c.style.top=b.y+"px"; c.style.width=b.w+"px"; c.style.height=b.h+"px";
+}
+function _ieClamp(){
+  const b=_ie.box, mn=40;
+  b.w=Math.max(mn,Math.min(b.w,_ie.vw)); b.h=Math.max(mn,Math.min(b.h,_ie.vh));
+  b.x=Math.max(0,Math.min(b.x,_ie.vw-b.w)); b.y=Math.max(0,Math.min(b.y,_ie.vh-b.h));
+}
+let _ieBoundOnce=false;
+function _ieBind(){
+  if(_ieBoundOnce)return; _ieBoundOnce=true;
+  const stage=document.getElementById("mieStage"), crop=document.getElementById("mieCrop");
+  const pt=e=>{ const t=e.touches?e.touches[0]:e; return {x:t.clientX,y:t.clientY}; };
+  const start=e=>{
+    if(!_ie)return;
+    const hd=e.target.closest&&e.target.closest(".hd");
+    const onCrop=e.target===crop||e.target.closest&&e.target.closest("#mieCrop");
+    if(!hd&&!onCrop)return;
+    e.preventDefault();
+    _ie.drag={mode:hd?hd.dataset.h:"move",p:pt(e),box:Object.assign({},_ie.box)};
+  };
+  const move=e=>{
+    if(!_ie||!_ie.drag)return;
+    e.preventDefault();
+    const p=pt(e), d=_ie.drag, dx=p.x-d.p.x, dy=p.y-d.p.y, o=d.box, b=_ie.box;
+    if(d.mode==="move"){ b.x=o.x+dx; b.y=o.y+dy; }
+    else{
+      let x1=o.x, y1=o.y, x2=o.x+o.w, y2=o.y+o.h;
+      if(d.mode.indexOf("w")>=0) x1=o.x+dx;
+      if(d.mode.indexOf("e")>=0) x2=o.x+o.w+dx;
+      if(d.mode.indexOf("n")>=0) y1=o.y+dy;
+      if(d.mode.indexOf("s")>=0) y2=o.y+o.h+dy;
+      b.x=Math.min(x1,x2); b.y=Math.min(y1,y2); b.w=Math.abs(x2-x1); b.h=Math.abs(y2-y1);
+      if(_ie.ratio){
+        if(d.mode==="nw"||d.mode==="ne"||d.mode==="sw"||d.mode==="se"){
+          b.h=b.w/_ie.ratio;
+          if(d.mode.indexOf("n")>=0) b.y=(o.y+o.h)-b.h;
+        }
+      }
+    }
+    _ieClamp(); _ieApplyBox();
+  };
+  const end=()=>{ if(_ie)_ie.drag=null; };
+  stage.addEventListener("mousedown",start); stage.addEventListener("touchstart",start,{passive:false});
+  window.addEventListener("mousemove",move); window.addEventListener("touchmove",move,{passive:false});
+  window.addEventListener("mouseup",end); window.addEventListener("touchend",end);
+  document.getElementById("mieRatio").addEventListener("click",e=>{
+    const b=e.target.closest("button"); if(!b||!_ie)return;
+    document.getElementById("mieRatio").querySelectorAll("button").forEach(x=>x.classList.toggle("on",x===b));
+    _ie.ratio = b.dataset.r==="free"?null:parseFloat(b.dataset.r);
+    if(_ie.ratio){ _ie.box.h=_ie.box.w/_ie.ratio; _ieClamp(); _ieApplyBox(); }
+  });
+  document.getElementById("mieSize").addEventListener("click",e=>{
+    const b=e.target.closest("button"); if(!b||!_ie)return;
+    document.getElementById("mieSize").querySelectorAll("button").forEach(x=>x.classList.toggle("on",x===b));
+    _ie.size = b.dataset.s==="full"?"full":parseInt(b.dataset.s,10);
+  });
+}
+function memoImgEditApply(){
+  if(!_ie||!_ie.box){ memoImgEditClose(); return; }
+  const img=document.getElementById("mieImg"), b=_ie.box;
+  const scale=_ie.nat/_ie.vw;               // 화면px → 원본px
+  let sx=b.x*scale, sy=b.y*scale, sw=b.w*scale, sh=b.h*scale;
+  const cap = _ie.size==="full" ? Math.min(sw,2000) : _ie.size;
+  let dw=Math.min(sw,cap), dh=Math.round(dw*sh/sw); dw=Math.round(dw);
+  const cv=document.createElement("canvas"); cv.width=dw; cv.height=dh;
+  cv.getContext("2d").drawImage(img,sx,sy,sw,sh,0,0,dw,dh);
+  const q = (_ie.size==="full"||_ie.size>=1200)?0.5 : (_ie.size<=480?0.62:0.55);
+  let out; try{ out=cv.toDataURL("image/jpeg",q); }catch(e){ out=img.src; }
+  const done=_ie.done;
+  memoImgEditClose();
+  if(done)done(out);
+}
+/* 이미 넣은 사진 탭 → 다시 편집(크기·자르기) */
+function memoImgTapEdit(e){
+  const img=e.target&&e.target.closest&&e.target.closest("img");
+  if(!img)return;
+  const host=img.closest&&img.closest('[contenteditable="true"]');
+  if(!host)return;
+  e.preventDefault();
+  memoImgEditOpen(img.getAttribute("src"),d=>{ img.setAttribute("src",d);
+    if(_memoMode==="p")memoOnInput(); else memoDraftSave(); });
 }
 /* ---- 개인 문서 ---- */
 function memoLoadPersonal(){
