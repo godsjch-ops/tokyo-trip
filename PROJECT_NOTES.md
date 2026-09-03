@@ -24,7 +24,8 @@
 | 시간축 | 06:00~24:00, 30분 스냅 |
 | 사진 | 이미지 URL + 로컬 업로드(자동 리사이즈·압축, 최대 1200px/JPEG 0.72) |
 | 공유 | Firebase 실시간(설정 있으면 공유, 없으면 이 기기 localStorage 저장) |
-| 모바일 | 요일 탭으로 하루씩 전체 화면 |
+| 모바일 | 요일 탭으로 하루씩 전체 화면 · PWA(오프라인) · 개인 메모 클라우드 백업 |
+| 편집권한 | 참가자=보기 전용, 관리자=`?edit`+PIN(`EDIT_PIN`, 기본 1418) 1회→기기 기억 |
 
 ## 3. 현재 기능
 ### 일정표(주간 그리드)
@@ -69,6 +70,14 @@
   - **보안**: 공유 메모=타인 작성=신뢰 불가 → `memoSanitize()`가 허용 태그(b/strong/u/i/em/br/div/p/span/ul/ol/li)만 남기고 속성 전부 제거(XSS 방지). 개인 문서/다운로드 텍스트(`memoHtmlToText`)도 동일 정화.
 - 헤더 「📋 PDF 일정표 불러오기」= `loadOfficialItinerary()`: JSON 백업 자동저장 → 확인 → `events`/`backlog`(org·spot)/`lodging`을 PDF 확정본으로 **전면 교체**(kind:"food"·메모는 보존). 상수: `OFFICIAL_ORGS / OFFICIAL_SPOTS / OFFICIAL_LODGING / DAY_MEALS / buildOfficialEvents()`.
 
+### 최근 개선 (2026-09-03, 4단계)
+1. **메모 안정성**: 개인 메모 = 이 폰 localStorage(1차) + Firebase `pmemos/<이름or기기>/<sheetId>`(2차 백업). 로컬이 비면 자동 복구, 더 최신이면 안내. 저장 실패 시 경고 배너. 공유 메모 "올리기" = 대기열(`tw_memo_pending`)에 먼저 확보 → 성공 시 제거, 실패 시 "⚠ 전송 실패·다시 시도", 연결 복구(`​.info/connected`·`online`) 시 자동 재전송. 작성 중 글은 `tw_memo_draft_<sheetId>`에 임시저장.
+2. **오프라인(PWA)**: `manifest.json` + `service-worker.js`(+아이콘 3개). 한 번 열면 신호 없이도 열림. HTML은 네트워크 우선, 나머지 캐시 우선, Firebase 실시간·구글지도는 SW가 손대지 않음. 시트 지도는 펼칠 때 로드, 오프라인이면 길찾기 링크로 대체.
+3. **읽기 개선**: 현장 모드 글씨 확대. 기관 시트 = 개요/방문 목적/사전 질문·확인 포인트 구조(`OFFICIAL_ORGS`의 `desc`/`purpose`/`points`). 담당자·홈페이지는 본문에서 제거(홈페이지는 버튼 유지). **purpose/points는 초안** — 사전 조사 자료 나오면 교체 후 관리자가 "PDF 일정표 불러오기" 1회 실행해야 공유 DB에 반영.
+4. **숙소 연동**: `lodgingForEvent()`가 stay 일정 블록을 장소/이름으로 숙소 카드에 매칭 → 어디서 열든 `memoId=lodging:<id>`로 통일(메모 공유). 숙소 시트에 "공유 메모로 꿀팁" 안내.
+5. **공유 메모 수정**: 내 글은 "수정" → 인라인 서식 편집 → 저장(`edited:true`, "수정됨" 표시).
+6. **편집 잠금**: 기본 보기 전용(`body.viewer` → `.editor-only` 숨김). 관리자만 `?edit`+PIN. 파괴적 함수는 `requireEditor()`로 이중 방어. `?view`로 해제.
+
 ### 저장·공유
 - Firebase 실시간 동기화. 헤더에 "실시간 공유 중" 표시.
 - 「📤 기기데이터 올리기」: 이 기기 localStorage 데이터를 공유 저장소로 1회 업로드(마이그레이션용).
@@ -83,8 +92,10 @@ trips/tokyo2026/
   lodging  : { id: {…} }   // 숙소
   detail/shopping : { id: {…} }
   detail/history  : { id: {…} }
-  memos/<sheetId>/<pushId> : { name, text, ts }   // 현장 모드 공유 메모 (항목 단위 push)
+  memos/<sheetId>/<pushId> : { name, html, ts, edited? }   // 현장 모드 공유 메모 (항목 단위 push)
+  pmemos/<이름or기기>/<sheetId> : { html, ts }             // 개인 메모 2차 백업 (화면엔 본인만)
 ```
+- localStorage 전용: `tw_memodoc_p_<sheetId>`(개인 메모 본문) / `tw_memodoc_pts_<sheetId>`(수정시각) / `tw_memo_pending`(공유 전송 대기열) / `tw_memo_draft_<sheetId>`(공유 작성 중) / `tw_uid`(기기ID) / `tw_editor`(=granted면 편집 가능)
 - 코드에서는 배열로 다루고 저장 시 id 맵으로 변환(toMap). 실시간 리스너가 배열로 되돌려 화면 갱신.
 - localStorage 키(공유 미사용 시): tokyo_trip_2026_events / _backlog / _lodging / _detail_<key>
 
@@ -123,6 +134,11 @@ detail  : { id, title, desc, url, loc, photos:[] }                         // sh
 - 보안: Firebase DB 규칙이 공개(.read/.write true) — 링크·설정을 아는 사람은 편집 가능. 민감정보 금지. 필요 시 규칙으로 잠글 수 있음.
 
 ## 7. 이어서 할 만한 것
+- [ ] 배포 후: 관리자가 `?edit`로 열어 **"PDF 일정표 불러오기" 1회** 실행(기관 브리핑 purpose/points 반영)
+- [ ] 각 폰에서 온라인일 때 1회 접속(오프라인 캐시 생성). 아이콘은 `logo.png` 아님 → `icon-512.png`만 바꾸면 교체 가능
+- [ ] `EDIT_PIN` 값을 원하는 번호로 변경
+- [ ] 기관 사전 조사 자료 완성되면 `OFFICIAL_ORGS`의 `desc`/`purpose`/`points` 교체
+- [ ] Firebase 규칙 잠금(간단 인증) — 연수 후
 - [ ] 삭제 시 확인창 옵션
 - [ ] 하루 총 소요시간·이동시간 합계
 - [ ] 참가자 9명 조 편성 표시
