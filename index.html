@@ -391,6 +391,9 @@
   .fm-item .badge2{font-size:10.5px;font-weight:800;color:var(--accent-deep);background:var(--accent-soft);border-radius:6px;padding:2px 6px;white-space:nowrap;}
   .fm-item .d{font-size:12.5px;color:var(--muted);margin-top:4px;line-height:1.55;}
   .fm-item.tonight{border-color:var(--stay);box-shadow:0 4px 14px rgba(139,92,246,.14);}
+  .fm-item{position:relative;}
+  .fm-item-dot{position:absolute;left:-3px;top:-3px;width:10px;height:10px;border-radius:50%;
+    background:#ef4444;box-shadow:0 0 0 2px #fff;}
   .fm-note-empty{font-size:13.5px;color:var(--muted);background:#fff;border:1px dashed var(--line2);border-radius:12px;
     padding:18px;text-align:center;line-height:1.65;}
 
@@ -399,9 +402,12 @@
     background:#fff;border-top:1px solid var(--line2);max-width:520px;margin:0 auto;
     padding-bottom:env(safe-area-inset-bottom,0px);}
   body:not(.fm-open) .fm-tabs{display:none;}
-  .fm-tabs button{border:0;background:transparent;display:flex;flex-direction:column;align-items:center;gap:3px;
+  .fm-tabs button{position:relative;border:0;background:transparent;display:flex;flex-direction:column;align-items:center;gap:3px;
     padding:8px 0 9px;font-size:10px;font-weight:700;color:var(--faint);cursor:pointer;}
   .fm-tabs button.on{color:var(--accent);}
+  .fm-badge{position:absolute;top:3px;left:calc(50% + 5px);min-width:16px;height:16px;padding:0 4px;box-sizing:border-box;
+    border-radius:9px;background:#ef4444;color:#fff;font-size:10px;font-weight:800;line-height:16px;
+    text-align:center;box-shadow:0 0 0 2px #fff;font-variant-numeric:tabular-nums;}
   .fm-tabs svg{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:1.75;stroke-linecap:round;stroke-linejoin:round;}
 
   /* field sheet (기관/숙소 상세 + 메모) — 현장 모드 위에 표시 */
@@ -1005,6 +1011,17 @@ function initFirebase(){
   const sb=document.getElementById("syncBadge");if(sb)sb.innerHTML=' · <b style="color:#059669">실시간 공유 중</b>';
   // 연결이 살아나면 못 보낸 공유 메모 자동 재전송
   try{ fbdb.ref(".info/connected").on("value",s=>{ if(s.val()===true) setTimeout(memoFlushPending,600); }); }catch(e){}
+  // 메모 배지(새 글 알림)용 요약 노드
+  try{ fbdb.ref(fbBase("memos_meta")).on("value",s=>{
+    _memoMeta=s.val()||{};
+    Object.keys(_memoMeta).forEach(sid=>{   // 최초 로드 때 이미 있던 글은 '읽음'으로 간주(이후 새 글만 배지)
+      if(!_memoMetaInit && localStorage.getItem("tw_seen_"+sid)==null){
+        try{ localStorage.setItem("tw_seen_"+sid,String(_memoMeta[sid].count||0)); }catch(e){}
+      }
+    });
+    _memoMetaInit=true;
+    renderFieldBadges(); fmRefreshItemDots();
+  }); }catch(e){}
 }
 function boot(){
   if(FIREBASE_CONFIG){try{initFirebase();return;}catch(e){toast("Firebase 연결 실패 — 설정을 확인하세요. 이 기기 저장으로 전환합니다.");}}
@@ -1832,6 +1849,7 @@ function renderField(){
   const box=document.getElementById("fmBody");if(!box)return;
   const t=fmState.tab;
   box.innerHTML = t==="orgs"?viewFieldOrgs() : t==="lodging"?viewFieldLodging() : t==="food"?viewFieldFood() : t==="all"?viewFieldMore() : viewFieldToday();
+  renderFieldBadges();
 }
 function renderFmTop(){
   const dEl=document.getElementById("fmDate"),sub=document.getElementById("fmDsub"),meals=document.getElementById("fmMeals");
@@ -1961,7 +1979,7 @@ function viewFieldOrgs(){
         (d?`${d.label} (${d.dow}) · ${k+1}일차`:"일자 미정")+
         `<span class="rt">${byDay[k].length}곳</span></div>`;
       byDay[k].forEach(o=>{
-        h+=`<div class="fm-item" onclick="openOrgSheet('${o.id}')"><div class="h"><b>${esc(o.title)}</b></div>`+
+        h+=`<div class="fm-item" data-sid="org:${o.id}" onclick="openOrgSheet('${o.id}')">${fmItemDot("org:"+o.id)}<div class="h"><b>${esc(o.title)}</b></div>`+
           `<div class="d">${o.time?esc(o.time):""}${o.field?(o.time?" · ":"")+esc(o.field):""}</div></div>`;
       });
       h+=`</div>`;
@@ -1970,7 +1988,7 @@ function viewFieldOrgs(){
   if(spots.length){
     h+=`<div class="fm-sec">관광 · 자유시간</div>`;
     spots.forEach(s=>{
-      h+=`<div class="fm-item" onclick="openOrgSheet('${s.id}')"><div class="h"><b>${esc(s.title)}</b></div>`+
+      h+=`<div class="fm-item" data-sid="org:${s.id}" onclick="openOrgSheet('${s.id}')">${fmItemDot("org:"+s.id)}<div class="h"><b>${esc(s.title)}</b></div>`+
         (s.desc?`<div class="d">${esc(s.desc)}</div>`:"")+`</div>`;
     });
   }
@@ -2003,8 +2021,8 @@ function viewFieldLodging(){
   let h=`<div class="fm-sec">숙소 ${lodging.length}곳</div>`;
   lodging.forEach(l=>{
     const tonight=fmPeriodCoversDay(l.period,di);
-    h+=`<div class="fm-item${tonight?" tonight":""}" onclick="openLodgingSheet('${l.id}')">`+
-      `<div class="h"><b>${esc(l.title)}</b>${tonight?`<span class="badge2">오늘 밤</span>`:""}</div>`+
+    h+=`<div class="fm-item${tonight?" tonight":""}" data-sid="lodging:${l.id}" onclick="openLodgingSheet('${l.id}')">`+
+      `${fmItemDot("lodging:"+l.id)}<div class="h"><b>${esc(l.title)}</b>${tonight?`<span class="badge2">오늘 밤</span>`:""}</div>`+
       (l.period?`<div class="d">🗓 ${esc(l.period)}</div>`:"")+
       (l.desc?`<div class="d">${esc((l.desc||"").split("\n")[0])}</div>`:"")+`</div>`;
   });
@@ -2077,7 +2095,7 @@ function fmSheetSetupReveal(){
     const mz=document.getElementById("fmMemoZone");
     if(mz && !mz.classList.contains("on")){
       const r=mz.getBoundingClientRect(), sr=sc.getBoundingClientRect();
-      if(r.top < sr.bottom - 24) mz.classList.add("on");
+      if(r.top < sr.bottom - 24){ mz.classList.add("on"); if(_memoId)memoMarkSeen(_memoId); }
     }
     fmSheetSyncJump();
   };
@@ -2312,6 +2330,8 @@ function shClearAdj2(){ const tr=document.getElementById("fmSheetTrack"); if(tr)
    메모  ·  개인 = 리치텍스트 문서(30초 자동저장) / 공유 = 게시글 피드(저장 시 글 추가)
    ========================================================================== */
 let _memoId=null,_memoMode=localStorage.getItem("tw_memomode")||"p",_memoRef=null,_memoShared={},_memoDirty=false,_memoAutoT=null;
+let _memoMeta={};                                // {sheetId:{count,lastTs}} — 배지용 요약(Firebase memos_meta)
+let _memoMetaInit=false;
 let _memoRemoteCache=null;                       // 개인 메모: 다른 기기 최신본 임시 보관
 let _memoEditing=null;                           // 공유 메모: 현재 수정 중인 글 id
 const _memoInflight=new Set();                   // 공유 메모: Firebase 전송 중인 임시글 id
@@ -2626,9 +2646,61 @@ function memoStopAutosave(){ if(_memoAutoT){clearInterval(_memoAutoT);_memoAutoT
 function memoStartShared(){
   if(fbdb){
     _memoRef=fbdb.ref(fbBase("memos")+"/"+fbKey(_memoId));
-    _memoRef.on("value",s=>{ _memoShared=s.val()||{}; renderPostList(); });
+    _memoRef.on("value",s=>{
+      _memoShared=s.val()||{}; renderPostList(); memoWriteMeta(_memoId,_memoShared);
+      const mz=document.getElementById("fmMemoZone");
+      if(mz && mz.classList.contains("on")) memoMarkSeen(_memoId);   // 보고 있는 중이면 읽음 처리
+    });
   }else{ renderPostList(); }
   memoFlushPending();   // 지난 번에 못 보낸 글 재전송 시도
+}
+/* ---- 새 글 알림 배지 ---- */
+function memoWriteMeta(sheetId,obj){
+  if(!fbdb)return;
+  const ks=Object.keys(obj||{}); let last=0;
+  ks.forEach(k=>{ const t=obj[k]&&obj[k].ts; if(t>last)last=t; });
+  try{ fbdb.ref(fbBase("memos_meta")+"/"+fbKey(sheetId)).set({count:ks.length,lastTs:last}); }catch(e){}
+}
+function memoSeenCount(id){ return +(localStorage.getItem("tw_seen_"+id)||0); }
+function memoMarkSeen(id){
+  let cur=(_memoMeta[id]&&_memoMeta[id].count)||0;
+  if(id===_memoId) cur=Math.max(cur,Object.keys(_memoShared||{}).length);
+  if(!fbdb) cur=Math.max(cur,memoSGet(id).length);
+  const prev=memoSeenCount(id);
+  if(cur<=prev)return;
+  try{ localStorage.setItem("tw_seen_"+id,String(cur)); }catch(e){}
+  renderFieldBadges(); fmRefreshItemDots();
+}
+function memoUnseen(sheetId){
+  let count;
+  if(fbdb){ const m=_memoMeta[sheetId]; count=m?(m.count||0):0; }
+  else count=memoSGet(sheetId).length;
+  return Math.max(0, count - memoSeenCount(sheetId));
+}
+function memoTabUnseen(tab){
+  let total=0;
+  if(tab==="lodging"){ lodging.forEach(l=>{ total+=memoUnseen("lodging:"+l.id); }); }
+  else if(tab==="orgs"){ backlog.forEach(b=>{ const k=b.kind||"visit"; if(k==="org"||k==="visit") total+=memoUnseen("org:"+b.id); }); }
+  return total;
+}
+function fmItemDot(sid){ return memoUnseen(sid)>0 ? `<span class="fm-item-dot"></span>` : ""; }
+function renderFieldBadges(){
+  const tabs=document.getElementById("fmTabs"); if(!tabs)return;
+  ["orgs","lodging"].forEach(t=>{
+    const btn=tabs.querySelector('button[data-tab="'+t+'"]'); if(!btn)return;
+    const n=memoTabUnseen(t);
+    let b=btn.querySelector(".fm-badge");
+    if(n>0){ if(!b){ b=document.createElement("span"); b.className="fm-badge"; btn.appendChild(b); } b.textContent=n>99?"99+":String(n); }
+    else if(b){ b.remove(); }
+  });
+}
+function fmRefreshItemDots(){
+  document.querySelectorAll("#fmBody .fm-item[data-sid]").forEach(el=>{
+    const un=memoUnseen(el.dataset.sid);
+    let d=el.querySelector(".fm-item-dot");
+    if(un>0){ if(!d){ d=document.createElement("span"); d.className="fm-item-dot"; el.prepend(d); } }
+    else if(d){ d.remove(); }
+  });
 }
 function memoPost(){
   const ce=document.getElementById("fmMemoCompose"); if(!ce)return;
@@ -2685,6 +2757,7 @@ function renderPostList(){
   }).join("");
   box.innerHTML=h;
   if(_memoEditing){ const ie=document.getElementById("fmMemoEditInput"); if(ie)ie.focus(); }
+  if(!fbdb){ renderFieldBadges(); fmRefreshItemDots(); }   // 공유 저장소 없을 때 배지 동기화
 }
 function memoEditStart(k){ _memoEditing=k; renderPostList(); }
 function memoEditCancel(){ _memoEditing=null; renderPostList(); }
