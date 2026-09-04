@@ -547,9 +547,10 @@
   .mie-head b{font-size:15px;font-weight:800;}
   .mie-head .x{border:0;background:#f3f4f6;border-radius:9px;width:30px;height:30px;font-size:15px;color:#6b7280;cursor:pointer;}
   .mie-stage{position:relative;flex:1;min-height:0;background:#111418;display:flex;align-items:center;justify-content:center;
-    overflow:hidden;touch-action:none;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;}
-  .mie-imgwrap{position:relative;line-height:0;touch-action:none;}
-  .mie-imgwrap img{display:block;max-width:100%;max-height:54vh;-webkit-user-drag:none;pointer-events:none;}
+    overflow:hidden;touch-action:none;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;
+    padding:28px;} /* 손잡이가 사진 가장자리에서도 잘리지 않도록 여백 확보 */
+  .mie-imgwrap{position:relative;line-height:0;touch-action:none;outline:1px solid rgba(255,255,255,.18);}
+  .mie-imgwrap img{display:block;max-width:100%;max-height:48vh;-webkit-user-drag:none;pointer-events:none;}
   .mie-crop{position:absolute;outline:2px solid #fff;box-shadow:0 0 0 9999px rgba(0,0,0,.5);touch-action:none;}
   .mie-crop:after{content:"";position:absolute;inset:0;pointer-events:none;opacity:0;transition:opacity .15s;
     background-image:linear-gradient(rgba(255,255,255,.55) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.55) 1px,transparent 1px);
