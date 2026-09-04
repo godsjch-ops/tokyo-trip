@@ -55,7 +55,8 @@
 - 하단 탭 5개: **오늘 / 기관 / 숙소 / 식당 / 전체**. (전체 = 메모·설정 화면, `viewFieldMore()`)
   - 오늘: `computeTodayIdx()`로 오늘 필터. 여행 전이면 D-day + 날짜 셀렉터. 여행중이면 "지금 진행 중/다음" 카드 + 타임라인(지난 건 흐리게). `ref` 있는 일정엔 "기관 정보" 버튼.
     - **iOS풍 날짜 스와이프**: 타임라인을 손가락으로 좌우로 밀면 날짜 이동. `viewFieldToday`가 `.fm-stage>.fm-track>.fm-page` 구조로 렌더, `fmTimelineHtml(di)`가 하루 단위 HTML 생성. `fmSetupSwipe()`가 `#fmBody`에 touch(start non-passive/move non-passive로 preventDefault) 바인딩 → 드래그 중 인접 날짜 페이지(`.fm-page.adj`)를 만들어 손가락 따라 이동(미리보기), 임계(70px/20%) 넘으면 `FM_EASE`로 슬라이드 후 `fmState.day` 커밋·재렌더. 세로 스크롤은 lock='v'로 무시, 경계는 감쇠(rubber-band). 셀렉터 아래 날짜 점(`.fm-daynav`).
-  - 기관: `backlog`의 `kind:"org"` 9곳 카드를 **일자별 그룹**(`.fm-daygroup`+`.fm-dayhead`, 그룹 간 간격)으로 표시 → 시트(정보 + 공식 홈페이지 + 접이식 지도 + 길찾기 + 메모). 아래 관광(kind:"visit")도 표시.
+  - 기관: `backlog`의 `kind:"org"` 9곳 카드를 **일자별 그룹**(`.fm-daygroup`+`.fm-dayhead`, 그룹 간 간격)으로 표시 → 시트(정보 + 공식 홈페이지 + **📄 기관자료 자세히보기** + 접이식 지도 + 메모). 아래 관광(kind:"visit")도 표시.
+    - 기관(kind:"org") 시트는 길찾기 대신 `o.doc||ORG_DOC_FALLBACK` PDF를 새 창으로 엶(차량 단체 이동이라 길찾기 불필요). `ORG_DOC_FALLBACK`은 현재 해외연수 계획서 PDF(목업). 기관별 사전조사 PDF 준비되면 `OFFICIAL_ORGS`에 `doc:"./파일.pdf"` 추가 + `service-worker.js` ASSETS에 선캐시. 관광(kind:"visit")은 기존 길찾기 유지.
   - 숙소: `lodging` 카드, 오늘 밤 숙소 강조(`fmPeriodCoversDay`). 시트에 접이식 지도 + 메모.
   - 식당: `kind:"food"` 없으면 "준비 중" 안내 + 일정표 meal 블록 목록.
   - 전체(메모·설정): 내 이름 설정(`saveMyName`), 내 메모 내보내기 — **HTML 저장**(`downloadMemos`, `buildMemoHtml`이 사진 data:URI까지 담은 단독 HTML 문서 생성) / **인쇄·PDF**(`printMemos`, 새 창에 HTML 쓰고 자동 `print()` → "PDF로 저장") / **공유**(`shareMemos`, Web Share로 .html 파일, 안되면 텍스트 요약 복사). 사진이 있으면 .txt로는 담을 수 없어 HTML로 전환함(`buildMemoText`는 텍스트 요약용으로 유지). **내 메모 모아보기**(`collectMyMemos`가 `tw_memodoc_p_*` 스캔 → 카드, 탭하면 `openSheetById`로 해당 시트 열기). "PC 대시보드로 전환"(`exitFieldMode`).
@@ -72,7 +73,7 @@
 
 ### 최근 개선 (2026-09-03, 4단계)
 1. **메모 안정성**: 개인 메모 = 이 폰 localStorage(1차) + Firebase `pmemos/<이름or기기>/<sheetId>`(2차 백업). 로컬이 비면 자동 복구, 더 최신이면 안내. 저장 실패 시 경고 배너. 공유 메모 "올리기" = 대기열(`tw_memo_pending`)에 먼저 확보 → 성공 시 제거, 실패 시 "⚠ 전송 실패·다시 시도", 연결 복구(`​.info/connected`·`online`) 시 자동 재전송. 작성 중 글은 `tw_memo_draft_<sheetId>`에 임시저장.
-2. **오프라인(PWA)**: `manifest.json` + `service-worker.js`(+아이콘 3개). 한 번 열면 신호 없이도 열림. HTML은 네트워크 우선, 나머지 캐시 우선, Firebase 실시간·구글지도는 SW가 손대지 않음. 시트 지도는 펼칠 때 로드, 오프라인이면 길찾기 링크로 대체.
+2. **오프라인(PWA)**: `manifest.json` + `service-worker.js`(+아이콘 3개 + 해외연수 계획서 PDF 선캐시). 한 번 열면 신호 없이도 열림. HTML은 네트워크 우선, 나머지 캐시 우선, Firebase 실시간·구글지도는 SW가 손대지 않음. 시트 지도는 펼칠 때 로드, 오프라인이면 길찾기 링크로 대체. ASSETS 변경 시 `CACHE` 버전 올릴 것(현재 `tw-tokyo-v2`).
 3. **읽기 개선**: 현장 모드 글씨 확대. 기관 시트 = 개요/방문 목적/사전 질문·확인 포인트 구조(`OFFICIAL_ORGS`의 `desc`/`purpose`/`points`). 담당자·홈페이지는 본문에서 제거(홈페이지는 버튼 유지). **purpose/points는 초안** — 사전 조사 자료 나오면 교체 후 관리자가 "PDF 일정표 불러오기" 1회 실행해야 공유 DB에 반영.
 4. **숙소 연동**: `lodgingForEvent()`가 stay 일정 블록을 장소/이름으로 숙소 카드에 매칭 → 어디서 열든 `memoId=lodging:<id>`로 통일(메모 공유). 숙소 시트에 "공유 메모로 꿀팁" 안내.
 5. **공유 메모 수정**: 내 글은 "수정" → 인라인 서식 편집 → 저장(`edited:true`, "수정됨" 표시).

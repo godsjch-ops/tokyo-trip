@@ -1027,6 +1027,9 @@ const TRIP_ID="tokyo2026";
 /* ▼ 편집 잠금: 참가자는 보기 전용. 관리자는 주소 뒤 ?edit 로 열고 아래 PIN 1회 입력 ▼
    (PIN은 원하는 값으로 바꾸세요. 기기에 저장되어 다음부터는 안 물어봅니다.) */
 const EDIT_PIN="2918";
+/* 기관별 사전조사 자료 PDF. 아직 없어서 현재는 해외연수 계획서로 대체(목업).
+   준비되면 OFFICIAL_ORGS 각 항목에 doc:"./파일명.pdf" 를 넣으면 그 기관만 교체됨. */
+const ORG_DOC_FALLBACK="./2026 따뜻한동행 일본 해외연수 계획서_20260903.pdf";
 const MYMAPS_MID="1O59R_FlNsb6EqQNAsSVZwUAOwPPK2q4";
 const MYMAPS_VIEW_URL=`https://www.google.com/maps/d/edit?mid=${MYMAPS_MID}&usp=sharing`;
 const MYMAPS_EMBED_URL=`https://www.google.com/maps/d/embed?mid=${MYMAPS_MID}`;
@@ -2223,7 +2226,9 @@ function buildOrgSheet(id){
     (pts.length?`<div class="sh-brief"><h4>사전 질문 · 확인 포인트</h4><ul>${pts.map(p=>`<li>${esc(p)}</li>`).join("")}</ul></div>`:"")+
     `<div class="sh-acts">`+
       (o.url?`<a class="fm-btn primary" href="${esc(o.url)}" target="_blank" rel="noopener">🔗 공식 홈페이지</a>`:"")+
-      (o.loc?`<a class="fm-btn" href="${searchUrl(o.loc)}" target="_blank" rel="noopener">🧭 길찾기</a>`:"")+
+      ((o.kind==="org")
+        ? `<a class="fm-btn" href="${esc(encodeURI(o.doc||ORG_DOC_FALLBACK))}" target="_blank" rel="noopener">📄 기관자료 자세히보기</a>`
+        : (o.loc?`<a class="fm-btn" href="${searchUrl(o.loc)}" target="_blank" rel="noopener">🧭 길찾기</a>`:""))+
     `</div>`+
     mapBlock(o.loc)+
     memoZoneHtml();
