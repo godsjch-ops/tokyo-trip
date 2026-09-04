@@ -572,6 +572,7 @@
   .mie-crop .hd.e{top:50%;right:-23px;margin-top:-23px;} .mie-crop .hd.e:before{top:13px;right:20px;width:3px;height:20px;}
   html.mie-open,html.mie-open body{overflow:hidden!important;}
   .mie-ctrl{padding:12px 15px 4px;}
+  .mie-hint{font-size:11px;color:var(--faint);margin:-4px 0 8px;line-height:1.5;}
   .mie-row{display:flex;align-items:center;gap:7px;margin-bottom:10px;}
   .mie-row .lb{font-size:11px;font-weight:800;color:var(--faint);width:38px;flex:none;letter-spacing:.03em;}
   .mie-row .seg{display:flex;gap:5px;flex-wrap:wrap;}
@@ -828,6 +829,7 @@
         <button data-s="480">작게</button><button data-s="800" class="on">보통</button>
         <button data-s="1200">크게</button><button data-s="full">원본</button>
       </div></div>
+      <div class="mie-hint" id="mieSizeHint" style="display:none">공유 메모 사진은 팀 전체에 전송돼 <b>보통</b>까지만 넣을 수 있어요.</div>
     </div>
     <div class="mie-foot">
       <button onclick="memoImgEditClose()">취소</button>
@@ -2677,7 +2679,15 @@ function memoImgEditOpen(src,done){
   if(!ov||!img){ memoCompressImage(src,done); return; }   // 안전장치
   _ie={done,ratio:null,size:800,box:null,drag:null};
   document.getElementById("mieRatio").querySelectorAll("button").forEach(b=>b.classList.toggle("on",b.dataset.r==="free"));
-  document.getElementById("mieSize").querySelectorAll("button").forEach(b=>b.classList.toggle("on",b.dataset.s==="800"));
+  // 공유 메모는 11명 모두에게 전송되므로 사진을 '보통'(800px)까지로 제한
+  const sharedMemo=(_memoMode==="s");
+  document.getElementById("mieSize").querySelectorAll("button").forEach(b=>{
+    const big=(b.dataset.s==="1200"||b.dataset.s==="full");
+    b.style.display=(sharedMemo&&big)?"none":"";
+    b.classList.toggle("on",b.dataset.s==="800");
+  });
+  const sizeHint=document.getElementById("mieSizeHint");
+  if(sizeHint)sizeHint.style.display=sharedMemo?"block":"none";
   ov.classList.add("on");
   document.documentElement.classList.add("mie-open");
   _ieBind();
@@ -2771,6 +2781,7 @@ function _ieBind(){
 }
 function memoImgEditApply(){
   if(!_ie||!_ie.box){ memoImgEditClose(); return; }
+  if(_memoMode==="s" && (_ie.size==="full" || _ie.size>800)) _ie.size=800;   // 공유 메모 상한
   const img=document.getElementById("mieImg"), b=_ie.box;
   const scale=_ie.nat/_ie.vw;               // 화면px → 원본px
   let sx=b.x*scale, sy=b.y*scale, sw=b.w*scale, sh=b.h*scale;
