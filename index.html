@@ -17,7 +17,7 @@
 <style>
   :root{
     /* iOS 계열 뉴트럴(살짝 쿨) — 야외·노안 대비 상향 */
-    --bg:#eef0f4; --panel:#ffffff; --ink:#16161a; --muted:#53535b; --faint:#8a8a93;
+    --bg:#eef0f4; --panel:#ffffff; --ink:#16161a; --muted:#48484f; --faint:#6b6b73;
     --line:#e8e8ee; --line2:#dbdbe2;
     --accent:#187FC4; --accent-soft:#e7f1f9; --accent-deep:#0c5f92;
     --secondary:#F08300; --secondary-light:#FABE00; --tertiary:#70B058; --tertiary-light:#C3CA00;
@@ -2266,9 +2266,8 @@ function viewFieldMore(){
   const chev=`<span class="chev"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 6l6 6-6 6"/></svg></span>`;
   let h="";
   h+=`<div class="fm-setgrp"><div class="fm-card2">`+
-      `<div class="fm-lrow tap" onclick="fieldTab('all');setTimeout(function(){var e=document.querySelector('.fm-memocard');if(e)e.scrollIntoView({behavior:'smooth'})},80)"><span class="rt">내 메모 모아보기</span><span class="rv">${mine.length}개${chev}</span></div>`+
       `<div class="fm-lrow tap" onclick="changeMyName()"><span class="rt">이름</span><span class="rv">${esc(myName||"-")}${isAdminName(myName)?" · 관리자":""}${chev}</span></div>`+
-    `</div><div class="foot">이름은 공유 메모 작성자로 표시돼요. 명단의 다른 이름으로만 바꿀 수 있어요.</div></div>`;
+    `</div><div class="foot">공유 메모 작성자로 표시돼요. 명단의 다른 이름으로만 바꿀 수 있어요.</div></div>`;
 
   h+=`<div class="fm-setgrp"><div class="lb">내 메모 내보내기</div><div class="fm-card2">`+
       `<div class="fm-lrow tap act" onclick="downloadMemos()"><span class="rt">HTML로 저장</span><span class="rv">사진 포함</span></div>`+
