@@ -1,7 +1,7 @@
 /* 따뜻한동행 연수 일정 — 오프라인 지원 서비스워커
  * 한 번 열어본 폰은 인터넷이 없어도 앱이 열립니다.
  * 캐시 버전을 올리면(CACHE 값 변경) 다음 접속 때 새 파일을 받습니다. */
-const CACHE = 'tw-tokyo-v2';
+const CACHE = 'tw-tokyo-v3';
 const ASSETS = [
   './',
   './index.html',
@@ -14,7 +14,8 @@ const ASSETS = [
   encodeURI('./2026 따뜻한동행 일본 해외연수 계획서_20260903.pdf'),
   'https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css',
   'https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js',
-  'https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js'
+  'https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js',
+  'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js'
 ];
 
 self.addEventListener('install', (e) => {

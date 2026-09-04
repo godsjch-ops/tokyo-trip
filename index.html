@@ -3,6 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<meta name="referrer" content="no-referrer">
 <title>일본 해외연수 일정 대시보드 (9/14~9/18)</title>
 <link rel="manifest" href="./manifest.json">
 <meta name="theme-color" content="#187FC4">
@@ -336,7 +338,28 @@
   /* 편집 잠금: 보기 전용(참가자)에서는 편집 UI 숨김 */
   body.viewer .editor-only{display:none!important;}
   body.viewer .m-foot{display:none!important;}
-  .editor-badge{background:var(--accent-soft)!important;color:var(--accent-deep)!important;border-color:transparent!important;}
+  /* 로그인 게이트 */
+  html.gated{overflow:hidden;}
+  .login-gate{position:fixed;inset:0;z-index:120;background:linear-gradient(160deg,#187FC4,#0d5a8f);
+    display:flex;align-items:center;justify-content:center;padding:24px;}
+  .login-gate[hidden]{display:none;}
+  .lg-card{background:#fff;border-radius:20px;padding:30px 24px 22px;max-width:360px;width:100%;
+    display:flex;flex-direction:column;align-items:center;text-align:center;box-shadow:0 24px 60px rgba(0,0,0,.28);}
+  .lg-logo{height:38px;width:auto;margin-bottom:14px;}
+  .lg-title{font-size:18px;font-weight:800;color:#0f172a;}
+  .lg-sub{font-size:13px;color:#64748b;line-height:1.6;margin:8px 0 18px;}
+  .lg-eg{display:inline-block;background:#f1f5f9;color:#475569;border-radius:6px;padding:1px 6px;font-size:12px;}
+  .lg-card input{width:100%;border:1.5px solid #cbd5e1;border-radius:12px;padding:13px 14px;font-size:16px;
+    text-align:center;outline:none;}
+  .lg-card input:focus{border-color:#187FC4;}
+  .lg-go{width:100%;margin-top:10px;border:0;border-radius:12px;padding:13px 0;background:#187FC4;color:#fff;
+    font-size:15px;font-weight:800;cursor:pointer;}
+  .lg-err{color:#dc2626;font-size:12.5px;line-height:1.5;margin-top:10px;}
+  .lg-err[hidden]{display:none;}
+  .lg-help{color:#94a3b8;font-size:11.5px;margin-top:14px;}
+  .net-offline{position:fixed;left:0;right:0;top:0;z-index:115;background:#b45309;color:#fff;
+    font-size:12px;font-weight:700;text-align:center;padding:5px 10px;letter-spacing:-.01em;}
+  .net-offline[hidden]{display:none;}
   @media(max-width:760px){ body.fm-open .app-shell{display:none;} }
   .fm-wrap{max-width:520px;margin:0 auto;}
   .fm-top{position:sticky;top:0;z-index:5;background:rgba(255,255,255,.94);backdrop-filter:blur(8px);
@@ -573,6 +596,11 @@
   html.mie-open,html.mie-open body{overflow:hidden!important;}
   .mie-ctrl{padding:12px 15px 4px;}
   .mie-hint{font-size:11px;color:var(--faint);margin:-4px 0 8px;line-height:1.5;}
+  .snap-list{margin-top:8px;display:flex;flex-direction:column;gap:6px;}
+  .snap-row{display:flex;align-items:center;justify-content:space-between;gap:10px;
+    background:#f8fafc;border:1px solid var(--line2);border-radius:9px;padding:8px 10px;font-size:13px;}
+  .snap-row .fm-btn{flex:none;padding:6px 12px;font-size:12px;}
+  .snap-meta{color:var(--faint);font-size:11.5px;}
   .mie-row{display:flex;align-items:center;gap:7px;margin-bottom:10px;}
   .mie-row .lb{font-size:11px;font-weight:800;color:var(--faint);width:38px;flex:none;letter-spacing:.03em;}
   .mie-row .seg{display:flex;gap:5px;flex-wrap:wrap;}
@@ -617,6 +645,18 @@
 </style>
 </head>
 <body>
+<div class="login-gate" id="loginGate" hidden>
+  <form class="lg-card" onsubmit="return loginSubmit(event)">
+    <img src="logo.png" alt="따뜻한동행" class="lg-logo">
+    <div class="lg-title">일본 해외연수 일정</div>
+    <div class="lg-sub">연수 참가자 전용입니다.<br>성을 포함한 <b>실명</b>을 입력해 주세요. <span class="lg-eg">예: 홍길동</span></div>
+    <input id="loginName" type="text" inputmode="text" autocomplete="name" placeholder="이름" oninput="var e=document.getElementById('loginErr');if(e)e.hidden=true">
+    <button type="submit" class="lg-go">입장</button>
+    <div class="lg-err" id="loginErr" hidden></div>
+    <div class="lg-help">명단에 없다고 나오면 주찬희에게 문의하세요.</div>
+  </form>
+</div>
+<div class="net-offline" id="netOffline" hidden>⚠ 오프라인 — 지금 변경한 내용은 연결되면 자동 반영돼요</div>
 <div class="sigbar"></div>
 <div class="app-shell">
   <div class="sidenav-backdrop" id="sideNavBackdrop" onclick="toggleSideNav(false)"></div>
@@ -645,10 +685,9 @@
     </div>
   </div>
   <div class="spacer"></div>
-  <button class="btn sm editor-badge" id="editorBadge" onclick="exitEditor()" style="display:none">✏️ 편집 가능 · 끄기</button>
   <button class="btn primary" onclick="enterFieldMode()">📱 현장 모드</button>
   <button class="btn editor-only" onclick="openForm()">＋ 일정 추가</button>
-  <button class="btn sm editor-only" onclick="loadOfficialItinerary()">📋 PDF 일정표 불러오기</button>
+  <button class="btn sm editor-only" id="btnLoadOfficial" onclick="loadOfficialItinerary()">📋 PDF 일정표 불러오기</button>
   <button class="btn sm editor-only" onclick="exportJSON()">내보내기</button>
   <button class="btn sm editor-only" onclick="document.getElementById('importFile').click()">불러오기</button>
   <input type="file" id="importFile" accept="application/json" style="display:none" onchange="importJSON(this)">
@@ -1023,6 +1062,7 @@
 
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <script>
 /* ---------- config ---------- */
 const START_H=6, END_H=24, ROW_H=50, PXMIN=ROW_H/60, SNAP=30;
@@ -1038,9 +1078,11 @@ const FIREBASE_CONFIG={
   appId:"1:748767875296:web:a00f7eea3c598e82504085"
 };
 const TRIP_ID="tokyo2026";
-/* ▼ 편집 잠금: 참가자는 보기 전용. 관리자는 주소 뒤 ?edit 로 열고 아래 PIN 1회 입력 ▼
-   (PIN은 원하는 값으로 바꾸세요. 기기에 저장되어 다음부터는 안 물어봅니다.) */
-const EDIT_PIN="2918";
+/* ▼ 접속 명단(계획서 2026-09-03 기준 11명). 첫 화면에서 성 포함 실명 입력 → 명단에 있으면 입장.
+   현장에서 이름이 안 맞으면 관리자(주찬희)가 아래 "명단 관리"에서 즉석 추가(재배포 불필요). */
+const ROSTER_SEED=["이광재","안연진","김선모","주찬희","강은정","김미진","손지현","김경혜","조재연","양대용","김민정"];
+/* ▼ 편집 권한: 로그인 이름이 이 명단에 있으면 편집 가능(그 외는 보기 전용). PIN 없음. */
+const ADMIN_NAMES=["주찬희"];
 /* 기관별 사전조사 자료 PDF. 아직 없어서 현재는 해외연수 계획서로 대체(목업).
    준비되면 OFFICIAL_ORGS 각 항목에 doc:"./파일명.pdf" 를 넣으면 그 기관만 교체됨. */
 const ORG_DOC_FALLBACK="./2026 따뜻한동행 일본 해외연수 계획서_20260903.pdf";
@@ -1078,20 +1120,65 @@ let fbdb=null;
 function fbBase(c){return `trips/${TRIP_ID}/${c}`;}
 function toMap(arr){const o={};(arr||[]).forEach(x=>o[x.id]=x);return o;}
 function valArr(snap){const v=snap.val();return v?Object.values(v):[];}
-function saveEvents(){if(fbdb){fbdb.ref(fbBase("events")).set(toMap(events));return;}try{localStorage.setItem(K_EV,JSON.stringify(events));}catch(e){toast("저장 공간이 가득 찼어요. 사진을 줄이거나 URL을 사용하세요.");}}
-function persistBacklog(){if(fbdb){fbdb.ref(fbBase("backlog")).set(toMap(backlog));return;}try{localStorage.setItem(K_BL,JSON.stringify(backlog));}catch(e){}}
-function persistLodging(){if(fbdb){fbdb.ref(fbBase("lodging")).set(toMap(lodging));return;}try{localStorage.setItem(K_LG,JSON.stringify(lodging));}catch(e){}}
-function persistDetail(k){if(fbdb){fbdb.ref(fbBase("detail/"+k)).set(toMap(detailData[k]));return;}try{localStorage.setItem("tokyo_trip_2026_detail_"+k,JSON.stringify(detailData[k]));}catch(e){}}
-function initFirebase(){
+/* 마지막으로 알려진 원격 상태(맵). 저장 시 이것과 비교해 '바뀐 항목만' 쓰기 →
+   관리자 둘이 서로 다른 블록을 편집해도 통째 덮어쓰기(clobber) 없음. */
+let _fbShadow={events:{},backlog:{},lodging:{},detail:{}};
+function fbShadowSet(key,mapVal){ _fbShadow[key]=mapVal||{}; }
+function fbReconcile(coll,arr,shadowKey){
+  if(!fbdb) return false;
+  const ref=fbdb.ref(fbBase(coll));
+  const now=toMap(arr), prev=_fbShadow[shadowKey]||{}, updates={};
+  Object.keys(now).forEach(id=>{ if(JSON.stringify(now[id])!==JSON.stringify(prev[id])) updates[id]=now[id]; });
+  Object.keys(prev).forEach(id=>{ if(!(id in now)) updates[id]=null; });   // 삭제 = null
+  if(Object.keys(updates).length){ ref.update(updates).catch(()=>{}); }
+  _fbShadow[shadowKey]=now;
+  return true;
+}
+function saveEvents(){if(fbReconcile("events",events,"events"))return;try{localStorage.setItem(K_EV,JSON.stringify(events));}catch(e){toast("저장 공간이 가득 찼어요. 사진을 줄이거나 URL을 사용하세요.");}}
+function persistBacklog(){if(fbReconcile("backlog",backlog,"backlog"))return;try{localStorage.setItem(K_BL,JSON.stringify(backlog));}catch(e){}}
+function persistLodging(){if(fbReconcile("lodging",lodging,"lodging"))return;try{localStorage.setItem(K_LG,JSON.stringify(lodging));}catch(e){}}
+function persistDetail(k){if(fbReconcile("detail/"+k,detailData[k],"detail/"+k))return;try{localStorage.setItem("tokyo_trip_2026_detail_"+k,JSON.stringify(detailData[k]));}catch(e){}}
+let fbAuthReady=null;   // Promise — 익명 로그인 완료(또는 실패)
+function initFirebaseAuth(){
+  if(fbAuthReady) return fbAuthReady;
   firebase.initializeApp(FIREBASE_CONFIG);
+  fbAuthReady=new Promise(resolve=>{
+    let done=false; const fin=()=>{ if(!done){done=true;resolve();} };
+    try{
+      const auth=firebase.auth();
+      auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL).catch(()=>{});
+      auth.onAuthStateChanged(u=>{ if(u) fin(); });
+      auth.signInAnonymously().then(fin).catch(fin);
+    }catch(e){ fin(); }
+    setTimeout(fin,6000);   // 오프라인 등: 무한 대기 방지
+  });
+  return fbAuthReady;
+}
+function fbCache(k,v){ try{ localStorage.setItem("tw_cache_"+k,JSON.stringify(v)); }catch(e){} }
+function hydrateFromCache(){
+  try{
+    const e=JSON.parse(localStorage.getItem("tw_cache_events")||"null");
+    const b=JSON.parse(localStorage.getItem("tw_cache_backlog")||"null");
+    const l=JSON.parse(localStorage.getItem("tw_cache_lodging")||"null");
+    const d=JSON.parse(localStorage.getItem("tw_cache_detail")||"null");
+    if(Array.isArray(e)&&!events.length)events=e;
+    if(Array.isArray(b)&&!backlog.length)backlog=b;
+    if(Array.isArray(l)&&!lodging.length)lodging=l;
+    if(d)Object.keys(d).forEach(k=>{ if(detailData[k]&&!detailData[k].length&&Array.isArray(d[k]))detailData[k]=d[k]; });
+    if(events.length||backlog.length||lodging.length)render();
+  }catch(e){}
+}
+function initFirebase(){
   fbdb=firebase.database();
-  fbdb.ref(fbBase("events")).on("value",s=>{events=valArr(s);if(!drag)render();});
-  fbdb.ref(fbBase("backlog")).on("value",s=>{backlog=valArr(s);if(!drag)render();if(currentPage==='visit'||currentPage==='food')renderDetailCards();});
-  fbdb.ref(fbBase("lodging")).on("value",s=>{lodging=valArr(s);if(!drag)render();if(currentPage==='lodging')renderDetailCards();});
-  Object.keys(DETAIL_SECTIONS).forEach(k=>fbdb.ref(fbBase("detail/"+k)).on("value",s=>{detailData[k]=valArr(s);if(currentPage===k)renderDetailCards();}));
+  fbdb.ref(fbBase("events")).on("value",s=>{fbShadowSet("events",s.val()||{});events=valArr(s);fbCache("events",events);if(!drag)render();});
+  fbdb.ref(fbBase("backlog")).on("value",s=>{fbShadowSet("backlog",s.val()||{});backlog=valArr(s);fbCache("backlog",backlog);if(!drag)render();if(currentPage==='visit'||currentPage==='food')renderDetailCards();});
+  fbdb.ref(fbBase("lodging")).on("value",s=>{fbShadowSet("lodging",s.val()||{});lodging=valArr(s);fbCache("lodging",lodging);if(!drag)render();if(currentPage==='lodging')renderDetailCards();});
+  Object.keys(DETAIL_SECTIONS).forEach(k=>fbdb.ref(fbBase("detail/"+k)).on("value",s=>{fbShadowSet("detail/"+k,s.val()||{});detailData[k]=valArr(s);fbCache("detail",detailData);if(currentPage===k)renderDetailCards();}));
+  fbdb.ref(fbBase("roster")).on("value",s=>{ _rosterExtra=s.val()?Object.values(s.val()).map(x=>x&&x.name).filter(Boolean):[]; });
+  snapshotStart();
   const sb=document.getElementById("syncBadge");if(sb)sb.innerHTML=' · <b style="color:#059669">실시간 공유 중</b>';
   // 연결이 살아나면 못 보낸 공유 메모 자동 재전송
-  try{ fbdb.ref(".info/connected").on("value",s=>{ if(s.val()===true) setTimeout(memoFlushPending,600); }); }catch(e){}
+  try{ fbdb.ref(".info/connected").on("value",s=>{ updateNet(s.val()===true); if(s.val()===true) setTimeout(memoFlushPending,600); }); }catch(e){}
   // 메모 배지(새 글 알림)용 요약 노드
   try{ fbdb.ref(fbBase("memos_meta")).on("value",s=>{
     _memoMeta=s.val()||{};
@@ -1104,11 +1191,107 @@ function initFirebase(){
     renderFieldBadges(); fmRefreshItemDots();
   }); }catch(e){}
 }
-function boot(){
-  if(FIREBASE_CONFIG){try{initFirebase();return;}catch(e){toast("Firebase 연결 실패 — 설정을 확인하세요. 이 기기 저장으로 전환합니다.");}}
+function localMode(){
+  fbdb=null;
   events=loadJSON(K_EV,seedEvents);backlog=loadJSON(K_BL,seedBacklog);lodging=loadJSON(K_LG,seedLodging);
   Object.keys(DETAIL_SECTIONS).forEach(k=>{detailData[k]=loadJSON("tokyo_trip_2026_detail_"+k,()=>[]);});
   render();
+}
+async function startApp(){
+  TODAY_IDX=computeTodayIdx();if(TODAY_IDX>=0)mobileDay=TODAY_IDX;
+  updateTripStatus();
+  // 저장된 로그인이 있으면 즉시 입장(오프라인 포함)
+  const saved=localStorage.getItem("tw_name");
+  if(saved && (localStorage.getItem("tw_login_ok")==="1" || matchRoster(saved).status==="ok")){
+    LOGIN_NAME=saved; enterApp();
+  }else{
+    showLoginGate();
+  }
+  if(FIREBASE_CONFIG){
+    hydrateFromCache();   // 오프라인/느린 연결: 마지막으로 받은 일정 즉시 표시
+    try{ await initFirebaseAuth(); initFirebase(); }
+    catch(e){ toast("Firebase 연결 실패 — 이 기기 저장으로 전환합니다."); localMode(); }
+  }else{ localMode(); }
+}
+function enterApp(){
+  const g=document.getElementById("loginGate"); if(g)g.hidden=true;
+  document.documentElement.classList.remove("gated");
+  initAdminGate();
+  initTopMap();
+  if(new Date()>=TRIP_START){ const b=document.getElementById("btnLoadOfficial"); if(b)b.style.display="none"; }
+  fmMaybeAutoEnter();
+}
+/* ---------- 로그인 게이트 (이름 명단) ---------- */
+let _rosterExtra=[], LOGIN_NAME="";
+function rosterAll(){ return ROSTER_SEED.concat(_rosterExtra); }
+function normName(s){ return String(s||"").replace(/\s+/g,"").toLowerCase(); }
+function editDist(a,b){
+  const m=a.length,n=b.length,d=Array.from({length:m+1},(_,i)=>[i].concat(Array(n).fill(0)));
+  for(let j=1;j<=n;j++)d[0][j]=j;
+  for(let i=1;i<=m;i++)for(let j=1;j<=n;j++)
+    d[i][j]=Math.min(d[i-1][j]+1,d[i][j-1]+1,d[i-1][j-1]+(a[i-1]===b[j-1]?0:1));
+  return d[m][n];
+}
+function matchRoster(input){
+  const q=normName(input);
+  if(q.length<2) return {status:"short"};
+  const list=rosterAll();
+  for(const n of list){ if(normName(n)===q) return {status:"ok",name:n}; }
+  const inc=list.filter(n=>{ const nn=normName(n); return nn.length>=2 && (q.indexOf(nn)>=0||nn.indexOf(q)>=0); });
+  if(inc.length===1) return {status:"ok",name:inc[0]};
+  if(inc.length>1) return {status:"ambiguous"};
+  if(q.length>=3){
+    const fz=list.filter(n=>{ const nn=normName(n); return Math.abs(nn.length-q.length)<=1 && editDist(nn,q)<=1; });
+    if(fz.length===1) return {status:"ok",name:fz[0]};
+    if(fz.length>1) return {status:"ambiguous"};
+  }
+  return {status:"none"};
+}
+function showLoginGate(){
+  document.documentElement.classList.add("gated");
+  const g=document.getElementById("loginGate"); if(g)g.hidden=false;
+  setTimeout(()=>{ const i=document.getElementById("loginName"); if(i)i.focus(); },100);
+}
+function loginSubmit(e){
+  if(e)e.preventDefault();
+  const inp=document.getElementById("loginName"), err=document.getElementById("loginErr");
+  const r=matchRoster(inp.value);
+  if(r.status==="ok"){
+    LOGIN_NAME=r.name;
+    try{ localStorage.setItem("tw_name",r.name); localStorage.setItem("tw_login_ok","1"); }catch(_){}
+    enterApp();
+    return false;
+  }
+  const waiting=(r.status==="none" && FIREBASE_CONFIG && !(_rosterExtra.length) && !fbdb);
+  err.textContent = waiting ? "연결 중이에요. 잠시 후 다시 시도해 주세요."
+    : r.status==="short" ? "성을 포함한 실명을 입력해 주세요."
+    : r.status==="ambiguous" ? "이름이 겹쳐요. 성을 포함한 전체 이름을 입력해 주세요."
+    : "명단에서 이름을 찾지 못했어요. 성을 포함해 다시 입력하거나 주찬희에게 문의하세요.";
+  err.hidden=false;
+  return false;
+}
+/* ---------- 스냅샷 (일정 데이터 자동 백업 · 최근 30개) ---------- */
+let _snapT=null,_snapLastHash="";
+function snapMapAll(){ return JSON.stringify([toMap(events),toMap(backlog),toMap(lodging),
+  Object.keys(detailData).map(k=>toMap(detailData[k]))]); }
+function snapshotStart(){
+  if(_snapT||!fbdb)return;
+  _snapLastHash=snapMapAll();
+  _snapT=setInterval(()=>{ if(!fbdb||!IS_EDITOR)return; const h=snapMapAll(); if(h!==_snapLastHash){ _snapLastHash=h; snapshotWrite("auto"); } },15*60*1000);
+}
+function snapshotWrite(reason){
+  if(!fbdb)return Promise.resolve();
+  const snap={ ts:Date.now(), by:LOGIN_NAME||"?", reason:reason||"auto",
+    events:toMap(events), backlog:toMap(backlog), lodging:toMap(lodging),
+    detail:Object.keys(detailData).reduce((o,k)=>{o[k]=toMap(detailData[k]);return o;},{}) };
+  return fbdb.ref(fbBase("snapshots")).push(snap).then(snapshotPrune).catch(()=>{});
+}
+function snapshotPrune(){
+  if(!fbdb)return;
+  fbdb.ref(fbBase("snapshots")).orderByKey().once("value").then(s=>{
+    const keys=[]; s.forEach(c=>keys.push(c.key));
+    for(let i=0;i<keys.length-30;i++) fbdb.ref(fbBase("snapshots")+"/"+keys[i]).remove().catch(()=>{});
+  }).catch(()=>{});
 }
 function uid(){return "e"+Math.random().toString(36).slice(2,9);}
 // 기본값 = PDF 최종본(2026-09-03). Firebase 미사용(이 기기 저장) 시 첫 실행 데이터.
@@ -1145,29 +1328,28 @@ function navigateTo(key){
   renderDetailCards();
 }
 
-/* ---------- 편집 잠금(참가자=보기 전용 / 관리자=?edit + PIN) ---------- */
-function initEditorGate(){
-  const url=(location.search+" "+location.hash);
-  if(/[?&#]\s*view(\b|=)/i.test(url)){ try{localStorage.removeItem("tw_editor");}catch(e){} }
-  else if(/[?&#]\s*edit(\b|=)/i.test(url) && localStorage.getItem("tw_editor")!=="granted"){
-    const p=(prompt("편집 모드 PIN을 입력하세요")||"").trim();
-    if(p===EDIT_PIN){ try{localStorage.setItem("tw_editor","granted");}catch(e){} }
-    else if(p){ alert("PIN이 올바르지 않습니다. 보기 전용으로 엽니다."); }
-  }
-  IS_EDITOR = (localStorage.getItem("tw_editor")==="granted");
+/* ---------- 편집 권한(로그인 이름이 관리자 명단에 있으면 편집 가능) ---------- */
+function isAdminName(nm){ return ADMIN_NAMES.some(n=>normName(n)===normName(nm)); }
+function initAdminGate(){
+  IS_EDITOR = isAdminName(LOGIN_NAME);
   document.body.classList.toggle("viewer", !IS_EDITOR);
-  const b=document.getElementById("editorBadge"); if(b)b.style.display=IS_EDITOR?"":"none";
   if(!IS_EDITOR){ editMode=false; const t=document.getElementById("editModeToggle"); if(t)t.checked=false; }
 }
 function requireEditor(){
   if(IS_EDITOR)return true;
-  toast("보기 전용 모드예요. 편집은 관리자만 할 수 있어요.");
+  toast("보기 전용이에요. 일정 편집은 관리자(주찬희)만 할 수 있어요.");
   return false;
 }
-function exitEditor(){
-  if(!confirm("이 기기에서 편집 모드를 끌까요? (다시 켜려면 주소 뒤에 ?edit)"))return;
-  try{localStorage.removeItem("tw_editor");}catch(e){}
-  location.href=location.pathname;
+/* 이름 변경(현장 모드 설정) */
+function changeMyName(){
+  const cur=localStorage.getItem("tw_name")||"";
+  const v=(prompt("이름을 다시 입력하세요 (성 포함 실명)",cur)||"").trim();
+  if(!v)return;
+  const r=matchRoster(v);
+  if(r.status!=="ok"){ toast("명단에서 찾지 못했어요. 주찬희에게 문의하세요."); return; }
+  LOGIN_NAME=r.name;
+  try{ localStorage.setItem("tw_name",r.name); localStorage.setItem("tw_login_ok","1"); }catch(_){}
+  initAdminGate(); render(); toast("이름을 "+r.name+"(으)로 바꿨어요.");
 }
 /* ---------- edit mode ---------- */
 function setEditMode(on){
@@ -1557,10 +1739,18 @@ function exportJSON(){
   const blob=new Blob([JSON.stringify({events,backlog,lodging},null,2)],{type:"application/json"});
   const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="tokyo_trip_schedule.json";a.click();URL.revokeObjectURL(a.href);
 }
+/* 전면 교체처럼 되돌리기 어려운 작업 = 단어 타이핑 확인 */
+function typedConfirm(msg,word){
+  const v=prompt(msg+"\n\n계속하려면 아래에 \""+word+"\" 를 그대로 입력하세요.");
+  return v!=null && v.trim()===word;
+}
 function importJSON(input){
-  if(!requireEditor())return;
-  const f=input.files[0];if(!f)return;const r=new FileReader();
+  if(!requireEditor()){ input.value=""; return; }
+  const f=input.files[0];if(!f){input.value="";return;}
+  if(!typedConfirm("불러온 파일로 현재 일정·후보·숙소를 전면 교체합니다. (메모는 유지)","전면교체")){ input.value=""; toast("취소했어요."); return; }
+  const r=new FileReader();
   r.onload=e=>{try{const d=JSON.parse(e.target.result);
+    if(fbdb)snapshotWrite("import");
     if(Array.isArray(d))events=d;
     else{if(Array.isArray(d.events))events=d.events;if(Array.isArray(d.backlog))backlog=d.backlog;if(Array.isArray(d.lodging))lodging=d.lodging;}
     saveEvents();persistBacklog();persistLodging();render();toast("불러왔습니다.");
@@ -1827,8 +2017,10 @@ function buildOfficialEvents(){return[
 ];}
 function loadOfficialItinerary(){
   if(!requireEditor())return;
+  if(new Date()>=TRIP_START){ toast("연수가 시작돼서 전면 교체는 잠겼어요. 필요하면 개별 편집 또는 스냅샷 복원을 쓰세요."); return; }
   try{exportJSON();}catch(e){}
-  if(!confirm("현재 일정·방문기관·숙소 데이터를 최신 일정표(PDF)로 전면 교체합니다.\n\n· 방금 백업 JSON이 다운로드됐어요. 되돌리려면 상단 '불러오기'로 그 파일을 여세요.\n· 개인/공유 메모는 그대로 유지됩니다.\n\n계속할까요?"))return;
+  if(!typedConfirm("현재 일정·방문기관·숙소를 계획서(PDF) 최종본으로 전면 교체합니다.\n· 방금 백업 JSON이 다운로드됐어요.\n· 개인/공유 메모는 유지됩니다.","전면교체"))return;
+  if(fbdb)snapshotWrite("load-official");
   events=buildOfficialEvents();
   const keepFood=backlog.filter(x=>x.kind==="food");
   backlog=OFFICIAL_ORGS.map(o=>Object.assign({},o))
@@ -1993,13 +2185,14 @@ function fmTimelineHtml(di){
 }
 /* ---------- 전체 탭: 메모 모아보기 + 설정 ---------- */
 function viewFieldMore(){
-  const myName=localStorage.getItem("tw_name")||"";
+  const myName=localStorage.getItem("tw_name")||LOGIN_NAME||"";
   const mine=collectMyMemos();
   let h="";
-  h+=`<div class="fm-setgrp"><div class="lb">내 이름 (공유 메모 작성자)</div>`+
+  h+=`<div class="fm-setgrp"><div class="lb">내 이름</div>`+
     `<div class="fm-card2"><div class="fm-namerow">`+
-      `<input id="fmSetName" type="text" placeholder="이름을 입력하세요" value="${esc(myName)}">`+
-      `<button class="memo-save" onclick="saveMyName()">저장</button></div></div></div>`;
+      `<div style="flex:1;font-weight:700;font-size:15px">${esc(myName||"-")}${isAdminName(myName)?' <span class="tag">관리자</span>':''}</div>`+
+      `<button class="memo-save" onclick="changeMyName()">바꾸기</button></div>`+
+      `<div class="memo-help" style="margin:8px 0 0">공유 메모 작성자로 표시돼요. 명단의 다른 이름으로만 바꿀 수 있어요.</div></div></div>`;
   h+=`<div class="fm-setgrp"><div class="lb">내 메모 내보내기</div>`+
     `<div class="fm-card2"><div class="fm-actrow">`+
       `<button class="fm-btn primary" onclick="downloadMemos()">📄 HTML 저장</button>`+
@@ -2017,14 +2210,72 @@ function viewFieldMore(){
     });
   }
   h+=`</div>`;
+  if(IS_EDITOR && fbdb){
+    h+=`<div class="fm-setgrp"><div class="lb">관리자 · 접속 명단</div>`+renderRosterAdmin()+`</div>`;
+    h+=`<div class="fm-setgrp"><div class="lb">관리자 · 스냅샷 복원 (일정 데이터)</div><div class="fm-card2">`+
+      `<div class="memo-help" style="margin:0 0 8px">"일정표 불러오기"·"파일 불러오기"·15분마다 자동으로 저장돼요(최근 30개).</div>`+
+      `<button class="fm-btn" onclick="snapshotWrite('manual').then(()=>{toast('지금 상태를 저장했어요.');snapshotLoadList();})">💾 지금 상태 저장</button>`+
+      `<div class="snap-list" id="snapList"></div>`+
+      `<button class="fm-btn" onclick="snapshotLoadList()">목록 새로고침</button></div></div>`;
+  }
   h+=`<div class="fm-setgrp"><div class="lb">화면</div><div class="fm-card2">`+
     `<button class="fm-btn" onclick="exitFieldMode()">🖥️ PC 대시보드로 전환</button></div></div>`;
+  setTimeout(()=>{ if(IS_EDITOR&&fbdb&&document.getElementById("snapList")) snapshotLoadList(); },60);
   return h;
 }
-function saveMyName(){
-  const v=(document.getElementById("fmSetName").value||"").trim();
-  if(!v){ toast("이름을 입력해 주세요."); return; }
-  localStorage.setItem("tw_name",v); toast("이름을 저장했어요.");
+function renderRosterAdmin(){
+  return `<div class="fm-card2">`+
+    `<div class="memo-help" style="margin:0 0 8px">기본 11명은 코드에 있어요. 여기서 추가/삭제한 이름은 즉시 반영돼요.</div>`+
+    `<div class="fm-namerow"><input id="rosterNew" type="text" placeholder="추가할 이름 (성 포함)">`+
+    `<button class="memo-save" onclick="rosterAdd()">추가</button></div>`+
+    (_rosterExtra.length?`<div class="snap-list">`+_rosterExtra.map(n=>
+      `<div class="snap-row"><span>${esc(n)}</span><button class="fm-btn" onclick="rosterDel('${esc(n).replace(/'/g,"\\'")}')">삭제</button></div>`).join("")+`</div>`:"")+
+    `</div>`;
+}
+function rosterAdd(){
+  if(!requireEditor()||!fbdb)return;
+  const el=document.getElementById("rosterNew"), v=(el.value||"").trim();
+  if(v.length<2){ toast("이름을 입력해 주세요."); return; }
+  fbdb.ref(fbBase("roster")).push({name:v,by:LOGIN_NAME,ts:Date.now()}).then(()=>{ el.value=""; toast("추가: "+v); setTimeout(renderField,250); }).catch(()=>toast("추가 실패"));
+}
+function rosterDel(name){
+  if(!requireEditor()||!fbdb)return;
+  if(!confirm(name+" 을(를) 명단에서 뺄까요?"))return;
+  fbdb.ref(fbBase("roster")).once("value").then(s=>{
+    s.forEach(c=>{ if(c.val()&&c.val().name===name) fbdb.ref(fbBase("roster")+"/"+c.key).remove().catch(()=>{}); });
+    toast("삭제했어요."); setTimeout(renderField,300);
+  });
+}
+function snapshotLoadList(){
+  const box=document.getElementById("snapList"); if(!box||!fbdb)return;
+  box.textContent="불러오는 중…";
+  fbdb.ref(fbBase("snapshots")).orderByKey().limitToLast(30).once("value").then(s=>{
+    const rows=[]; s.forEach(c=>rows.push([c.key,c.val()])); rows.reverse();
+    if(!rows.length){ box.textContent="저장된 스냅샷이 없어요."; return; }
+    box.innerHTML=rows.map(([k,v])=>{
+      const d=new Date(v.ts||0);
+      const when=`${d.getMonth()+1}/${d.getDate()} ${String(d.getHours()).padStart(2,"0")}:${String(d.getMinutes()).padStart(2,"0")}`;
+      const cnt=v.events?Object.keys(v.events).length:0;
+      const rs={auto:"자동","load-official":"일정표교체","import":"파일불러오기","pre-restore":"복원 전","manual":"수동"}[v.reason]||v.reason||"";
+      return `<div class="snap-row"><div><b>${when}</b><br><span class="snap-meta">일정 ${cnt}개 · ${esc(rs)} · ${esc(v.by||"")}</span></div>`+
+        `<button class="fm-btn" onclick="snapshotRestore('${k}')">되돌리기</button></div>`;
+    }).join("");
+  }).catch(()=>{ box.textContent="불러오기 실패"; });
+}
+function snapshotRestore(key){
+  if(!requireEditor()||!fbdb)return;
+  if(!typedConfirm("이 시점으로 일정·후보·숙소 데이터를 되돌립니다.\n· 현재 상태는 되돌리기 전에 자동 저장돼요.\n· 메모는 영향 없어요.","되돌리기"))return;
+  fbdb.ref(fbBase("snapshots")+"/"+key).once("value").then(s=>{
+    const snap=s.val(); if(!snap){ toast("스냅샷을 찾을 수 없어요."); return; }
+    snapshotWrite("pre-restore").then(()=>{
+      const w={};
+      w[fbBase("events")]=snap.events||null;
+      w[fbBase("backlog")]=snap.backlog||null;
+      w[fbBase("lodging")]=snap.lodging||null;
+      Object.keys(DETAIL_SECTIONS).forEach(k=>{ w[fbBase("detail/"+k)]=(snap.detail&&snap.detail[k])||null; });
+      fbdb.ref().update(w).then(()=>{ toast("복원했어요."); setTimeout(renderField,400); }).catch(()=>toast("복원 실패"));
+    });
+  });
 }
 /* sheetId(예: org:org-1)로 해당 상세 시트 열기 */
 function openSheetById(sheetId){
@@ -2437,17 +2688,10 @@ function memoSafeStyle(s){
 function twUid(){ let u=localStorage.getItem("tw_uid");
   if(!u){ u="u"+Date.now().toString(36)+Math.random().toString(36).slice(2,7); try{localStorage.setItem("tw_uid",u);}catch(e){} }
   return u; }
-/* 개인 메모 백업 소유자 키 — 이름이 있으면 이름 기준(기기 바뀌어도 복구), 없으면 이 기기 */
-function pmemoOwnerKey(){
-  const n=(localStorage.getItem("tw_name")||"").trim().toLowerCase().replace(/\s+/g,"");
-  return fbKey(n?("n_"+n):("d_"+twUid()));
-}
+/* 개인 메모 백업 소유자 키 — 이 기기 고유 ID 기준(동명이인 충돌 없음). 이름은 복구 힌트로만 저장. */
+function pmemoOwnerKey(){ return fbKey("d_"+twUid()); }
 function pmemoRef(id){ return fbdb.ref(fbBase("pmemos")+"/"+pmemoOwnerKey()+"/"+fbKey(id)); }
-function fmAuthor(){
-  let n=localStorage.getItem("tw_name");
-  if(!n){ n=(prompt("공유 메모에 표시할 이름을 입력하세요 (최초 1회)")||"").trim(); if(n)localStorage.setItem("tw_name",n); }
-  return n||"익명";
-}
+function fmAuthor(){ return (localStorage.getItem("tw_name")||LOGIN_NAME||"익명"); }
 function fmTime(ts){ if(!ts)return""; const d=new Date(ts); return `${d.getMonth()+1}/${d.getDate()} ${d.getHours()}:${String(d.getMinutes()).padStart(2,"0")}`; }
 function fbKey(id){ return id.replace(/[.#$\[\]/]/g,"_"); }
 /* 공유 메모는 타인이 쓴 내용 = 신뢰 불가. 허용 태그만 남기고 속성 전부 제거(XSS 방지) */
@@ -2478,14 +2722,14 @@ function memoHtmlToText(html){
   d.querySelectorAll("div,p,li,h1,h2,h3").forEach(el=>el.appendChild(document.createTextNode("\n")));
   return (d.textContent||"").replace(/\n{3,}/g,"\n\n").replace(/[ \t]+\n/g,"\n").trim();
 }
-/* ---- 개인 문서 저장소 (이 기기 1차 + Firebase 2차 백업) ---- */
+/* ---- 개인 문서 저장소 (이 기기 + Firebase 동시 저장, 더 최신 쪽을 신뢰) ---- */
 function memoPDocGet(id){ return localStorage.getItem("tw_memodoc_p_"+id); }
 function memoPDocSet(id,html){
   let localOk=true;
   try{ localStorage.setItem("tw_memodoc_p_"+id,html); localStorage.setItem("tw_memodoc_pts_"+id,String(Date.now())); }
-  catch(e){ localOk=false; toast("이 폰에 저장하지 못했어요 — 내용을 복사해 두세요."); }
+  catch(e){ localOk=false; toast("이 폰에 저장하지 못했어요 — 클라우드에는 저장 시도 중."); }
   memoShowSaveWarn(!localOk);
-  if(fbdb){ try{ pmemoRef(id).set({html:html,ts:Date.now()}); }catch(e){} }   // 2차 백업(조용히)
+  if(fbdb){ try{ pmemoRef(id).set({html:html,ts:Date.now(),name:(localStorage.getItem("tw_name")||LOGIN_NAME||"")}); }catch(e){} }
 }
 function memoShowSaveWarn(on){
   const w=document.getElementById("fmMemoWarn"); if(!w)return;
@@ -3083,10 +3327,15 @@ async function shareMemos(){
   }catch(e){ if(e&&e.name==="AbortError")return; try{await navigator.clipboard.writeText(summary); toast("메모 텍스트를 복사했어요. (사진은 HTML 저장을 이용하세요)");}catch(_){toast("공유를 사용할 수 없어요.");} }
 }
 
-TODAY_IDX=computeTodayIdx();if(TODAY_IDX>=0)mobileDay=TODAY_IDX;
-updateTripStatus();
-initEditorGate();
-initTopMap();boot();fmMaybeAutoEnter();
+function updateNet(connected){
+  const el=document.getElementById("netOffline"); if(!el)return;
+  const off=(connected===false)||(navigator.onLine===false);
+  el.hidden=!off;
+}
+window.addEventListener("offline",()=>updateNet(false));
+window.addEventListener("online",()=>updateNet(true));
+updateNet();
+startApp();
 window.addEventListener("online",()=>setTimeout(memoFlushPending,400));
 setTimeout(memoFlushPending,3000);
 /* 오프라인 지원: 한 번 열어본 폰은 인터넷 없이도 앱이 열림 */
