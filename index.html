@@ -640,7 +640,6 @@
   <button class="btn sm editor-only" onclick="exportJSON()">내보내기</button>
   <button class="btn sm editor-only" onclick="document.getElementById('importFile').click()">불러오기</button>
   <input type="file" id="importFile" accept="application/json" style="display:none" onchange="importJSON(this)">
-  <button class="btn sm editor-only" onclick="migrateLocal()">📤 기기데이터 올리기</button>
 </header>
 
 <div class="wrap" id="pageHome">
@@ -696,7 +695,7 @@
       <div class="ts-left">
         <span class="ts-title"><span>🗓️</span> 주간 일정표</span>
         <div class="leg">
-          <span class="dot"><i class="sw" style="background:var(--visit)"></i>방문</span>
+          <span class="dot"><i class="sw" style="background:var(--visit)"></i>체험/방문</span>
           <span class="dot"><i class="sw" style="background:var(--meal)"></i>식사</span>
           <span class="dot"><i class="sw" style="background:var(--move)"></i>이동</span>
           <span class="dot"><i class="sw" style="background:var(--stay)"></i>숙소</span>
@@ -932,7 +931,7 @@
         <div class="full"><label>일정 제목 *</label><input id="fTitle" placeholder="예: 도쿄대 캠퍼스 견학"></div>
         <div><label>날짜 *</label><select id="fDay"></select></div>
         <div><label>분류</label><select id="fCat">
-          <option value="visit">방문</option><option value="meal">식사</option><option value="move">이동</option>
+          <option value="visit">체험/방문</option><option value="meal">식사</option><option value="move">이동</option>
           <option value="stay">숙소</option><option value="meet">회의/연수</option><option value="free">자유</option>
         </select></div>
         <div><label>시작 시간 *</label><input type="time" id="fStart" step="1800" value="09:00"></div>
@@ -1033,7 +1032,7 @@ const MYMAPS_VIEW_URL=`https://www.google.com/maps/d/edit?mid=${MYMAPS_MID}&usp=
 const MYMAPS_EMBED_URL=`https://www.google.com/maps/d/embed?mid=${MYMAPS_MID}`;
 const DAYS=[{label:"9/14",dow:"월"},{label:"9/15",dow:"화"},{label:"9/16",dow:"수"},{label:"9/17",dow:"목"},{label:"9/18",dow:"금"}];
 const CAT={
-  visit:{name:"방문",color:"#3b82f6"},meal:{name:"식사",color:"#f59e0b"},move:{name:"이동",color:"#10b981"},
+  visit:{name:"체험/방문",color:"#3b82f6"},meal:{name:"식사",color:"#f59e0b"},move:{name:"이동",color:"#10b981"},
   stay:{name:"숙소",color:"#8b5cf6"},meet:{name:"회의/연수",color:"#ef4444"},free:{name:"자유",color:"#64748b"}};
 const K_EV="tokyo_trip_2026_events",K_BL="tokyo_trip_2026_backlog",K_LG="tokyo_trip_2026_lodging";
 const DETAIL_SECTIONS={
@@ -1647,18 +1646,6 @@ function saveDetailItem(){
   toast(dEditId?"수정되었습니다.":"추가되었습니다.");
 }
 
-function migrateLocal(){
-  if(!requireEditor())return;
-  if(!fbdb){toast("공유 모드가 아니에요. FIREBASE_CONFIG를 확인하세요.");return;}
-  if(!confirm("이 기기에 저장된 기존 일정·상세 데이터를 공유 저장소로 올릴까요? 같은 id 항목은 덮어씁니다."))return;
-  try{
-    const e=JSON.parse(localStorage.getItem(K_EV)||"[]");if(e.length){events=e;saveEvents();}
-    const b=JSON.parse(localStorage.getItem(K_BL)||"[]");if(b.length){backlog=b;persistBacklog();}
-    const l=JSON.parse(localStorage.getItem(K_LG)||"[]");if(l.length){lodging=l;persistLodging();}
-    Object.keys(DETAIL_SECTIONS).forEach(k=>{const d=JSON.parse(localStorage.getItem("tokyo_trip_2026_detail_"+k)||"[]");if(d.length){detailData[k]=d;persistDetail(k);}});
-    toast("기기 데이터를 공유 저장소로 올렸어요.");
-  }catch(err){toast("올리기 실패: "+err.message);}
-}
 document.addEventListener("keydown",e=>{
   if(e.key==="Escape"){closeFieldSheet();closeView();closeForm();closePView();closeBacklogForm();closeLodgingForm();closeDetailList();closeDetailView();closeDetailForm();return;}
   const tag=e.target&&e.target.tagName;
@@ -1769,54 +1756,57 @@ function _oe(day,start,end,cat,title,loc,desc,ref){
   return {id:"o-"+day+"-"+start.replace(":",""),day:day,start:start,end:end,cat:cat,
     title:title,loc:loc||"",desc:desc||"",photos:[],ref:ref||""};
 }
+/* 계획서(2026-09-03) '일본 연수 일정' 표를 그대로 옮김. 이동 구간은 계획서에 적힌 소요시간대로 분리. */
 function buildOfficialEvents(){return[
- // 9/14(월) 도쿄
- _oe(0,"07:30","09:45","move","인천공항 집결·출국 수속","인천국제공항 제1여객터미널","3층 출국장 M 카운터 앞 집결. 통역가이드 박진희 010-5324-4557 / (일본)090-5453-7069"),
- _oe(0,"09:45","12:15","move","제주항공 인천 → 도쿄(나리타)","成田国際空港",""),
- _oe(0,"12:15","13:30","meal","나리타 도착·입국수속·중식(공항 내)","成田国際空港",""),
- _oe(0,"13:30","15:00","move","메이지가쿠인대학으로 이동","明治学院大学 白金キャンパス",""),
+ // 9/14(월) 인천 → 도쿄
+ _oe(0,"07:30","09:45","move","인천공항 집결·출국 수속 (135분)","인천국제공항 제1여객터미널","3층 출국장 M 카운터 앞 07:30 집결. 통역가이드 박진희 010-5324-4557 / (일본)090-5453-7069"),
+ _oe(0,"09:45","12:15","move","제주항공 인천 → 도쿄(나리타) (150분)","成田国際空港","비행 약 2시간 30분"),
+ _oe(0,"12:15","13:30","meal","나리타 입국 수속·공항 내 중식","成田国際空港","계획서: 12:15~15:00 수속·중식·이동"),
+ _oe(0,"13:30","15:00","move","나리타공항 → 메이지가쿠인대학 이동 (차량)","明治学院大学 白金キャンパス",""),
  _oe(0,"15:00","16:00","meet","① Sports of Heart (장애인 인식개선)","明治学院大学 白金キャンパス","공식방문 1 · 담당 안연진","org-1"),
- _oe(0,"16:00","18:00","meet","② 메이지가쿠인대 강연 (김재근·김원경 교수)","明治学院大学 白金キャンパス","공식방문 2 · 담당 김선모","org-2"),
- _oe(0,"18:00","20:00","meal","석식·소감나눔","",""),
- _oe(0,"20:00","21:00","stay","라 비스타 도쿄베이 체크인·저녁모임","ラビスタ東京ベイ",""),
+ _oe(0,"16:00","18:00","meet","② 메이지가쿠인대 강연 (김재근·김원경 교수)","明治学院大学 白金キャンパス","공식방문 2 · 담당 김선모 · 일본 사회복지 정책(장애인·노인)","org-2"),
+ _oe(0,"18:00","20:00","meal","석식·소감나눔 (120분)","",""),
+ _oe(0,"20:00","21:00","stay","라 비스타 도쿄베이 호텔 이동·체크인·저녁모임","ラビスタ東京ベイ 江東区豊洲6-4-40",""),
  // 9/15(화) 도쿄
  _oe(1,"07:00","08:00","meal","호텔 조식·로비 집결","ラビスタ東京ベイ",""),
- _oe(1,"08:00","09:00","move","서비스그랜트로 이동 (60분)","",""),
+ _oe(1,"08:00","09:00","move","호텔 → 서비스그랜트 재팬 이동 (차량 60분)","サービスグラント 東京",""),
  _oe(1,"09:00","10:30","meet","③ 서비스그랜트 재팬 (자원봉사·프로보노)","サービスグラント 東京","공식방문 3 · 담당 손지현","org-3"),
- _oe(1,"10:30","13:00","free","시부야 공원 등 관광·중식","渋谷 東京",""),
- _oe(1,"13:00","14:00","move","유이마루로 이동 (80분)","",""),
+ _oe(1,"10:30","12:30","visit","시부야 공원 등 관광·중식","渋谷 東京","계획서: 10:30~14:00 관광·중식·이동(80분)"),
+ _oe(1,"12:30","14:00","move","→ 유이마루 타마다이라의 숲 이동 (차량 80분)","ゆいまーる多摩平の森 日野市",""),
  _oe(1,"14:00","16:00","meet","④ 유이마루 타마다이라의 숲 (서비스고령자주택)","ゆいまーる多摩平の森 日野市","공식방문 4 · 담당 주찬희","org-4"),
- _oe(1,"16:00","17:30","move","디즈니랜드로 이동","東京ディズニーランド",""),
- _oe(1,"17:30","21:00","free","디즈니랜드(야간)·석식·문화체험","東京ディズニーランド",""),
- _oe(1,"21:00","22:00","stay","라 비스타 도쿄베이 복귀·저녁모임","ラビスタ東京ベイ",""),
+ _oe(1,"16:00","17:30","move","→ 도쿄 디즈니랜드 이동 (차량·택시)","東京ディズニーランド",""),
+ _oe(1,"17:30","21:00","visit","디즈니랜드(야간)·석식·문화체험","東京ディズニーランド","계획서: 16:00~21:00 이동·디즈니랜드·석식·문화체험"),
+ _oe(1,"21:00","22:00","stay","라 비스타 도쿄베이 호텔 복귀·저녁모임","ラビスタ東京ベイ",""),
  // 9/16(수) 요코하마 → 시즈오카
  _oe(2,"07:30","08:30","meal","호텔 조식·체크아웃","ラビスタ東京ベイ",""),
- _oe(2,"08:30","09:50","move","요코하마 츠즈키로 이동 (80분)","",""),
+ _oe(2,"08:30","09:50","move","호텔 → 라스베가스(요코하마 츠즈키) 이동 (차량 80분)","デイサービス ラスベガス 横浜都筑",""),
  _oe(2,"09:50","11:00","meet","⑤ 데이서비스 라스베가스 (파칭코형 주간보호)","デイサービス ラスベガス 横浜都筑","공식방문 5 · 담당 김경혜","org-5"),
- _oe(2,"11:00","13:00","free","요코하마 관람(케이블카)·중식","横浜 みなとみらい",""),
- _oe(2,"13:00","13:30","move","회의실로 이동","",""),
- _oe(2,"13:30","15:00","meet","⑥ 트러스트뱅크 (고향사랑기부제·Zoom)","","공식방문 6 · 화상회의 · 담당 이광재","org-6"),
- _oe(2,"15:00","18:00","move","요코하마 → 시즈오카 이동 (3시간)","静岡市",""),
- _oe(2,"18:00","19:00","stay","그랜드힐즈 시즈오카 체크인","ホテルグランヒルズ静岡",""),
+ _oe(2,"11:00","13:30","visit","중식·요코하마 관람(케이블카)·이동","横浜 みなとみらい","계획서: 11:00~13:30 점심·요코하마 관람·이동"),
+ _oe(2,"13:30","15:00","meet","⑥ 트러스트뱅크 (고향사랑기부제·Zoom)","横浜 会議室","공식방문 6 · 요코하마 회의실 · 화상회의 · 담당 이광재","org-6"),
+ _oe(2,"15:00","18:00","move","요코하마 → 시즈오카 이동 (차량 3시간)","静岡市",""),
+ _oe(2,"18:00","19:00","stay","호텔 그랜드힐즈 시즈오카 이동·체크인","ホテルグランヒルズ静岡 静岡市駿河区南町18-1",""),
  _oe(2,"19:00","21:00","meal","석식·시즈오카 시내 관람","静岡市",""),
+ _oe(2,"21:00","22:00","stay","저녁모임·휴식","ホテルグランヒルズ静岡",""),
  // 9/17(목) 하마마쓰 → 오사카
  _oe(3,"07:00","08:00","meal","호텔 조식·체크아웃","ホテルグランヒルズ静岡",""),
- _oe(3,"08:00","10:00","move","하마마쓰로 이동 (120분)","",""),
+ _oe(3,"08:00","10:00","move","시즈오카 → 하마마쓰 이동 (차량 120분)","きょうまる園 浜松",""),
  _oe(3,"10:00","11:30","meet","⑦ 쿄마루엔 (장애인 일자리·스마트팜)","きょうまる園 浜松","공식방문 7 · 담당 조재연","org-7"),
- _oe(3,"11:30","13:57","move","신칸센 하마마쓰 → 오사카 (12:31→13:57, 에키벤 중식)","",""),
- _oe(3,"13:57","15:30","move","오사카 도착·ATC로 이동","ATCエイジレスセンター 大阪",""),
+ _oe(3,"11:30","12:31","move","쿄마루엔 → 하마마쓰역 이동·신칸센 탑승 대기","浜松駅",""),
+ _oe(3,"12:31","13:57","move","신칸센 히카리 709호 하마마쓰 → 신오사카 (에키벤 중식)","新大阪駅","ひかり709号(N700系) 12:31→13:57 · 1시간 26분 직행"),
+ _oe(3,"13:57","15:30","move","신오사카 → ATC 에이지리스센터 이동 (차량)","ATCエイジレスセンター 大阪",""),
  _oe(3,"15:30","17:00","meet","⑧ ATC 에이지리스센터 (보조기구)","ATCエイジレスセンター 大阪","공식방문 8 · 담당 김미진","org-8"),
- _oe(3,"17:00","18:00","stay","오사카 아트베이 호텔 체크인","アートホテル大阪ベイタワー",""),
+ _oe(3,"17:00","18:00","stay","오사카 아트베이 호텔 이동·체크인","アートホテル大阪ベイタワー 大阪市港区弁天1-2-1",""),
  _oe(3,"18:00","21:00","meal","석식·오사카 시내 관람","大阪 難波",""),
+ _oe(3,"21:00","22:00","stay","저녁모임·휴식","アートホテル大阪ベイタワー",""),
  // 9/18(금) 오사카 → 귀국
  _oe(4,"07:30","08:30","meal","호텔 조식·체크아웃","アートホテル大阪ベイタワー",""),
- _oe(4,"08:30","10:00","move","고향의집으로 이동 (90분)","故郷の家 大阪",""),
+ _oe(4,"08:30","10:00","move","호텔 → 고향의집·오사카 이동 (차량 90분)","故郷の家 大阪",""),
  _oe(4,"10:00","11:30","meet","⑨ 고향의집·오사카 (노인복지)","故郷の家 大阪","공식방문 9 · 담당 김경혜","org-9"),
- _oe(4,"11:30","15:00","free","중식·자유시간(이온몰 쇼핑)","イオンモール 大阪",""),
- _oe(4,"15:00","15:30","move","간사이공항으로 이동","関西国際空港",""),
- _oe(4,"15:30","17:00","move","간사이공항 도착·출국 수속","関西国際空港",""),
- _oe(4,"17:00","19:00","move","제주항공 오사카(간사이) → 인천","仁川国際空港",""),
- _oe(4,"19:00","19:30","move","인천공항 도착·짐찾기·해산","仁川国際空港","")
+ _oe(4,"11:30","15:00","visit","중식·자유시간 (이온몰 쇼핑)","イオンモール 大阪",""),
+ _oe(4,"15:00","15:30","move","이온몰 → 간사이공항 이동 (차량 30분)","関西国際空港",""),
+ _oe(4,"15:30","17:00","move","간사이공항 도착·출국 수속 (90분)","関西国際空港",""),
+ _oe(4,"17:00","19:00","move","제주항공 오사카(간사이) → 인천 (120분)","仁川国際空港",""),
+ _oe(4,"19:00","19:30","move","인천공항 도착·입국 수속·짐찾기·해산","仁川国際空港","")
 ];}
 function loadOfficialItinerary(){
   if(!requireEditor())return;
