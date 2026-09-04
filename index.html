@@ -407,6 +407,9 @@
   .fm-nowcard .nc-count{margin-left:auto;font-weight:800;font-size:26px;line-height:1;letter-spacing:-.02em;
     font-variant-numeric:tabular-nums;color:var(--ink);}
   .fm-nowcard .nc-count span{font-size:13px;font-weight:600;color:var(--faint);margin-left:2px;}
+  .fm-nowcard.dday .nc-kick{color:var(--accent);}
+  .fm-nowcard.dday .nc-count{font-size:32px;color:var(--accent);}
+  .fm-nowcard.dday .t{margin-top:12px;}
   .fm-nowcard .t{font-size:var(--t-headline);font-weight:700;letter-spacing:-.02em;margin:10px 0 3px;
     overflow-wrap:anywhere;min-width:0;}
   .fm-nowcard .m{font-size:var(--t-foot);color:var(--muted);font-variant-numeric:tabular-nums;}
@@ -421,20 +424,26 @@
   .fm-btn:active{transform:scale(.985);}
   .fm-btn.primary{background:var(--accent);color:#fff;}
 
-  /* 오늘 타임라인 = 인셋 그룹 리스트 */
-  .fm-sec{font-size:var(--t-cap);font-weight:600;color:var(--faint);letter-spacing:.05em;text-transform:uppercase;margin:20px 2px 9px;}
-  .fm-tlgroup{background:#fff;border:1px solid var(--line);border-radius:var(--r-card);overflow:hidden;}
-  .fm-tlrow{display:flex;align-items:center;gap:12px;padding:13px 14px;border-top:1px solid var(--line);
-    min-height:48px;cursor:pointer;transition:background .12s;background:transparent;}
-  .fm-tlrow:first-child{border-top:0;}
-  .fm-tlrow:active{background:var(--bg);}
-  .fm-tlrow time{font-size:var(--t-foot);font-weight:600;color:var(--faint);width:42px;flex:none;
-    font-variant-numeric:tabular-nums;}
-  .fm-tlrow .tt{font-size:var(--t-body);min-width:0;overflow-wrap:anywhere;letter-spacing:-.01em;}
-  .fm-tlrow .chev{margin-left:auto;flex:none;color:var(--faint);display:flex;}
-  .fm-tlrow.done time,.fm-tlrow.done .tt{color:var(--faint);}
-  .fm-tlrow.cur time{color:var(--meet);}
-  .fm-tlrow.cur .tt{font-weight:700;}
+  /* 오늘 타임라인 = 점선 레일 + 링 노드 */
+  .fm-sec{font-size:var(--t-cap);font-weight:600;color:var(--faint);letter-spacing:.05em;text-transform:uppercase;margin:20px 2px 6px;}
+  .fm-rail{background:#fff;border:1px solid var(--line);border-radius:var(--r-card);padding:6px 12px;}
+  .fm-railrow{display:grid;grid-template-columns:42px 16px 1fr;gap:11px;align-items:start;
+    padding:11px 4px;cursor:pointer;position:relative;transition:background .12s;border-radius:8px;}
+  .fm-railrow:active{background:var(--bg);}
+  .fm-railrow::before{content:"";position:absolute;left:64px;top:26px;bottom:-11px;
+    border-left:2px dotted var(--line2);}
+  .fm-railrow.last::before{display:none;}
+  .fm-railrow time{font-size:var(--t-foot);font-weight:600;color:var(--faint);text-align:right;
+    font-variant-numeric:tabular-nums;padding-top:1px;letter-spacing:-.02em;}
+  .fm-railrow .node{position:relative;width:14px;height:14px;margin-top:2px;justify-self:center;z-index:1;}
+  .fm-railrow .node::before{content:"";position:absolute;inset:0;border-radius:50%;
+    border:2.5px solid var(--nc,var(--line2));background:var(--panel);box-sizing:border-box;}
+  .fm-railrow .tt{font-size:var(--t-body);line-height:1.36;min-width:0;overflow-wrap:anywhere;letter-spacing:-.01em;}
+  .fm-railrow.done time,.fm-railrow.done .tt{color:var(--faint);}
+  .fm-railrow.done .node::before{border-color:var(--line2);}
+  .fm-railrow.cur time{color:var(--meet);font-weight:700;}
+  .fm-railrow.cur .tt{font-weight:700;}
+  .fm-railrow.cur .node::before{border-width:4px;}
 
   .fm-item{border:1px solid var(--line);border-radius:12px;background:#fff;padding:13px 13px;margin-bottom:9px;cursor:pointer;}
   .fm-item .h{display:flex;align-items:baseline;gap:7px;}
@@ -528,26 +537,27 @@
   /* 메모 (노션형 리치텍스트 문서) */
   .memo-h{display:flex;align-items:center;justify-content:space-between;margin:6px 0 9px;}
   .memo-h b{font-size:14px;font-weight:800;}
-  .memo-seg{display:flex;gap:3px;background:#eef0f2;border-radius:9px;padding:3px;}
-  .memo-seg button{border:0;background:transparent;font-size:12px;font-weight:800;color:var(--faint);
-    padding:6px 12px;border-radius:7px;cursor:pointer;}
-  .memo-seg button.on{background:#fff;color:var(--accent);box-shadow:0 1px 3px rgba(0,0,0,.08);}
-  .memo-help{font-size:11.5px;color:var(--faint);line-height:1.55;margin-bottom:9px;}
-  /* 서식 툴바 — 한 줄 고정(글 쓰는 동안 항상 손닿게), 넘치면 가로 스크롤 */
-  .memo-tools{display:flex;flex-wrap:nowrap;gap:5px;align-items:center;
+  .memo-seg{display:flex;gap:2px;background:var(--bg);border-radius:9px;padding:3px;}
+  .memo-seg button{border:0;background:transparent;font-size:12.5px;font-weight:600;color:var(--muted);
+    padding:6px 14px;border-radius:7px;cursor:pointer;transition:color .15s;}
+  .memo-seg button.on{background:var(--panel);color:var(--accent);box-shadow:0 1px 3px rgba(0,0,0,.09);}
+  .memo-help{font-size:var(--t-cap);color:var(--faint);line-height:1.55;margin-bottom:9px;}
+  /* 서식 툴바 — iOS 세그먼트 바(회색 알약 안에 무테 아이콘 버튼), 한 줄 고정 */
+  .memo-tools{display:flex;flex-wrap:nowrap;gap:2px;align-items:center;
     overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;
-    position:sticky;top:0;z-index:4;background:#fff;padding:8px 0;margin-bottom:2px;}
+    position:sticky;top:0;z-index:4;background:var(--bg);border-radius:12px;padding:4px;margin:2px 0 12px;}
   .memo-tools::-webkit-scrollbar{display:none;}
-  .memo-tools .mt{flex:none;min-width:34px;height:34px;padding:0 7px;border:1px solid var(--line2);background:#fff;
-    border-radius:9px;font-size:13px;font-weight:700;cursor:pointer;color:#374151;
-    display:flex;align-items:center;justify-content:center;white-space:nowrap;}
-  .memo-tools .mt:active{background:var(--accent-soft);}
-  .memo-tools .mt svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;}
+  .memo-tools .mt{flex:none;min-width:36px;height:34px;padding:0 9px;border:0;background:transparent;
+    border-radius:9px;font-size:14px;font-weight:600;cursor:pointer;color:var(--muted);
+    display:flex;align-items:center;justify-content:center;white-space:nowrap;transition:background .12s,color .12s;}
+  .memo-tools .mt:active,.memo-tools .mt.on{background:var(--panel);color:var(--accent);box-shadow:0 1px 3px rgba(0,0,0,.09);}
+  .memo-tools .mt svg{width:17px;height:17px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;}
   .memo-tools .mt svg circle{fill:currentColor;stroke:none;}
-  .memo-tools .mt-clr{flex:none;display:inline-flex;align-items:center;gap:5px;padding:0 2px;}
-  .memo-tools .sw{width:20px;height:20px;min-width:0;padding:0;border:2px solid #fff;border-radius:6px;
-    box-shadow:0 0 0 1px var(--line2);cursor:pointer;flex:none;}
-  .memo-tools .sw:active{transform:scale(.9);}
+  .memo-tools .mt-clr{flex:none;display:inline-flex;align-items:center;gap:7px;padding:0 8px 0 6px;margin-left:2px;
+    border-left:1px solid var(--line2);}
+  .memo-tools .sw{width:18px;height:18px;min-width:0;padding:0;border:0;border-radius:5px;
+    box-shadow:0 0 0 1px rgba(0,0,0,.14);cursor:pointer;flex:none;transition:transform .1s;}
+  .memo-tools .sw:active{transform:scale(.88);}
   /* 개인 메모 에디터 — 말풍선 없이 페이지에 바로 쓰는 느낌 */
   .memo-editor{min-height:280px;padding:6px 0 44px;font-size:15.5px;line-height:1.85;color:var(--ink);
     background:transparent;-webkit-user-select:text;user-select:text;}
@@ -570,10 +580,10 @@
   .memo-remote{font-size:11px;color:#b45309;margin-top:9px;line-height:1.5;}
   .memo-remote a{color:var(--accent);font-weight:700;text-decoration:underline;cursor:pointer;}
   /* 공유 메모 — 게시글 피드 */
-  .memo-compose{border:1px solid var(--line2);border-radius:12px;background:#fff;padding:10px 12px;}
+  .memo-compose{border:1px solid var(--line);border-radius:var(--r-card);background:var(--panel);padding:12px 13px;}
   .memo-compose .ce{min-height:96px;max-height:44vh;overflow-y:auto;font-size:15px;line-height:1.75;color:var(--ink);outline:none;}
   .memo-compose .ce:empty:before{content:attr(data-ph);color:var(--faint);}
-  .memo-compose .memo-tools{position:static;padding:0 0 8px;}
+  .memo-compose .memo-tools{position:static;margin:0 0 10px;}
   .memo-postlist{margin-top:12px;display:flex;flex-direction:column;gap:9px;}
   .memo-post{border:1px solid var(--line);border-radius:11px;background:#fbfcfd;padding:10px 12px;}
   .memo-post .pb{font-size:14px;line-height:1.68;color:var(--ink);word-break:break-word;}
@@ -2217,6 +2227,18 @@ function fmTimelineHtml(di){
   if(!evs.length) return `<div class="fm-note-empty">이 날 등록된 일정이 없어요.<br>상단 <b>📋 PDF 일정표 불러오기</b>로 최신 일정을 넣어주세요.</div>`;
   let h="";
   const nowM = (trip===di) ? (new Date().getHours()*60+new Date().getMinutes()) : -1;
+  if(trip<0){
+    const t0=new Date();t0.setHours(0,0,0,0);
+    const dd=Math.round((TRIP_START-t0)/86400000);
+    if(dd>0){
+      h+=`<div class="fm-nowcard soon dday">`+
+        `<div class="nc-top"><span class="nc-kick">일본 해외연수까지</span>`+
+          `<span class="nc-count">D-${dd}</span></div>`+
+        `<div class="t">${DAYS[0].label} (${DAYS[0].dow}) 출발 · 4박 5일</div>`+
+        `<div class="m">도쿄 · 요코하마 · 시즈오카 · 오사카 · 공식 방문기관 9곳</div>`+
+        `</div>`;
+    }
+  }
   if(nowM>=0){
     const cur=evs.find(e=>toMin(e.start)<=nowM&&nowM<toMin(e.end));
     const nxt=evs.find(e=>toMin(e.start)>nowM);
@@ -2243,17 +2265,16 @@ function fmTimelineHtml(di){
         `</div></div>`;
     }
   }
-  h+=`<div class="fm-sec">오늘 일정</div><div class="fm-tlgroup">`;
-  evs.forEach(e=>{
+  h+=`<div class="fm-sec">${trip===di?"오늘 일정":"일정"}</div><div class="fm-rail">`;
+  evs.forEach((e,i)=>{
     const c=CAT[e.cat]||CAT.visit;
-    let cls="fm-tlrow";
+    let cls="fm-railrow";
     if(nowM>=0){ if(toMin(e.end)<=nowM)cls+=" done"; else if(toMin(e.start)<=nowM&&nowM<toMin(e.end))cls+=" cur"; }
-    const linked=e.ref||lodgingForEvent(e);
+    if(i===evs.length-1)cls+=" last";
     h+=`<div class="${cls}" onclick="fmEventTap('${e.id}')">`+
       `<time>${e.start}</time>`+
-      `<span class="cat-dot" style="background:${c.color}"></span>`+
+      `<span class="node" style="--nc:${c.color}"></span>`+
       `<span class="tt">${esc(e.title)}</span>`+
-      (linked?`<span class="chev"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 6l6 6-6 6"/></svg></span>`:"")+
       `</div>`;
   });
   h+=`</div>`;
