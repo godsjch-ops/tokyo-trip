@@ -1,0 +1,53 @@
+{
+  "rules": {
+    "trips": {
+      "$trip": {
+        ".read": "auth != null",
+        ".write": "auth != null",
+
+        "events": {
+          "$id": {
+            ".validate": "newData.hasChildren(['id']) && (!newData.hasChild('title') || newData.child('title').val().length < 400) && (!newData.hasChild('desc') || newData.child('desc').val().length < 8000)"
+          }
+        },
+        "backlog": {
+          "$id": {
+            ".validate": "newData.hasChildren(['id']) && (!newData.hasChild('title') || newData.child('title').val().length < 400)"
+          }
+        },
+        "lodging": {
+          "$id": {
+            ".validate": "newData.hasChildren(['id']) && (!newData.hasChild('title') || newData.child('title').val().length < 400)"
+          }
+        },
+
+        "memos": {
+          "$sheet": {
+            "$post": {
+              ".validate": "newData.hasChild('html') && newData.child('html').isString() && newData.child('html').val().length < 500000 && newData.child('name').val().length < 60"
+            }
+          }
+        },
+        "memos_meta": {
+          "$sheet": { ".validate": "newData.hasChild('count')" }
+        },
+
+        "pmemos": {
+          "$owner": {
+            "$sheet": {
+              ".validate": "newData.hasChild('html') && newData.child('html').isString() && newData.child('html').val().length < 500000"
+            }
+          }
+        },
+
+        "roster": {
+          "$k": { ".validate": "newData.hasChild('name') && newData.child('name').isString() && newData.child('name').val().length < 40" }
+        },
+
+        "snapshots": {
+          "$k": { ".validate": "newData.hasChild('ts')" }
+        }
+      }
+    }
+  }
+}

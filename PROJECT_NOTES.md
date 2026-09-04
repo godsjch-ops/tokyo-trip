@@ -25,7 +25,8 @@
 | 사진 | 이미지 URL + 로컬 업로드(자동 리사이즈·압축, 최대 1200px/JPEG 0.72) |
 | 공유 | Firebase 실시간(설정 있으면 공유, 없으면 이 기기 localStorage 저장) |
 | 모바일 | 요일 탭으로 하루씩 전체 화면 · PWA(오프라인) · 개인 메모 클라우드 백업 |
-| 편집권한 | 참가자=보기 전용, 관리자=`?edit`+PIN(`EDIT_PIN`, 기본 2918) 1회→기기 기억 |
+| 접속 | 첫 화면에서 성 포함 실명 입력 → `ROSTER_SEED`(11명) ∪ Firebase `roster`에 있으면 입장(1회, 기기 기억). 익명 인증 자동. `noindex` |
+| 편집권한 | 로그인 이름이 `ADMIN_NAMES`(현재 `["주찬희"]`)에 있으면 편집. PIN 없음. 파괴적 함수는 `requireEditor()` 이중 방어 |
 
 ## 3. 현재 기능
 ### 일정표(주간 그리드)
@@ -77,7 +78,11 @@
 3. **읽기 개선**: 현장 모드 글씨 확대. 기관 시트 = 개요/방문 목적/사전 질문·확인 포인트 구조(`OFFICIAL_ORGS`의 `desc`/`purpose`/`points`). 담당자·홈페이지는 본문에서 제거(홈페이지는 버튼 유지). **purpose/points는 초안** — 사전 조사 자료 나오면 교체 후 관리자가 "PDF 일정표 불러오기" 1회 실행해야 공유 DB에 반영.
 4. **숙소 연동**: `lodgingForEvent()`가 stay 일정 블록을 장소/이름으로 숙소 카드에 매칭 → 어디서 열든 `memoId=lodging:<id>`로 통일(메모 공유). 숙소 시트에 "공유 메모로 꿀팁" 안내.
 5. **공유 메모 수정**: 내 글은 "수정" → 인라인 서식 편집 → 저장(`edited:true`, "수정됨" 표시).
-6. **편집 잠금**: 기본 보기 전용(`body.viewer` → `.editor-only` 숨김). 관리자만 `?edit`+PIN(`EDIT_PIN` 기본 **2918**). 파괴적 함수는 `requireEditor()`로 이중 방어. `?view`로 해제.
+6. **접속·편집 게이트**(2026-09 재설계): 첫 화면 `#loginGate` → `matchRoster()`(정확/포함/오타1글자, 성만은 거부) 통과 시 `LOGIN_NAME` 저장(`tw_name`+`tw_login_ok`)·입장, 재방문 시 안 물음. 앱 로드 시 `signInAnonymously()`(`initFirebaseAuth`, 6초 타임아웃) — 접근통제가 아니라 규칙 `auth != null` + 쓰기 검증용. 편집은 `isAdminName(LOGIN_NAME)`(=`ADMIN_NAMES`) → `body.viewer` 토글. 관리자 화면(현장 모드 전체 탭): `roster` 추가/삭제, 스냅샷 복원. 규칙 JSON은 [`firebase-rules.json`](firebase-rules.json), 세팅 절차는 [`연수전_체크리스트.md`](연수전_체크리스트.md).
+   - **동시 편집 안전**: `saveEvents/persistBacklog/persistLodging/persistDetail` → `fbReconcile()` 가 `_fbShadow`(리스너가 갱신하는 원격 상태)와 비교해 **바뀐 항목만** `ref.update({id:obj|null})`. 통째 `.set()` clobber 없음.
+   - **스냅샷**: `snapshotWrite(reason)` → `snapshots/<pushId>`에 events/backlog/lodging/detail 맵. 자동 15분(변경 시, 관리자만) + `load-official`/`import`/`pre-restore` 직전. `snapshotPrune()` 최근 30개. `snapshotRestore(key)` = pre-restore 저장 후 멀티패스 `ref().update()`.
+   - **오프라인 캐시**: 리스너가 `tw_cache_*`에 마지막 데이터 저장, `hydrateFromCache()`가 로드 시 즉시 표시. 상단 주황 띠 `#netOffline`(`updateNet`, `.info/connected`·online/offline).
+   - **9/14부터** `#btnLoadOfficial` 자동 숨김. `loadOfficialItinerary`/`importJSON`은 `typedConfirm(...,"전면교체")`.
 7. **메모 UX 재설계**: 시트 = 브리핑 → `.sh-hinge`("여기부터 내 기록") → `.sh-memozone`(스크롤 시 떠오름) → 편집기. `#fmSheetJump` 플로팅 버튼으로 정보↔메모 이동. 편집기는 말풍선 없이 전면(`.memo-editor` 테두리·내부 스크롤 제거, min-height 280). 툴바 `position:sticky`, **B/U/제목(H3)/목록/색상 5종/이미지**. 이미지 = `memoCompressImage`(가로 900px·JPEG 0.55) → `<img data:>` 삽입, 개인·공유 공통. `memoSanitize`가 `IMG[src=data:image]`·`FONT[color=#hex]`·`SPAN[style=color/bg만]`·`H1~3` 허용(그 외 속성 제거 유지).
    - 다음 단계(보류): 기관 브리핑을 관리자 편집 모드에서 앱 내 직접 수정(현재는 `OFFICIAL_ORGS` 코드 상수, 초안 반영 후 전환 예정)
 8. **새 글 배지**: 공유 메모가 올라오면 하단 탭(기관·숙소)에 카톡식 빨간 숫자 배지, 해당 기관/숙소 카드 좌상단에 빨간 점. `memos_meta`(count·lastTs) 리스너 + 로컬 `tw_seen_<sheetId>`(마지막으로 본 글 개수) 비교. 시트에서 메모 영역까지 스크롤하면 읽음 처리. 최초 로드 시 이미 있던 글은 읽음 간주(`_memoMetaInit`).
@@ -100,9 +105,11 @@ trips/tokyo2026/
   detail/history  : { id: {…} }
   memos/<sheetId>/<pushId> : { name, html, ts, edited? }   // 현장 모드 공유 메모 (항목 단위 push)
   memos_meta/<sheetId> : { count, lastTs }                 // 새 글 배지용 요약(글 로드 시 자동 갱신)
-  pmemos/<이름or기기>/<sheetId> : { html, ts }             // 개인 메모 2차 백업 (화면엔 본인만)
+  pmemos/d_<기기ID>/<sheetId> : { html, ts, name }         // 개인 메모 동시 저장 (기기ID 기준, 화면엔 본인만)
+  roster/<pushId> : { name, by, ts }                       // 관리자가 추가한 접속 허용 이름 (기본 11명은 코드 ROSTER_SEED)
+  snapshots/<pushId> : { ts, by, reason, events{}, backlog{}, lodging{}, detail{} }  // 일정 자동 백업, 최근 30
 ```
-- localStorage 전용: `tw_memodoc_p_<sheetId>`(개인 메모 본문) / `tw_memodoc_pts_<sheetId>`(수정시각) / `tw_memo_pending`(공유 전송 대기열) / `tw_memo_draft_<sheetId>`(공유 작성 중) / `tw_uid`(기기ID) / `tw_editor`(=granted면 편집 가능)
+- localStorage 전용: `tw_memodoc_p_<sheetId>`(개인 메모 본문) / `tw_memodoc_pts_<sheetId>`(수정시각) / `tw_memo_pending`(공유 전송 대기열) / `tw_memo_draft_<sheetId>`(공유 작성 중) / `tw_uid`(기기ID) / `tw_name`+`tw_login_ok`(로그인 이름) / `tw_cache_events|backlog|lodging|detail`(오프라인용 마지막 데이터)
 - 코드에서는 배열로 다루고 저장 시 id 맵으로 변환(toMap). 실시간 리스너가 배열로 되돌려 화면 갱신.
 - localStorage 키(공유 미사용 시): tokyo_trip_2026_events / _backlog / _lodging / _detail_<key>
 
@@ -138,15 +145,13 @@ detail  : { id, title, desc, url, loc, photos:[] }                         // sh
   ```
 - 다른 PC: `git clone https://github.com/godsjch-ops/tokyo-trip.git` 후 `index.html` 열기.
 - 공유 모드에선 사진은 업로드보다 URL 권장(동기화 속도).
-- 보안: Firebase DB 규칙이 공개(.read/.write true) — 링크·설정을 아는 사람은 편집 가능. 민감정보 금지. 필요 시 규칙으로 잠글 수 있음.
+- 보안: [`firebase-rules.json`](firebase-rules.json) = `auth != null` + 메모 500KB 제한. **주찬희가 콘솔에서 익명 인증 On + 규칙 붙여넣기** 해야 켜짐([`연수전_체크리스트.md`](연수전_체크리스트.md) 1번).
 
 ## 7. 이어서 할 만한 것
-- [ ] 배포 후: 관리자가 `?edit`로 열어 **"PDF 일정표 불러오기" 1회** 실행(기관 브리핑 purpose/points 반영)
-- [ ] 각 폰에서 온라인일 때 1회 접속(오프라인 캐시 생성). 아이콘은 `logo.png` 아님 → `icon-512.png`만 바꾸면 교체 가능
-- [ ] `EDIT_PIN` 값을 원하는 번호로 변경
+- [ ] **주찬희: [`연수전_체크리스트.md`](연수전_체크리스트.md) 1번(익명 인증·규칙·첫 세팅) 완료**
+- [ ] 폰 2대로 [`연수전_체크리스트.md`](연수전_체크리스트.md) 3번 현장 테스트 → 결과 공유 후 2차 수정
+- [ ] 각 폰에서 온라인일 때 1회 접속(오프라인 캐시 생성)
 - [ ] 기관 사전 조사 자료 완성되면 `OFFICIAL_ORGS`의 `desc`/`purpose`/`points` 교체
-- [ ] Firebase 규칙 잠금(간단 인증) — 연수 후
-- [ ] 삭제 시 확인창 옵션
+- [ ] 연수 후: 익명 인증 계정 정리, 저장소 정리(연락처 등)
 - [ ] 하루 총 소요시간·이동시간 합계
-- [ ] 참가자 9명 조 편성 표시
-- [ ] Firebase 규칙 잠금(간단 인증)
+- [ ] 참가자 조 편성 표시
