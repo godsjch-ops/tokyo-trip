@@ -547,19 +547,29 @@
   .mie-head b{font-size:15px;font-weight:800;}
   .mie-head .x{border:0;background:#f3f4f6;border-radius:9px;width:30px;height:30px;font-size:15px;color:#6b7280;cursor:pointer;}
   .mie-stage{position:relative;flex:1;min-height:0;background:#111418;display:flex;align-items:center;justify-content:center;
-    overflow:hidden;touch-action:none;user-select:none;-webkit-user-select:none;}
-  .mie-imgwrap{position:relative;line-height:0;}
-  .mie-imgwrap img{display:block;max-width:100%;max-height:52vh;-webkit-user-drag:none;}
-  .mie-crop{position:absolute;outline:2px solid #fff;box-shadow:0 0 0 9999px rgba(0,0,0,.55);cursor:move;}
-  .mie-crop:before{content:"";position:absolute;inset:0;
-    background-image:linear-gradient(rgba(255,255,255,.4) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.4) 1px,transparent 1px);
-    background-size:33.33% 33.33%;pointer-events:none;}
-  .mie-crop .hd{position:absolute;width:26px;height:26px;}
-  .mie-crop .hd:before{content:"";position:absolute;width:14px;height:14px;border:2.5px solid #fff;}
-  .mie-crop .hd.nw{left:-13px;top:-13px;} .mie-crop .hd.nw:before{left:11px;top:11px;border-right:0;border-bottom:0;}
-  .mie-crop .hd.ne{right:-13px;top:-13px;} .mie-crop .hd.ne:before{right:11px;top:11px;border-left:0;border-bottom:0;}
-  .mie-crop .hd.sw{left:-13px;bottom:-13px;} .mie-crop .hd.sw:before{left:11px;bottom:11px;border-right:0;border-top:0;}
-  .mie-crop .hd.se{right:-13px;bottom:-13px;} .mie-crop .hd.se:before{right:11px;bottom:11px;border-left:0;border-top:0;}
+    overflow:hidden;touch-action:none;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;}
+  .mie-imgwrap{position:relative;line-height:0;touch-action:none;}
+  .mie-imgwrap img{display:block;max-width:100%;max-height:54vh;-webkit-user-drag:none;pointer-events:none;}
+  .mie-crop{position:absolute;outline:2px solid #fff;box-shadow:0 0 0 9999px rgba(0,0,0,.5);touch-action:none;}
+  .mie-crop:after{content:"";position:absolute;inset:0;pointer-events:none;opacity:0;transition:opacity .15s;
+    background-image:linear-gradient(rgba(255,255,255,.55) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.55) 1px,transparent 1px);
+    background-size:33.334% 33.334%;background-position:center;}
+  .mie-crop.drag:after{opacity:1;}
+  .mie-crop .hd{position:absolute;width:46px;height:46px;z-index:2;touch-action:none;}
+  .mie-crop .hd:before{content:"";position:absolute;background:#fff;border-radius:1px;}
+  .mie-crop .hd.nw{left:-19px;top:-19px;} .mie-crop .hd.ne{right:-19px;top:-19px;}
+  .mie-crop .hd.sw{left:-19px;bottom:-19px;} .mie-crop .hd.se{right:-19px;bottom:-19px;}
+  .mie-crop .hd.nw:before,.mie-crop .hd.ne:before,.mie-crop .hd.sw:before,.mie-crop .hd.se:before{
+    width:20px;height:20px;background:none;border:3px solid #fff;}
+  .mie-crop .hd.nw:before{left:16px;top:16px;border-right:0;border-bottom:0;}
+  .mie-crop .hd.ne:before{right:16px;top:16px;border-left:0;border-bottom:0;}
+  .mie-crop .hd.sw:before{left:16px;bottom:16px;border-right:0;border-top:0;}
+  .mie-crop .hd.se:before{right:16px;bottom:16px;border-left:0;border-top:0;}
+  .mie-crop .hd.n{left:50%;top:-23px;margin-left:-23px;} .mie-crop .hd.n:before{left:13px;top:20px;width:20px;height:3px;}
+  .mie-crop .hd.s{left:50%;bottom:-23px;margin-left:-23px;} .mie-crop .hd.s:before{left:13px;bottom:20px;width:20px;height:3px;}
+  .mie-crop .hd.w{top:50%;left:-23px;margin-top:-23px;} .mie-crop .hd.w:before{top:13px;left:20px;width:3px;height:20px;}
+  .mie-crop .hd.e{top:50%;right:-23px;margin-top:-23px;} .mie-crop .hd.e:before{top:13px;right:20px;width:3px;height:20px;}
+  html.mie-open,html.mie-open body{overflow:hidden!important;}
   .mie-ctrl{padding:12px 15px 4px;}
   .mie-row{display:flex;align-items:center;gap:7px;margin-bottom:10px;}
   .mie-row .lb{font-size:11px;font-weight:800;color:var(--faint);width:38px;flex:none;letter-spacing:.03em;}
@@ -802,8 +812,9 @@
       <div class="mie-imgwrap" id="mieWrap">
         <img id="mieImg" alt="">
         <div class="mie-crop" id="mieCrop">
-          <span class="hd nw" data-h="nw"></span><span class="hd ne" data-h="ne"></span>
-          <span class="hd sw" data-h="sw"></span><span class="hd se" data-h="se"></span>
+          <span class="hd nw" data-h="nw"></span><span class="hd n" data-h="n"></span><span class="hd ne" data-h="ne"></span>
+          <span class="hd w" data-h="w"></span><span class="hd e" data-h="e"></span>
+          <span class="hd sw" data-h="sw"></span><span class="hd s" data-h="s"></span><span class="hd se" data-h="se"></span>
         </div>
       </div>
     </div>
@@ -2667,6 +2678,7 @@ function memoImgEditOpen(src,done){
   document.getElementById("mieRatio").querySelectorAll("button").forEach(b=>b.classList.toggle("on",b.dataset.r==="free"));
   document.getElementById("mieSize").querySelectorAll("button").forEach(b=>b.classList.toggle("on",b.dataset.s==="800"));
   ov.classList.add("on");
+  document.documentElement.classList.add("mie-open");
   _ieBind();
   img.onload=()=>{
     const setup=()=>{
@@ -2683,13 +2695,13 @@ function memoImgEditOpen(src,done){
   img.onerror=()=>{ toast("이미지를 처리할 수 없어요."); memoImgEditClose(); };
   img.src=src;
 }
-function memoImgEditClose(){ const ov=document.getElementById("mie"); if(ov)ov.classList.remove("on"); _ie=null; }
+function memoImgEditClose(){ const ov=document.getElementById("mie"); if(ov)ov.classList.remove("on"); document.documentElement.classList.remove("mie-open"); _ie=null; }
 function _ieApplyBox(){
   const c=document.getElementById("mieCrop"), b=_ie.box;
   c.style.left=b.x+"px"; c.style.top=b.y+"px"; c.style.width=b.w+"px"; c.style.height=b.h+"px";
 }
 function _ieClamp(){
-  const b=_ie.box, mn=40;
+  const b=_ie.box, mn=46;
   b.w=Math.max(mn,Math.min(b.w,_ie.vw)); b.h=Math.max(mn,Math.min(b.h,_ie.vh));
   b.x=Math.max(0,Math.min(b.x,_ie.vw-b.w)); b.y=Math.max(0,Math.min(b.y,_ie.vh-b.h));
 }
@@ -2697,45 +2709,58 @@ let _ieBoundOnce=false;
 function _ieBind(){
   if(_ieBoundOnce)return; _ieBoundOnce=true;
   const stage=document.getElementById("mieStage"), crop=document.getElementById("mieCrop");
-  const pt=e=>{ const t=e.touches?e.touches[0]:e; return {x:t.clientX,y:t.clientY}; };
+  const pt=e=>({x:e.clientX,y:e.clientY});           // 포인터 좌표(터치·마우스 통일)
+  const MN=46;                                       // 최소 프레임 크기(손가락 하나)
   const start=e=>{
-    if(!_ie)return;
+    if(!_ie||!_ie.box)return;
     const hd=e.target.closest&&e.target.closest(".hd");
-    const onCrop=e.target===crop||e.target.closest&&e.target.closest("#mieCrop");
-    if(!hd&&!onCrop)return;
+    const onCrop=hd||(e.target.closest&&e.target.closest("#mieCrop"));
+    if(!onCrop)return;
     e.preventDefault();
-    _ie.drag={mode:hd?hd.dataset.h:"move",p:pt(e),box:Object.assign({},_ie.box)};
+    try{ stage.setPointerCapture(e.pointerId); }catch(_){}   // 손가락이 스테이지를 벗어나도 계속 추적
+    _ie.drag={mode:hd?hd.dataset.h:"move", p:pt(e), box:Object.assign({},_ie.box)};
+    crop.classList.add("drag");
   };
   const move=e=>{
     if(!_ie||!_ie.drag)return;
     e.preventDefault();
-    const p=pt(e), d=_ie.drag, dx=p.x-d.p.x, dy=p.y-d.p.y, o=d.box, b=_ie.box;
-    if(d.mode==="move"){ b.x=o.x+dx; b.y=o.y+dy; }
-    else{
-      let x1=o.x, y1=o.y, x2=o.x+o.w, y2=o.y+o.h;
-      if(d.mode.indexOf("w")>=0) x1=o.x+dx;
-      if(d.mode.indexOf("e")>=0) x2=o.x+o.w+dx;
-      if(d.mode.indexOf("n")>=0) y1=o.y+dy;
-      if(d.mode.indexOf("s")>=0) y2=o.y+o.h+dy;
-      b.x=Math.min(x1,x2); b.y=Math.min(y1,y2); b.w=Math.abs(x2-x1); b.h=Math.abs(y2-y1);
-      if(_ie.ratio){
-        if(d.mode==="nw"||d.mode==="ne"||d.mode==="sw"||d.mode==="se"){
-          b.h=b.w/_ie.ratio;
-          if(d.mode.indexOf("n")>=0) b.y=(o.y+o.h)-b.h;
-        }
+    const p=pt(e), d=_ie.drag, dx=p.x-d.p.x, dy=p.y-d.p.y, o=d.box, b=_ie.box, M=d.mode;
+    if(M==="move"){ b.x=o.x+dx; b.y=o.y+dy; _ieClamp(); _ieApplyBox(); return; }
+    let x1=o.x, y1=o.y, x2=o.x+o.w, y2=o.y+o.h;
+    if(M.indexOf("w")>=0) x1=Math.min(o.x+dx, x2-MN);
+    if(M.indexOf("e")>=0) x2=Math.max(o.x+o.w+dx, x1+MN);
+    if(M.indexOf("n")>=0) y1=Math.min(o.y+dy, y2-MN);
+    if(M.indexOf("s")>=0) y2=Math.max(o.y+o.h+dy, y1+MN);
+    b.x=x1; b.y=y1; b.w=x2-x1; b.h=y2-y1;
+    if(_ie.ratio){
+      if(M.length===2){                              // 모서리: 폭 기준으로 높이 맞춤
+        b.h=b.w/_ie.ratio;
+        if(M.indexOf("n")>=0) b.y=(o.y+o.h)-b.h;
+      }else if(M==="e"||M==="w"){                     // 좌·우: 세로 중앙 고정
+        const cy=o.y+o.h/2; b.h=b.w/_ie.ratio; b.y=cy-b.h/2;
+      }else{                                          // 상·하: 가로 중앙 고정
+        const cx=o.x+o.w/2; b.w=b.h*_ie.ratio; b.x=cx-b.w/2;
       }
     }
     _ieClamp(); _ieApplyBox();
   };
-  const end=()=>{ if(_ie)_ie.drag=null; };
-  stage.addEventListener("mousedown",start); stage.addEventListener("touchstart",start,{passive:false});
-  window.addEventListener("mousemove",move); window.addEventListener("touchmove",move,{passive:false});
-  window.addEventListener("mouseup",end); window.addEventListener("touchend",end);
+  const end=e=>{ if(_ie)_ie.drag=null; crop.classList.remove("drag");
+                 try{ stage.releasePointerCapture(e.pointerId); }catch(_){} };
+  stage.addEventListener("pointerdown",start);
+  stage.addEventListener("pointermove",move);
+  stage.addEventListener("pointerup",end);
+  stage.addEventListener("pointercancel",end);
   document.getElementById("mieRatio").addEventListener("click",e=>{
-    const b=e.target.closest("button"); if(!b||!_ie)return;
+    const b=e.target.closest("button"); if(!b||!_ie||!_ie.box)return;
     document.getElementById("mieRatio").querySelectorAll("button").forEach(x=>x.classList.toggle("on",x===b));
     _ie.ratio = b.dataset.r==="free"?null:parseFloat(b.dataset.r);
-    if(_ie.ratio){ _ie.box.h=_ie.box.w/_ie.ratio; _ieClamp(); _ieApplyBox(); }
+    if(_ie.ratio){
+      const bx=_ie.box, cx=bx.x+bx.w/2, cy=bx.y+bx.h/2;
+      bx.h=bx.w/_ie.ratio;
+      if(bx.h>_ie.vh){ bx.h=_ie.vh; bx.w=bx.h*_ie.ratio; }
+      bx.x=cx-bx.w/2; bx.y=cy-bx.h/2;
+      _ieClamp(); _ieApplyBox();
+    }
   });
   document.getElementById("mieSize").addEventListener("click",e=>{
     const b=e.target.closest("button"); if(!b||!_ie)return;
