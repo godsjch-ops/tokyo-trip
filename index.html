@@ -424,26 +424,28 @@
   .fm-btn:active{transform:scale(.985);}
   .fm-btn.primary{background:var(--accent);color:#fff;}
 
-  /* 오늘 타임라인 = 점선 레일 + 링 노드 */
-  .fm-sec{font-size:var(--t-cap);font-weight:600;color:var(--faint);letter-spacing:.05em;text-transform:uppercase;margin:20px 2px 6px;}
-  .fm-rail{background:#fff;border:1px solid var(--line);border-radius:var(--r-card);padding:6px 12px;}
-  .fm-railrow{display:grid;grid-template-columns:42px 16px 1fr;gap:11px;align-items:start;
-    padding:11px 4px;cursor:pointer;position:relative;transition:background .12s;border-radius:8px;}
-  .fm-railrow:active{background:var(--bg);}
-  .fm-railrow::before{content:"";position:absolute;left:64px;top:26px;bottom:-11px;
-    border-left:2px dotted var(--line2);}
-  .fm-railrow.last::before{display:none;}
-  .fm-railrow time{font-size:var(--t-foot);font-weight:600;color:var(--faint);text-align:right;
-    font-variant-numeric:tabular-nums;padding-top:1px;letter-spacing:-.02em;}
-  .fm-railrow .node{position:relative;width:14px;height:14px;margin-top:2px;justify-self:center;z-index:1;}
-  .fm-railrow .node::before{content:"";position:absolute;inset:0;border-radius:50%;
-    border:2.5px solid var(--nc,var(--line2));background:var(--panel);box-sizing:border-box;}
-  .fm-railrow .tt{font-size:var(--t-body);line-height:1.36;min-width:0;overflow-wrap:anywhere;letter-spacing:-.01em;}
-  .fm-railrow.done time,.fm-railrow.done .tt{color:var(--faint);}
-  .fm-railrow.done .node::before{border-color:var(--line2);}
-  .fm-railrow.cur time{color:var(--meet);font-weight:700;}
-  .fm-railrow.cur .tt{font-weight:700;}
-  .fm-railrow.cur .node::before{border-width:4px;}
+  /* 오늘 타임라인 = 점선 레일 + 카드 (첫 버전 고도화) */
+  .fm-sec{font-size:var(--t-cap);font-weight:600;color:var(--faint);letter-spacing:.05em;text-transform:uppercase;margin:20px 2px 10px;}
+  .fm-tl{display:grid;grid-template-columns:40px 16px 1fr;gap:10px;}
+  .fm-tl .tm{font-size:var(--t-foot);font-weight:600;color:var(--faint);text-align:right;padding-top:13px;
+    font-variant-numeric:tabular-nums;letter-spacing:-.02em;}
+  .fm-tl .md{position:relative;}
+  .fm-tl .md::before{content:"";position:absolute;left:7px;top:22px;bottom:-20px;border-left:2px dotted var(--line2);}
+  .fm-tl .md i{position:absolute;left:1px;top:14px;width:14px;height:14px;border-radius:50%;
+    background:var(--panel);border:2.5px solid var(--nc,var(--line2));box-sizing:border-box;z-index:1;}
+  .fm-tl.done .md i{border-color:var(--line2);background:var(--line2);}
+  .fm-tl.cur .md i{border-width:4px;box-shadow:0 0 0 3px var(--accent-soft);}
+  .fm-tl.last .md::before{display:none;}
+  .fm-card{border:1px solid var(--line);border-radius:var(--r-card);background:var(--panel);padding:12px 14px;
+    margin-bottom:12px;cursor:pointer;box-shadow:0 1px 2px rgba(20,20,30,.04);transition:transform .12s;}
+  .fm-card:active{transform:scale(.99);}
+  .fm-tl.done .fm-card{opacity:.55;box-shadow:none;}
+  .fm-tl.cur .fm-card{border-color:var(--accent);
+    box-shadow:0 1px 2px rgba(20,20,30,.05),0 10px 26px -16px rgba(24,127,196,.5);}
+  .fm-cat{display:inline-block;font-size:10px;font-weight:700;color:#fff;border-radius:999px;padding:3px 9px;letter-spacing:.01em;}
+  .fm-ct{font-size:var(--t-headline);font-weight:700;margin:8px 0 3px;letter-spacing:-.02em;overflow-wrap:anywhere;}
+  .fm-cs{font-size:var(--t-foot);color:var(--muted);font-variant-numeric:tabular-nums;letter-spacing:-.01em;}
+  .fm-orglink{display:inline-flex;align-items:center;gap:3px;margin-top:9px;font-size:var(--t-foot);font-weight:600;color:var(--accent);}
 
   .fm-item{border:1px solid var(--line);border-radius:12px;background:#fff;padding:13px 13px;margin-bottom:9px;cursor:pointer;}
   .fm-item .h{display:flex;align-items:baseline;gap:7px;}
@@ -2266,19 +2268,22 @@ function fmTimelineHtml(di){
         `</div></div>`;
     }
   }
-  h+=`<div class="fm-sec">${trip===di?"오늘 일정":"일정"}</div><div class="fm-rail">`;
+  h+=`<div class="fm-sec">${trip===di?"오늘 일정":"일정"}</div>`;
   evs.forEach((e,i)=>{
     const c=CAT[e.cat]||CAT.visit;
-    let cls="fm-railrow";
-    if(nowM>=0){ if(toMin(e.end)<=nowM)cls+=" done"; else if(toMin(e.start)<=nowM&&nowM<toMin(e.end))cls+=" cur"; }
+    let cls="fm-tl";
     if(i===evs.length-1)cls+=" last";
-    h+=`<div class="${cls}" onclick="fmEventTap('${e.id}')">`+
-      `<time>${e.start}</time>`+
-      `<span class="node" style="--nc:${c.color}"></span>`+
-      `<span class="tt">${esc(e.title)}</span>`+
-      `</div>`;
+    if(nowM>=0){ if(toMin(e.end)<=nowM)cls+=" done"; else if(toMin(e.start)<=nowM&&nowM<toMin(e.end))cls+=" cur"; }
+    h+=`<div class="${cls}" style="--nc:${c.color}">`+
+      `<div class="tm">${e.start}</div><div class="md"><i></i></div>`+
+      `<div class="fm-card" onclick="fmEventTap('${e.id}')">`+
+      `<span class="fm-cat" style="background:${c.color}">${c.name}</span>`+
+      `<div class="fm-ct">${esc(e.title)}</div>`+
+      `<div class="fm-cs">${e.start}–${e.end}${e.loc?" · "+esc(e.loc):""}</div>`+
+      (e.ref?`<span class="fm-orglink">🏛️ 기관 정보 보기 ›</span>`
+           :(lodgingForEvent(e)?`<span class="fm-orglink">🏨 숙소 정보·메모 ›</span>`:""))+
+      `</div></div>`;
   });
-  h+=`</div>`;
   return h;
 }
 /* ---------- 전체 탭: 메모 모아보기 + 설정 ---------- */
