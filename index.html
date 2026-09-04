@@ -1985,9 +1985,10 @@ function viewFieldMore(){
       `<button class="memo-save" onclick="saveMyName()">저장</button></div></div></div>`;
   h+=`<div class="fm-setgrp"><div class="lb">내 메모 내보내기</div>`+
     `<div class="fm-card2"><div class="fm-actrow">`+
-      `<button class="fm-btn primary" onclick="downloadMemos()">📄 .txt 다운로드</button>`+
-      `<button class="fm-btn" onclick="shareMemos()">💬 카카오톡·공유</button></div>`+
-      `<div class="memo-help" style="margin-top:9px;margin-bottom:0">이 기기에 저장한 <b>개인 메모</b> 전체를 모아 내보냅니다.</div></div></div>`;
+      `<button class="fm-btn primary" onclick="downloadMemos()">📄 HTML 저장</button>`+
+      `<button class="fm-btn" onclick="printMemos()">🖨️ 인쇄 / PDF</button>`+
+      `<button class="fm-btn" onclick="shareMemos()">💬 공유</button></div>`+
+      `<div class="memo-help" style="margin-top:9px;margin-bottom:0">이 기기에 저장한 <b>개인 메모</b> 전체를 사진까지 담아 내보냅니다. PDF로 받으려면 <b>인쇄 / PDF</b> → 대상에서 “PDF로 저장”을 고르세요.</div></div></div>`;
   h+=`<div class="fm-setgrp"><div class="lb">내 메모 모아보기 (${mine.length})</div>`;
   if(!mine.length){
     h+=`<div class="fm-note-empty">아직 저장한 개인 메모가 없어요.<br>기관·숙소·일정 상세에서 메모를 작성해 보세요.</div>`;
@@ -2946,7 +2947,7 @@ function memoDel(k){
 }
 
 /* ==========================================================================
-   내 메모 모아보기 / 내보내기 (.txt 다운로드 · 공유)
+   내 메모 모아보기 / 내보내기 (HTML 저장 · 인쇄/PDF · 공유, 사진 포함)
    ========================================================================== */
 function sheetLabelInfo(sheetId){
   const i=sheetId.indexOf(":"); const type=i<0?"":sheetId.slice(0,i), id=i<0?sheetId:sheetId.slice(i+1);
@@ -2973,28 +2974,71 @@ function buildMemoText(){
   else mine.forEach(m=>{ s+=`■ [${m.tag}] ${m.label}\n${m.text}\n\n`; });
   return s;
 }
+/* 사진(data:URI)까지 그대로 담기 위해 HTML 문서로 내보낸다. */
+function collectMyMemosHtml(){
+  const out=[];
+  for(let i=0;i<localStorage.length;i++){ const k=localStorage.key(i);
+    if(k&&k.indexOf("tw_memodoc_p_")===0){
+      const id=k.slice("tw_memodoc_p_".length), raw=localStorage.getItem(k)||"";
+      if(memoHtmlToText(raw)){ const info=sheetLabelInfo(id); out.push({id,label:info.label,tag:info.tag,html:memoSanitize(raw)}); }
+    }
+  }
+  out.sort((a,b)=>a.label.localeCompare(b.label));
+  return out;
+}
+function buildMemoHtml(opt){
+  opt=opt||{};
+  const mine=collectMyMemosHtml();
+  const name=esc(localStorage.getItem("tw_name")||"-");
+  const when=esc(new Date().toLocaleString("ko-KR"));
+  let body="";
+  if(!mine.length) body='<p class="empty">저장된 개인 메모가 없습니다.</p>';
+  else mine.forEach(m=>{ body+=`<section><h2><span class="tag">${esc(m.tag)}</span> ${esc(m.label)}</h2><div class="doc">${m.html}</div></section>`; });
+  return `<!doctype html><html lang="ko"><head><meta charset="utf-8">`+
+    `<meta name="viewport" content="width=device-width,initial-scale=1">`+
+    `<title>따뜻한동행 연수 메모 — ${name}</title><style>`+
+    `body{font-family:-apple-system,BlinkMacSystemFont,'Malgun Gothic','맑은 고딕',sans-serif;line-height:1.7;color:#1f2937;max-width:760px;margin:0 auto;padding:24px 20px}`+
+    `h1{font-size:20px;margin:0 0 4px;border-bottom:2px solid #187FC4;padding-bottom:8px}`+
+    `.meta{color:#6b7280;font-size:13px;margin:8px 0 26px}`+
+    `section{margin:0 0 26px;page-break-inside:avoid}`+
+    `h2{font-size:15px;background:#f1f5f9;padding:8px 10px;border-left:3px solid #187FC4;border-radius:4px;margin:0 0 8px}`+
+    `.tag{color:#187FC4;font-weight:700;margin-right:4px}`+
+    `.doc{padding:2px}.doc img{max-width:100%;height:auto;border-radius:6px;margin:6px 0}`+
+    `.empty{color:#9ca3af}`+
+    `@media print{body{padding:0}h2{-webkit-print-color-adjust:exact;print-color-adjust:exact}}`+
+    `</style></head><body>`+
+    `<h1>따뜻한동행 2026 일본 해외연수 — 내 메모 모음</h1>`+
+    `<div class="meta">작성자: ${name} · 생성: ${when}</div>`+
+    body+
+    (opt.print?`<script>addEventListener('load',function(){setTimeout(function(){try{print();}catch(e){}},500);});<\/script>`:"")+
+    `</body></html>`;
+}
 function downloadMemos(){
-  const mine=collectMyMemos();
-  if(!mine.length){ toast("저장된 개인 메모가 없어요."); return; }
-  const blob=new Blob([buildMemoText()],{type:"text/plain;charset=utf-8"});
+  if(!collectMyMemosHtml().length){ toast("저장된 개인 메모가 없어요."); return; }
+  const blob=new Blob([buildMemoHtml()],{type:"text/html;charset=utf-8"});
   const url=URL.createObjectURL(blob), a=document.createElement("a");
-  a.href=url; a.download=`따뜻한동행_연수메모_${new Date().toISOString().slice(0,10)}.txt`;
+  a.href=url; a.download=`따뜻한동행_연수메모_${new Date().toISOString().slice(0,10)}.html`;
   document.body.appendChild(a); a.click();
   setTimeout(()=>{URL.revokeObjectURL(url);a.remove();},1200);
-  toast("메모를 다운로드했어요.");
+  toast("메모를 HTML로 저장했어요. (사진 포함)");
+}
+function printMemos(){
+  if(!collectMyMemosHtml().length){ toast("저장된 개인 메모가 없어요."); return; }
+  const w=window.open("","_blank");
+  if(!w){ toast("팝업이 막혔어요 — 'HTML 저장'을 이용해 브라우저에서 인쇄해 주세요."); return; }
+  w.document.open(); w.document.write(buildMemoHtml({print:true})); w.document.close();
 }
 async function shareMemos(){
-  const mine=collectMyMemos();
-  if(!mine.length){ toast("저장된 개인 메모가 없어요."); return; }
-  const text=buildMemoText();
+  if(!collectMyMemosHtml().length){ toast("저장된 개인 메모가 없어요."); return; }
+  const html=buildMemoHtml(), summary=buildMemoText();
   try{
     if(navigator.canShare){
-      const file=new File([text],"따뜻한동행_연수메모.txt",{type:"text/plain"});
+      const file=new File([html],"따뜻한동행_연수메모.html",{type:"text/html"});
       if(navigator.canShare({files:[file]})){ await navigator.share({files:[file],title:"연수 메모"}); return; }
     }
-    if(navigator.share){ await navigator.share({title:"연수 메모",text}); return; }
-    await navigator.clipboard.writeText(text); toast("메모를 복사했어요. 카카오톡에 붙여넣기 하세요.");
-  }catch(e){ if(e&&e.name==="AbortError")return; try{await navigator.clipboard.writeText(text); toast("메모를 복사했어요. 카카오톡에 붙여넣기 하세요.");}catch(_){toast("공유를 사용할 수 없어요.");} }
+    if(navigator.share){ await navigator.share({title:"연수 메모",text:summary}); return; }
+    await navigator.clipboard.writeText(summary); toast("메모 텍스트를 복사했어요. (사진은 HTML 저장을 이용하세요)");
+  }catch(e){ if(e&&e.name==="AbortError")return; try{await navigator.clipboard.writeText(summary); toast("메모 텍스트를 복사했어요. (사진은 HTML 저장을 이용하세요)");}catch(_){toast("공유를 사용할 수 없어요.");} }
 }
 
 TODAY_IDX=computeTodayIdx();if(TODAY_IDX>=0)mobileDay=TODAY_IDX;

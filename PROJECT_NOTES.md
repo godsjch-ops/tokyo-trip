@@ -58,7 +58,7 @@
   - 기관: `backlog`의 `kind:"org"` 9곳 카드를 **일자별 그룹**(`.fm-daygroup`+`.fm-dayhead`, 그룹 간 간격)으로 표시 → 시트(정보 + 공식 홈페이지 + 접이식 지도 + 길찾기 + 메모). 아래 관광(kind:"visit")도 표시.
   - 숙소: `lodging` 카드, 오늘 밤 숙소 강조(`fmPeriodCoversDay`). 시트에 접이식 지도 + 메모.
   - 식당: `kind:"food"` 없으면 "준비 중" 안내 + 일정표 meal 블록 목록.
-  - 전체(메모·설정): 내 이름 설정(`saveMyName`), 내 메모 .txt 다운로드(`downloadMemos`)/공유(`shareMemos`, Web Share→카카오톡), **내 메모 모아보기**(`collectMyMemos`가 `tw_memodoc_p_*` 스캔 → 카드, 탭하면 `openSheetById`로 해당 시트 열기). "PC 대시보드로 전환"(`exitFieldMode`).
+  - 전체(메모·설정): 내 이름 설정(`saveMyName`), 내 메모 내보내기 — **HTML 저장**(`downloadMemos`, `buildMemoHtml`이 사진 data:URI까지 담은 단독 HTML 문서 생성) / **인쇄·PDF**(`printMemos`, 새 창에 HTML 쓰고 자동 `print()` → "PDF로 저장") / **공유**(`shareMemos`, Web Share로 .html 파일, 안되면 텍스트 요약 복사). 사진이 있으면 .txt로는 담을 수 없어 HTML로 전환함(`buildMemoText`는 텍스트 요약용으로 유지). **내 메모 모아보기**(`collectMyMemos`가 `tw_memodoc_p_*` 스캔 → 카드, 탭하면 `openSheetById`로 해당 시트 열기). "PC 대시보드로 전환"(`exitFieldMode`).
 - **상세 시트(iOS풍)**: `.fm-sheet>.panel(.sh-grip+.sh-scroll>.sh-track>.sh-page)`. 열기=아래에서 슬라이드업(`_sheetShow`가 리플로우 후 `.on` 토글, 백드롭 페이드). 빌더 `buildOrgSheet/buildLodgingSheet/buildEventSheet`→`{html,memoId}`, 오프너 `openOrgSheet/openLodgingSheet/openEventSheet`가 `_sheetNav`(같은 종류 목록+idx+open) 설정 후 표시.
   - **끌어 닫기 + 좌우 이동**: `fmSetupSheetGestures()`가 `#fmSheetPanel`에 터치 바인딩. 첫 이동으로 방향 lock — 세로(손잡이 또는 스크롤 top에서 아래로)=패널 translateY 따라가다 110px↑ 놓으면 닫힘(백드롭 동반 페이드), 가로=`.sh-track` 이동 + 인접 항목 가벼운 미리보기(`sheetPreview`, 지도·메모 제외) 표시하다 임계 넘으면 `_sheetNav.open`으로 이전/다음 항목 전환. 스크롤은 lock='scroll'로 통과.
   - `fmEventTap`: `ref` 있으면 기관 시트로(연동 유지), 없으면 `openEventSheet`. 이벤트 시트에도 `ref`면 "🏛️ 기관 정보 보기" 버튼.
