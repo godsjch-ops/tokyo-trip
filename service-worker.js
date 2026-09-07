@@ -1,7 +1,7 @@
 /* 따뜻한동행 연수 일정 — 오프라인 지원 서비스워커
  * 한 번 열어본 폰은 인터넷이 없어도 앱이 열립니다.
  * 캐시 버전을 올리면(CACHE 값 변경) 다음 접속 때 새 파일을 받습니다. */
-const CACHE = 'tw-tokyo-v3';
+const CACHE = 'tw-tokyo-v4';
 const ASSETS = [
   './',
   './index.html',
@@ -56,17 +56,24 @@ self.addEventListener('fetch', (e) => {
     (sameOrigin && (url.pathname === '/' || url.pathname.endsWith('.html')));
 
   if (isHTML) {
-    // HTML: 네트워크 우선 (온라인이면 항상 최신, 오프라인이면 캐시)
+    // HTML: 네트워크 우선 (온라인이면 항상 최신) — 단, 3초 안에 응답이 없으면 캐시로 넘어간다.
+    // 비행기 모드는 fetch가 즉시 실패하지만, 호텔 와이파이·캡티브 포털·로밍 전환 중처럼
+    // "연결은 됐는데 응답이 없는" 상태에서는 예전엔 흰 화면으로 계속 매달려 있었다.
+    const fromNet = fetch(req).then((res) => {
+      if (res && res.ok) {
+        const copy = res.clone();
+        caches.open(CACHE).then((c) => c.put('./index.html', copy));
+      }
+      return res;
+    });
+    fromNet.catch(() => {});   // 타임아웃 후 뒤늦게 실패해도 조용히 (unhandled rejection 방지)
+    const fallback = () => caches.match(req).then((h) => h || caches.match('./index.html'));
     e.respondWith(
-      fetch(req)
-        .then((res) => {
-          if (res && res.ok) {
-            const copy = res.clone();
-            caches.open(CACHE).then((c) => c.put('./index.html', copy));
-          }
-          return res;
-        })
-        .catch(() => caches.match(req).then((h) => h || caches.match('./index.html')))
+      Promise.race([
+        fromNet,
+        new Promise((_, rej) => setTimeout(() => rej(new Error('slow-network')), 3000))
+      ])
+        .catch(() => fallback().then((h) => h || fromNet))
     );
     return;
   }

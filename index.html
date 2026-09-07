@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="robots" content="noindex, nofollow">
 <meta name="referrer" content="no-referrer">
 <title>일본 해외연수 일정 대시보드 (9/14~9/18)</title>
@@ -388,6 +388,20 @@
   .fm-top .sp{flex:1;}
   .fm-exit{border:1px solid var(--line2);background:#fff;border-radius:8px;padding:7px 10px;font-size:12px;
     font-weight:700;color:#374151;cursor:pointer;white-space:nowrap;}
+  .fm-sos{border:1px solid #fecaca;background:#fef2f2;border-radius:8px;padding:6px 9px;font-size:16px;
+    line-height:1;cursor:pointer;flex:none;}
+  .fm-sos:active{background:#fee2e2;transform:scale(.95);}
+  /* 비상 연락처 시트 */
+  .sos-row{display:flex;align-items:center;gap:10px;min-height:54px;padding:13px 14px;
+    border-top:1px solid var(--line);text-decoration:none;color:var(--ink);}
+  .sos-row:first-child{border-top:0;}
+  .sos-row .l{min-width:0;font-size:var(--t-sub);font-weight:600;}
+  .sos-row .n{margin-left:auto;font-weight:700;color:var(--accent);white-space:nowrap;
+    font-variant-numeric:tabular-nums;}
+  .sos-row.jp .n{color:#dc2626;font-size:18px;}
+  .sos-row.dead{color:var(--muted);}
+  .sos-row.dead .n{color:var(--faint);font-weight:500;}
+  a.sos-row:active{background:var(--bg);}
   .fm-meals{display:flex;gap:6px;padding:9px 14px 2px;flex-wrap:wrap;}
   .fm-meals:empty{display:none;padding:0;}
   .fm-meal{font-size:11px;font-weight:700;color:var(--muted);background:#fff;border:1px solid var(--line);
@@ -766,6 +780,7 @@
     </div>
   </div>
   <div class="spacer"></div>
+  <button class="btn sm" onclick="openEmergencySheet()" title="비상 연락처">🆘 비상</button>
   <button class="btn primary" onclick="enterFieldMode()">📱 현장 모드</button>
   <button class="btn editor-only" onclick="openForm()">＋ 일정 추가</button>
   <button class="btn sm editor-only" id="btnLoadOfficial" onclick="loadOfficialItinerary()">📋 PDF 일정표 불러오기</button>
@@ -905,6 +920,7 @@
         <div class="fm-dsub" id="fmDsub"></div>
       </div>
       <div class="sp"></div>
+      <button class="fm-sos" onclick="openEmergencySheet()" title="비상 연락처" aria-label="비상 연락처">🆘</button>
       <button class="fm-exit" onclick="exitFieldMode()">대시보드 ▸</button>
     </div>
     <div class="fm-meals" id="fmMeals"></div>
@@ -1163,10 +1179,28 @@ const TRIP_ID="tokyo2026";
    현장에서 이름이 안 맞으면 관리자(주찬희)가 아래 "명단 관리"에서 즉석 추가(재배포 불필요). */
 const ROSTER_SEED=["이광재","안연진","김선모","주찬희","강은정","김미진","손지현","김경혜","조재연","양대용","김민정"];
 /* ▼ 편집 권한: 로그인 이름이 이 명단에 있으면 편집 가능(그 외는 보기 전용). PIN 없음. */
-const ADMIN_NAMES=["주찬희"];
+const ADMIN_NAMES=["주찬희","안연진"];
 /* 기관별 사전조사 자료 PDF. 아직 없어서 현재는 해외연수 계획서로 대체(목업).
    준비되면 OFFICIAL_ORGS 각 항목에 doc:"./파일명.pdf" 를 넣으면 그 기관만 교체됨. */
 const ORG_DOC_FALLBACK="./2026 따뜻한동행 일본 해외연수 계획서_20260903.pdf";
+/* ▼ 비상 연락처 — 현장 모드 헤더의 🆘 버튼에서 바로 전화. 번호가 바뀌면 여기만 고치면 됨.
+   tel:""(빈 값)이면 "번호 미등록"으로 회색 표시되고 전화가 걸리지 않음.
+   오늘 밤 숙소 전화는 lodging 데이터의 desc에서 자동으로 뽑아 맨 위에 붙는다. */
+const EMERGENCY=[
+ {group:"인솔 · 현지", items:[
+   {label:"통역가이드 박진희 (한국)", show:"010-5324-4557",  tel:"+821053244557"},
+   {label:"통역가이드 박진희 (일본)", show:"090-5453-7069",  tel:"+819054537069"},
+   {label:"인솔 담당 주찬희",         show:"",               tel:""},
+   {label:"부인솔 안연진",            show:"",               tel:""}
+ ]},
+ {group:"일본 긴급전화 (무료)", items:[
+   {label:"경찰",          show:"110", tel:"110", jp:true},
+   {label:"화재 · 구급차", show:"119", tel:"119", jp:true}
+ ]},
+ {group:"영사 조력", items:[
+   {label:"외교부 영사콜센터 (24시간)", show:"+82-2-3210-0404", tel:"+82233210404"}
+ ]}
+];
 const MYMAPS_MID="1O59R_FlNsb6EqQNAsSVZwUAOwPPK2q4";
 const MYMAPS_VIEW_URL=`https://www.google.com/maps/d/edit?mid=${MYMAPS_MID}&usp=sharing`;
 const MYMAPS_EMBED_URL=`https://www.google.com/maps/d/embed?mid=${MYMAPS_MID}`;
@@ -2639,6 +2673,45 @@ function buildEventSheet(id){
     memoZoneHtml();
   return {html,memoId:"event:"+id};
 }
+/* ---- 비상 연락처 시트 (헤더 🆘) ---- */
+/* 숙소 desc 안의 "· 전화: +81-3-5548-2003" 같은 줄에서 번호만 뽑는다 */
+function telFromText(t){ const m=String(t||"").match(/\+?\d[\d\-\s]{7,}\d/); return m?m[0].trim():""; }
+function emergencyTonightHotel(){
+  const di=computeTodayIdx();
+  if(di>=0){ const l=lodging.find(x=>fmPeriodCoversDay(x.period,di)); if(l)return l; }
+  return null;
+}
+function sosRow(label,show,tel,cls){
+  const t=String(tel||"").replace(/[^\d+]/g,"");
+  if(!t) return `<div class="sos-row dead"><span class="l">${esc(label)}</span><span class="n">번호 미등록</span></div>`;
+  return `<a class="sos-row ${cls||""}" href="tel:${esc(t)}"><span class="l">${esc(label)}</span>`+
+         `<span class="n">${esc(show||t)} ›</span></a>`;
+}
+function buildEmergencySheet(){
+  let h=`<button class="sh-x" onclick="closeFieldSheet()">✕</button>`+
+    `<span class="cat-chip sh-chip"><span class="cat-dot" style="background:#dc2626"></span>비상 연락</span>`+
+    `<h3>🆘 비상 연락처</h3>`+
+    `<div class="sh-sub">번호를 누르면 바로 전화가 걸립니다</div>`;
+  const hotel=emergencyTonightHotel();
+  if(hotel){
+    const tel=telFromText(hotel.desc);
+    h+=`<div class="fm-sec">오늘 밤 숙소</div><div class="fm-card2">`+
+       sosRow(hotel.title,tel,tel)+`</div>`;
+  }
+  EMERGENCY.forEach(g=>{
+    h+=`<div class="fm-sec">${esc(g.group)}</div><div class="fm-card2">`+
+       g.items.map(it=>sosRow(it.label,it.show,it.tel,it.jp?"jp":"")).join("")+`</div>`;
+  });
+  h+=`<div class="sh-tip">일본에서 <b>110</b>=경찰, <b>119</b>=화재·구급차. 로밍 중에도 무료로 걸립니다. `+
+     `여권 사본은 <b>개인 메모</b>에 사진으로 넣어두면 오프라인에서도 볼 수 있어요.</div>`;
+  return {html:h};
+}
+function openEmergencySheet(){
+  fmSetupSheetGestures();      // PC 대시보드에서 바로 열었을 때도 제스처가 붙도록
+  _sheetNav=null;              // 좌우 스와이프 대상 없음
+  _sheetShow(buildEmergencySheet());
+}
+
 /* ---- 좌우 스와이프용 이동 목록 ---- */
 function orgSortCmp(a,b){ return ((a.day==null?99:a.day)-(b.day==null?99:b.day))||String(a.time||"").localeCompare(String(b.time||"")); }
 function navForOrg(id){
@@ -2837,7 +2910,25 @@ function memoPDocSet(id,html){
   try{ localStorage.setItem("tw_memodoc_p_"+id,html); localStorage.setItem("tw_memodoc_pts_"+id,String(Date.now())); }
   catch(e){ localOk=false; toast("이 폰에 저장하지 못했어요 — 클라우드에는 저장 시도 중."); }
   memoShowSaveWarn(!localOk);
-  if(fbdb){ try{ pmemoRef(id).set({html:html,ts:Date.now(),name:(localStorage.getItem("tw_name")||LOGIN_NAME||"")}); }catch(e){} }
+  if(fbdb){
+    // set()은 비동기로 reject되므로 try/catch가 아니라 .catch()로 받아야 한다.
+    // 사진이 크면 보안 규칙(1건 용량 제한)에 걸려 거부되는데, 예전에는 아무 표시가 없었다.
+    try{
+      pmemoRef(id).set({html:html,ts:Date.now(),name:(localStorage.getItem("tw_name")||LOGIN_NAME||"")})
+        .then(()=>{ if(localOk) memoShowSaveWarn(false); })
+        .catch(err=>memoShowCloudWarn(err));
+    }catch(e){ memoShowCloudWarn(e); }
+  }
+}
+/* 클라우드(Firebase) 백업 실패 안내 — 용량 초과인지 연결 문제인지 구분해서 알려준다 */
+function memoShowCloudWarn(err){
+  const w=document.getElementById("fmMemoWarn"); if(!w)return;
+  const code=String((err&&(err.code||err.message))||err||"");
+  const tooBig=/permission|denied/i.test(code);
+  w.style.display="block";
+  w.textContent = tooBig
+    ? "⚠ 사진이 커서 클라우드 백업이 거부됐어요. 메모는 이 폰에 저장됐습니다 — 사진을 '작게'로 줄이거나 메모를 나눠 적어주세요."
+    : "⚠ 클라우드 백업에 실패했어요(신호 문제일 수 있어요). 메모는 이 폰에 저장됐습니다 — 신호가 좋을 때 이 메모를 한 번 더 열어 저장해 주세요.";
 }
 function memoShowSaveWarn(on){
   const w=document.getElementById("fmMemoWarn"); if(!w)return;
@@ -3137,7 +3228,7 @@ function memoImgEditApply(){
   const img=document.getElementById("mieImg"), b=_ie.box;
   const scale=_ie.nat/_ie.vw;               // 화면px → 원본px
   let sx=b.x*scale, sy=b.y*scale, sw=b.w*scale, sh=b.h*scale;
-  const cap = _ie.size==="full" ? Math.min(sw,2000) : _ie.size;
+  const cap = _ie.size==="full" ? Math.min(sw,1400) : _ie.size;   // 원본도 상한 — 백업 용량 초과 방지
   let dw=Math.min(sw,cap), dh=Math.round(dw*sh/sw); dw=Math.round(dw);
   const cv=document.createElement("canvas"); cv.width=dw; cv.height=dh;
   cv.getContext("2d").drawImage(img,sx,sy,sw,sh,0,0,dw,dh);
@@ -3315,8 +3406,9 @@ function renderPostList(){
     const body = it.html!=null ? memoSanitize(it.html) : esc(it.text||"");  // 옛 글은 text 필드
     return `<div class="memo-post${mine?" mine":""}" data-k="${it.k}"><div class="pb">${body}</div>`+
       `<div class="pm"><span class="who">${esc(it.name||"익명")}</span><span>${fmTime(it.ts)}${it.edited?" · 수정됨":""}</span>`+
-      (mine?`<span class="edit" onclick="memoEditStart('${it.k}')">수정</span>`:"")+
-      `<span class="del" onclick="memoDel('${it.k}')">삭제</span></div></div>`;
+      (mine?`<span class="edit" onclick="memoEditStart('${it.k}')">수정</span>`+
+            `<span class="del" onclick="memoDel('${it.k}')">삭제</span>`:"")+
+      `</div></div>`;
   }).join("");
   box.innerHTML=h;
   if(_memoEditing){ const ie=document.getElementById("fmMemoEditInput"); if(ie)ie.focus(); }
@@ -3334,6 +3426,10 @@ function memoEditSave(k){
   toast("메모를 수정했어요.");
 }
 function memoDel(k){
+  // 본인 글만 삭제 — 화면에서도 남의 글엔 버튼이 없지만 여기서 한 번 더 막는다
+  const me=localStorage.getItem("tw_name")||LOGIN_NAME||"";
+  const post = fbdb ? (_memoShared&&_memoShared[k]) : memoSGet(_memoId).find(x=>x.id===k);
+  if(post && post.name && me && post.name!==me){ toast("내가 쓴 메모만 삭제할 수 있어요."); return; }
   if(!confirm("이 메모를 삭제할까요?"))return;
   if(_memoEditing===k)_memoEditing=null;
   if(fbdb) (_memoRef||fbdb.ref(fbBase("memos")+"/"+fbKey(_memoId))).child(k).remove();
@@ -3444,6 +3540,43 @@ window.addEventListener("offline",()=>updateNet(false));
 window.addEventListener("online",()=>updateNet(true));
 updateNet();
 startApp();
+
+/* ==========================================================================
+   현재 시각 자동 반영 — "지금 진행 중" 카드와 날짜가 저절로 따라간다.
+   예전에는 렌더 시점의 시각으로 고정돼, 폰을 꺼냈을 때 한참 전 일정이
+   "지금 진행 중"으로 남아 있었다.
+   ========================================================================== */
+let _tickLastMin=-1, _tickDate="";
+function tickClock(force){
+  const now=new Date(), m=now.getHours()*60+now.getMinutes();
+  const dkey=now.getFullYear()+"-"+now.getMonth()+"-"+now.getDate();
+  const t=computeTodayIdx();
+  // 날짜가 바뀌었으면(연수 중 자정, 연수 전 D-day 감소, 시작·종료일) 전체를 다시 그린다
+  if(t!==TODAY_IDX || (_tickDate && dkey!==_tickDate)){
+    _tickLastMin=m; _tickDate=dkey; TODAY_IDX=t;
+    if(t>=0){ mobileDay=t; fmState.day=t; }
+    updateTripStatus();
+    render();                              // render()가 현장 모드까지 같이 갱신
+    return;
+  }
+  _tickDate=dkey;
+  if(!force && m===_tickLastMin) return;    // 같은 분이면 다시 그릴 이유가 없다
+  updateTripStatus();
+  if(!document.body.classList.contains("fm-open")){ _tickLastMin=m; return; }
+  if(fmState.tab!=="today"){ _tickLastMin=m; return; }
+  if(fmState.day!==TODAY_IDX){ _tickLastMin=m; return; }   // 오늘이 아닌 날 = 시각에 따라 변하는 표시가 없음
+  if(_sw) return;                                          // 날짜 스와이프 중 — 끝나고 다음 틱에
+  const sheet=document.getElementById("fmSheet");
+  if(sheet && sheet.classList.contains("on")) return;      // 상세 시트를 보는 중 — 닫히면 다음 틱에
+  _tickLastMin=m;
+  const sc=document.getElementById("fieldMode"), y=sc?sc.scrollTop:0;
+  renderField();
+  if(sc)sc.scrollTop=y;                    // 읽고 있던 위치 유지
+}
+setInterval(()=>tickClock(false),30000);
+document.addEventListener("visibilitychange",()=>{ if(!document.hidden)tickClock(true); });
+window.addEventListener("pageshow",()=>tickClock(true));
+window.addEventListener("focus",()=>tickClock(true));
 window.addEventListener("online",()=>setTimeout(memoFlushPending,400));
 setTimeout(memoFlushPending,3000);
 /* 오프라인 지원: 한 번 열어본 폰은 인터넷 없이도 앱이 열림 */

@@ -24,7 +24,7 @@
         "memos": {
           "$sheet": {
             "$post": {
-              ".validate": "newData.hasChild('html') && newData.child('html').isString() && newData.child('html').val().length < 500000 && newData.child('name').val().length < 60"
+              ".validate": "newData.hasChild('html') && newData.child('html').isString() && newData.child('html').val().length < 1000000 && newData.child('name').val().length < 60"
             }
           }
         },
@@ -35,7 +35,7 @@
         "pmemos": {
           "$owner": {
             "$sheet": {
-              ".validate": "newData.hasChild('html') && newData.child('html').isString() && newData.child('html').val().length < 500000"
+              ".validate": "newData.hasChild('html') && newData.child('html').isString() && newData.child('html').val().length < 1000000"
             }
           }
         },
