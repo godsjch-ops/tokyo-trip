@@ -26,7 +26,7 @@
 | 공유 | Firebase 실시간(설정 있으면 공유, 없으면 이 기기 localStorage 저장) |
 | 모바일 | 요일 탭으로 하루씩 전체 화면 · PWA(오프라인) · 개인 메모 클라우드 백업 |
 | 접속 | 첫 화면에서 성 포함 실명 입력 → `ROSTER_SEED`(11명) ∪ Firebase `roster`에 있으면 입장(1회, 기기 기억). 익명 인증 자동. `noindex` |
-| 편집권한 | 로그인 이름이 `ADMIN_NAMES`(현재 `["주찬희","안연진"]`)에 있으면 편집. PIN 없음. 파괴적 함수는 `requireEditor()` 이중 방어 |
+| 편집권한 | 로그인 이름이 `ADMIN_NAMES`(현재 `["주찬희","손지현"]`)에 있으면 편집. PIN 없음. 파괴적 함수는 `requireEditor()` 이중 방어 |
 
 ## 3. 현재 기능
 ### 일정표(주간 그리드)
@@ -106,8 +106,9 @@
    - 함께: 사진 편집기의 '원본' 상한 2000px → 1400px, `firebase-rules.json`의 메모 1건 한도 500KB → 1MB. **규칙은 콘솔에 다시 붙여넣어야 적용됨**(체크리스트 1-2).
 4. **느린 네트워크에서 흰 화면 방지** (`service-worker.js`) — HTML 네트워크 우선 fetch에 타임아웃이 없어, 호텔 와이파이·캡티브 포털·로밍 전환처럼 "연결은 됐는데 응답이 없는" 상태에서 계속 매달렸다. `Promise.race`로 3초 타임아웃 후 캐시 폴백. `CACHE`를 `tw-tokyo-v4`로 올림 → **배포 후 각 폰이 온라인에서 1회 열어야 캐시가 새로 만들어진다**.
 5. **비상 연락처 시트** (`EMERGENCY` 상수 / `buildEmergencySheet` / `openEmergencySheet`) — 현장 모드 헤더 🆘 + PC 헤더 "🆘 비상". `tel:` 링크로 바로 통화. 오늘 밤 숙소 전화는 `lodging`의 `desc`에서 `telFromText()`가 자동으로 뽑아 맨 위에 붙인다. 통역가이드 번호가 9/14 첫 일정 desc 안에 묻혀 있던 문제 해결.
-   - **주찬희·안연진 휴대폰 번호는 아직 비어 있음("번호 미등록")** — `EMERGENCY` 상수에 채워 넣을 것.
-6. **부관리자 추가** — `ADMIN_NAMES`에 안연진. 주찬희 폰이 방전·분실돼도 일정 수정·명단 추가·스냅샷 복원이 가능하다.
+   - **개인 번호는 소스에 두지 않는다.** 이 저장소는 공개라 `index.html`에 넣으면 git 히스토리에 영구히 남는다. 인솔진·가이드 번호는 Firebase `contacts` 노드에 있고(규칙상 로그인한 사람만 읽힘), 관리자가 **더보기 → 관리자 · 비상 연락처**에서 추가/삭제한다. 코드의 `EMERGENCY_PUBLIC`에는 110·119·영사콜센터 같은 공개 번호만 둔다.
+   - 번호는 `telNormalize()`가 `+82`/`+81` 국제전화 형식으로 바꿔 저장 — 로밍 중에도 걸린다.
+6. **부관리자 추가** — `ADMIN_NAMES`에 손지현. 주찬희 폰이 방전·분실돼도 일정 수정·명단 추가·스냅샷 복원이 가능하다.
 7. **확대 잠금 해제** — viewport에서 `maximum-scale=1.0, user-scalable=no` 제거. 안드로이드 크롬이 이걸 존중해 참가자가 글씨를 못 키웠다.
 
 > 검증 못 한 것: **서비스워커 동작은 실기기 확인 필요.** 개발용 브라우저 패널이 서비스워커 등록 자체를 막아(빈 1줄짜리 SW도 동일하게 실패) 오프라인·3초 타임아웃 경로는 런타임으로 확인하지 못했다. 문법 검사(`node --check`)만 통과.
@@ -125,6 +126,7 @@ trips/tokyo2026/
   memos_meta/<sheetId> : { count, lastTs }                 // 새 글 배지용 요약(글 로드 시 자동 갱신)
   pmemos/d_<기기ID>/<sheetId> : { html, ts, name }         // 개인 메모 동시 저장 (기기ID 기준, 화면엔 본인만)
   roster/<pushId> : { name, by, ts }                       // 관리자가 추가한 접속 허용 이름 (기본 11명은 코드 ROSTER_SEED)
+  contacts/<pushId> : { label, show, tel, by, ts }         // 🆘 비상 연락처의 개인 번호 (소스에 두지 않음)
   snapshots/<pushId> : { ts, by, reason, events{}, backlog{}, lodging{}, detail{} }  // 일정 자동 백업, 최근 30
 ```
 - localStorage 전용: `tw_memodoc_p_<sheetId>`(개인 메모 본문) / `tw_memodoc_pts_<sheetId>`(수정시각) / `tw_memo_pending`(공유 전송 대기열) / `tw_memo_draft_<sheetId>`(공유 작성 중) / `tw_uid`(기기ID) / `tw_name`+`tw_login_ok`(로그인 이름) / `tw_cache_events|backlog|lodging|detail`(오프라인용 마지막 데이터)
@@ -168,7 +170,6 @@ detail  : { id, title, desc, url, loc, photos:[] }                         // sh
 ## 7. 이어서 할 만한 것
 - [x] ~~주찬희: 체크리스트 1번(익명 인증·규칙·첫 세팅)~~ — **완료 확인(2026-09-07)**: 인증 없이 REST 요청 시 `401 Permission denied`, 공유 DB에 실데이터(일정 44 / 후보 15 / 숙소 3) 존재
 - [x] ~~폰 2대 현장 테스트~~ — 완료
-- [ ] **`EMERGENCY` 상수에 주찬희·안연진 휴대폰 번호 채우기** (지금은 "번호 미등록")
 - [ ] **`firebase-rules.json`을 콘솔에 다시 붙여넣기** (메모 한도 500KB → 1MB)
 - [ ] **배포 후 각 폰에서 온라인 1회 접속** — `CACHE`가 v4로 올라가 오프라인 캐시를 새로 만들어야 함
 - [ ] 실기기에서 비행기 모드 + 느린 와이파이로 서비스워커 확인 (개발 패널에서는 검증 불가)

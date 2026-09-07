@@ -1179,20 +1179,15 @@ const TRIP_ID="tokyo2026";
    현장에서 이름이 안 맞으면 관리자(주찬희)가 아래 "명단 관리"에서 즉석 추가(재배포 불필요). */
 const ROSTER_SEED=["이광재","안연진","김선모","주찬희","강은정","김미진","손지현","김경혜","조재연","양대용","김민정"];
 /* ▼ 편집 권한: 로그인 이름이 이 명단에 있으면 편집 가능(그 외는 보기 전용). PIN 없음. */
-const ADMIN_NAMES=["주찬희","안연진"];
+const ADMIN_NAMES=["주찬희","손지현"];
 /* 기관별 사전조사 자료 PDF. 아직 없어서 현재는 해외연수 계획서로 대체(목업).
    준비되면 OFFICIAL_ORGS 각 항목에 doc:"./파일명.pdf" 를 넣으면 그 기관만 교체됨. */
 const ORG_DOC_FALLBACK="./2026 따뜻한동행 일본 해외연수 계획서_20260903.pdf";
-/* ▼ 비상 연락처 — 현장 모드 헤더의 🆘 버튼에서 바로 전화. 번호가 바뀌면 여기만 고치면 됨.
-   tel:""(빈 값)이면 "번호 미등록"으로 회색 표시되고 전화가 걸리지 않음.
-   오늘 밤 숙소 전화는 lodging 데이터의 desc에서 자동으로 뽑아 맨 위에 붙는다. */
-const EMERGENCY=[
- {group:"인솔 · 현지", items:[
-   {label:"통역가이드 박진희 (한국)", show:"010-5324-4557",  tel:"+821053244557"},
-   {label:"통역가이드 박진희 (일본)", show:"090-5453-7069",  tel:"+819054537069"},
-   {label:"인솔 담당 주찬희",         show:"",               tel:""},
-   {label:"부인솔 안연진",            show:"",               tel:""}
- ]},
+/* ▼ 비상 연락처(공개 번호만) — 현장 모드 헤더의 🆘 버튼에서 바로 전화.
+   ※ 개인 휴대폰 번호는 여기에 넣지 말 것. 이 파일은 공개 저장소에 그대로 올라간다.
+      인솔진·가이드 번호는 Firebase `contacts` 노드에 두고(관리자 화면에서 입력),
+      이름 게이트를 통과한 사람만 읽는다. → renderContactsAdmin() */
+const EMERGENCY_PUBLIC=[
  {group:"일본 긴급전화 (무료)", items:[
    {label:"경찰",          show:"110", tel:"110", jp:true},
    {label:"화재 · 구급차", show:"119", tel:"119", jp:true}
@@ -1290,6 +1285,12 @@ function initFirebase(){
   fbdb.ref(fbBase("lodging")).on("value",s=>{fbShadowSet("lodging",s.val()||{});lodging=valArr(s);fbCache("lodging",lodging);if(!drag)render();if(currentPage==='lodging')renderDetailCards();});
   Object.keys(DETAIL_SECTIONS).forEach(k=>fbdb.ref(fbBase("detail/"+k)).on("value",s=>{fbShadowSet("detail/"+k,s.val()||{});detailData[k]=valArr(s);fbCache("detail",detailData);if(currentPage===k)renderDetailCards();}));
   fbdb.ref(fbBase("roster")).on("value",s=>{ _rosterExtra=s.val()?Object.values(s.val()).map(x=>x&&x.name).filter(Boolean):[]; });
+  // 비상 연락처(개인 번호) — 소스에 두지 않고 여기서 읽는다. 규칙상 로그인한 사람만 읽힘.
+  fbdb.ref(fbBase("contacts")).on("value",s=>{
+    const v=s.val()||{};
+    _contacts=Object.keys(v).map(k=>Object.assign({k:k},v[k])).sort((a,b)=>(a.ts||0)-(b.ts||0));
+    if(fmState.tab==="all"&&document.body.classList.contains("fm-open"))renderField();
+  });
   snapshotStart();
   const sb=document.getElementById("syncBadge");if(sb)sb.innerHTML=' · <b style="color:#059669">실시간 공유 중</b>';
   // 연결이 살아나면 못 보낸 공유 메모 자동 재전송
@@ -1337,7 +1338,7 @@ function enterApp(){
   fmMaybeAutoEnter();
 }
 /* ---------- 로그인 게이트 (이름 명단) ---------- */
-let _rosterExtra=[], LOGIN_NAME="";
+let _rosterExtra=[], LOGIN_NAME="", _contacts=[];
 function rosterAll(){ return ROSTER_SEED.concat(_rosterExtra); }
 function normName(s){ return String(s||"").replace(/\s+/g,"").toLowerCase(); }
 function editDist(a,b){
@@ -2081,7 +2082,7 @@ function _oe(day,start,end,cat,title,loc,desc,ref){
 /* 계획서(2026-09-03) '일본 연수 일정' 표를 그대로 옮김. 이동 구간은 계획서에 적힌 소요시간대로 분리. */
 function buildOfficialEvents(){return[
  // 9/14(월) 인천 → 도쿄
- _oe(0,"07:30","09:45","move","인천공항 집결·출국 수속 (135분)","인천국제공항 제1여객터미널","3층 출국장 M 카운터 앞 07:30 집결. 통역가이드 박진희 010-5324-4557 / (일본)090-5453-7069"),
+ _oe(0,"07:30","09:45","move","인천공항 집결·출국 수속 (135분)","인천국제공항 제1여객터미널","3층 출국장 M 카운터 앞 07:30 집결. 통역가이드 연락처는 헤더 🆘 비상 연락처에서 확인"),
  _oe(0,"09:45","12:15","move","제주항공 인천 → 도쿄(나리타) (150분)","成田国際空港","비행 약 2시간 30분"),
  _oe(0,"12:15","13:30","meal","나리타 입국 수속·공항 내 중식","成田国際空港","계획서: 12:15~15:00 수속·중식·이동"),
  _oe(0,"13:30","15:00","move","나리타공항 → 메이지가쿠인대학 이동 (차량)","明治学院大学 白金キャンパス",""),
@@ -2349,6 +2350,7 @@ function viewFieldMore(){
   h+=`</div>`;
 
   if(IS_EDITOR && fbdb){
+    h+=`<div class="fm-setgrp"><div class="lb">관리자 · 비상 연락처</div>`+renderContactsAdmin()+`</div>`;
     h+=`<div class="fm-setgrp"><div class="lb">관리자 · 접속 명단</div>`+renderRosterAdmin()+`</div>`;
     h+=`<div class="fm-setgrp"><div class="lb">관리자 · 스냅샷 복원 (일정 데이터)</div><div class="fm-card2">`+
       `<div class="fm-lrow tap act" onclick="snapshotWrite('manual').then(function(){toast('지금 상태를 저장했어요.');snapshotLoadList();})"><span class="rt">지금 상태 저장</span></div>`+
@@ -2361,6 +2363,50 @@ function viewFieldMore(){
     `<div class="fm-lrow tap act" onclick="exitFieldMode()"><span class="rt">PC 대시보드로 전환</span></div></div></div>`;
   setTimeout(()=>{ if(IS_EDITOR&&fbdb&&document.getElementById("snapList")) snapshotLoadList(); },60);
   return h;
+}
+/* 번호 정규화 — 로밍 중에도 걸리도록 국제전화 형식으로 저장한다 */
+function telNormalize(raw,cc){
+  const d=String(raw||"").replace(/[^\d+]/g,"");
+  if(!d)return "";
+  if(d[0]==="+")return d;
+  if(cc==="kr")return "+82"+d.replace(/^0/,"");
+  if(cc==="jp")return "+81"+d.replace(/^0/,"");
+  return d;
+}
+function renderContactsAdmin(){
+  return `<div class="fm-card2">`+
+    (_contacts.length?_contacts.map(c=>
+      `<div class="fm-lrow"><span class="rt">${esc(c.label)}</span>`+
+      `<span class="rv">${esc(c.show||"")}`+
+      `<button class="fm-btn" style="min-width:0;padding:6px 12px;flex:none;margin-left:8px" `+
+      `onclick="contactDel('${esc(c.k)}')">삭제</button></span></div>`).join(""):"")+
+    `<div class="fm-namerow"><input id="ctLabel" type="text" placeholder="표시 이름 (예: 인솔 담당 주찬희)"></div>`+
+    `<div class="fm-namerow"><input id="ctNum" type="tel" inputmode="tel" placeholder="번호 (예: 010-1234-5678)">`+
+    `<select id="ctCC" style="border:1px solid var(--line2);border-radius:10px;padding:0 8px;background:var(--bg);flex:none">`+
+      `<option value="kr">한국</option><option value="jp">일본</option><option value="raw">그대로</option>`+
+    `</select>`+
+    `<button class="memo-save" onclick="contactAdd()">추가</button></div>`+
+    `</div><div class="foot">여기 넣은 번호는 <b>소스코드에 남지 않고</b>, 이름 게이트를 통과한 사람만 볼 수 있어요. `+
+    `저장하면 🆘 비상 연락처 맨 위 "인솔 · 현지"에 바로 뜹니다.</div>`;
+}
+function contactAdd(){
+  if(!requireEditor()||!fbdb)return;
+  const l=document.getElementById("ctLabel"), num=document.getElementById("ctNum"), cc=document.getElementById("ctCC");
+  const label=(l.value||"").trim(), show=(num.value||"").trim();
+  if(label.length<2){ toast("표시 이름을 입력해 주세요."); return; }
+  const tel=telNormalize(show,cc.value);
+  if(!tel){ toast("번호를 입력해 주세요."); return; }
+  fbdb.ref(fbBase("contacts")).push({label,show,tel,by:LOGIN_NAME,ts:Date.now()})
+    .then(()=>{ l.value=""; num.value=""; toast("추가: "+label); setTimeout(renderField,250); })
+    .catch(()=>toast("추가 실패 — 보안 규칙을 다시 붙여넣었는지 확인해 주세요."));
+}
+function contactDel(k){
+  if(!requireEditor()||!fbdb)return;
+  const c=_contacts.find(x=>x.k===k);
+  if(!confirm((c?c.label:"이 연락처")+" 을(를) 삭제할까요?"))return;
+  fbdb.ref(fbBase("contacts")+"/"+k).remove()
+    .then(()=>{ toast("삭제했어요."); setTimeout(renderField,250); })
+    .catch(()=>toast("삭제 실패"));
 }
 function renderRosterAdmin(){
   return `<div class="fm-card2">`+
@@ -2698,7 +2744,17 @@ function buildEmergencySheet(){
     h+=`<div class="fm-sec">오늘 밤 숙소</div><div class="fm-card2">`+
        sosRow(hotel.title,tel,tel)+`</div>`;
   }
-  EMERGENCY.forEach(g=>{
+  // 인솔진·가이드 = Firebase에서 (소스에 개인번호를 두지 않기 위해)
+  h+=`<div class="fm-sec">인솔 · 현지</div>`;
+  if(_contacts.length){
+    h+=`<div class="fm-card2">`+
+       _contacts.map(c=>sosRow(c.label,c.show,c.tel)).join("")+`</div>`;
+  }else{
+    h+=`<div class="fm-note-empty">인솔진 연락처가 아직 등록되지 않았어요.`+
+       (IS_EDITOR?`<br><b>더보기 → 관리자 · 비상 연락처</b>에서 추가할 수 있어요.`
+                 :`<br>주찬희에게 등록을 요청해 주세요.`)+`</div>`;
+  }
+  EMERGENCY_PUBLIC.forEach(g=>{
     h+=`<div class="fm-sec">${esc(g.group)}</div><div class="fm-card2">`+
        g.items.map(it=>sosRow(it.label,it.show,it.tel,it.jp?"jp":"")).join("")+`</div>`;
   });

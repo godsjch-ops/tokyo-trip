@@ -40,6 +40,10 @@
           }
         },
 
+        "contacts": {
+          "$k": { ".validate": "newData.hasChildren(['label','tel']) && newData.child('label').val().length < 60 && newData.child('tel').val().length < 24" }
+        },
+
         "roster": {
           "$k": { ".validate": "newData.hasChild('name') && newData.child('name').isString() && newData.child('name').val().length < 40" }
         },
