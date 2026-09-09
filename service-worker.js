@@ -1,7 +1,7 @@
 /* 따뜻한동행 연수 일정 — 오프라인 지원 서비스워커
  * 한 번 열어본 폰은 인터넷이 없어도 앱이 열립니다.
  * 캐시 버전을 올리면(CACHE 값 변경) 다음 접속 때 새 파일을 받습니다. */
-const CACHE = 'tw-tokyo-v4';
+const CACHE = 'tw-tokyo-v5';
 const ASSETS = [
   './',
   './index.html',
@@ -10,8 +10,18 @@ const ASSETS = [
   './icon-192.png',
   './icon-512.png',
   './icon-180.png',
-  // 기관자료(현재는 해외연수 계획서로 대체) — 현장 오프라인 열람용 선캐시
+  // 연수 핸드북 · 기관별 사전조사 자료 · 계획서 — 현장 오프라인 열람용 선캐시(약 4MB)
   encodeURI('./2026 따뜻한동행 일본 해외연수 계획서_20260903.pdf'),
+  encodeURI('./핸드북/2026 따뜻한동행 일본 해외연수 핸드북.pdf'),
+  encodeURI('./핸드북/1. 메이지가쿠인대학 및 일본 복지정책.pdf'),
+  encodeURI('./핸드북/2. Sports of Heart.pdf'),
+  encodeURI('./핸드북/3. 서비스그랜트 재팬.pdf'),
+  encodeURI('./핸드북/4. 유이마루 타마다이라의숲.pdf'),
+  encodeURI('./핸드북/5. 데이서비스 라스베가스.pdf'),
+  encodeURI('./핸드북/6. 트러스트뱅크(고향사랑기부제).pdf'),
+  encodeURI('./핸드북/7. 쿄마루엔.pdf'),
+  encodeURI('./핸드북/8. ATC 에이지리스센터.pdf'),
+  encodeURI('./핸드북/9. 고향의집 오사카.pdf'),
   'https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css',
   'https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js',
   'https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js',

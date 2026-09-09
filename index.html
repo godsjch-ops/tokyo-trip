@@ -411,6 +411,16 @@
     border:1px solid var(--line);border-radius:var(--r-btn);background:var(--panel);color:var(--ink);}
   .fm-dcount{font-size:12px;color:var(--accent);font-weight:700;background:var(--accent-soft);
     border-radius:8px;padding:8px 11px;margin-bottom:12px;}
+  /* '연수 핸드북 보기' — 오늘 탭 최상단 고정(날짜를 넘겨도 항상 같은 자리) */
+  .fm-handbook{width:100%;display:flex;align-items:center;gap:10px;margin:2px 0 10px;
+    padding:12px 13px;border:1px solid var(--accent);border-radius:var(--r-btn);
+    background:var(--accent-soft);color:var(--accent);font-weight:700;font-size:var(--t-sub);
+    text-align:left;cursor:pointer;-webkit-tap-highlight-color:transparent;}
+  .fm-handbook .ic{font-size:19px;line-height:1;}
+  .fm-handbook .tx{flex:1;min-width:0;}
+  .fm-handbook .tx small{display:block;font-weight:500;font-size:12px;opacity:.8;margin-top:2px;}
+  .fm-handbook .ar{opacity:.6;}
+  .fm-handbook:active{transform:scale(.99);}
 
   /* 지금 진행 중 카드 (iOS) */
   .fm-nowcard{background:#fff;border:1px solid var(--line);border-radius:var(--r-card);padding:16px;
@@ -783,6 +793,7 @@
   <button class="btn sm" onclick="openEmergencySheet()" title="비상 연락처">🆘 비상</button>
   <button class="btn primary" onclick="enterFieldMode()">📱 현장 모드</button>
   <button class="btn editor-only" onclick="openForm()">＋ 일정 추가</button>
+  <button class="btn sm" onclick="openHandbook()">📕 연수 핸드북 보기</button>
   <button class="btn sm editor-only" id="btnLoadOfficial" onclick="loadOfficialItinerary()">📋 PDF 일정표 불러오기</button>
   <button class="btn sm editor-only" onclick="exportJSON()">내보내기</button>
   <button class="btn sm editor-only" onclick="document.getElementById('importFile').click()">불러오기</button>
@@ -1180,9 +1191,12 @@ const TRIP_ID="tokyo2026";
 const ROSTER_SEED=["이광재","안연진","김선모","주찬희","강은정","김미진","손지현","김경혜","조재연","양대용","김민정"];
 /* ▼ 편집 권한: 로그인 이름이 이 명단에 있으면 편집 가능(그 외는 보기 전용). PIN 없음. */
 const ADMIN_NAMES=["주찬희","손지현"];
-/* 기관별 사전조사 자료 PDF. 아직 없어서 현재는 해외연수 계획서로 대체(목업).
-   준비되면 OFFICIAL_ORGS 각 항목에 doc:"./파일명.pdf" 를 넣으면 그 기관만 교체됨. */
+/* 연수 핸드북(전체) — '오늘' 탭 상단 버튼과 대시보드 툴바에서 연다. */
+const HANDBOOK_DOC="./핸드북/2026 따뜻한동행 일본 해외연수 핸드북.pdf";
+/* 기관별 사전조사 자료 PDF는 OFFICIAL_ORGS 각 항목의 doc: 에 있음(./핸드북/N. ....pdf).
+   아직 자료가 없는 항목만 아래 계획서로 대체된다. */
 const ORG_DOC_FALLBACK="./2026 따뜻한동행 일본 해외연수 계획서_20260903.pdf";
+function openHandbook(){ window.open(encodeURI(HANDBOOK_DOC),"_blank","noopener"); }
 /* ▼ 비상 연락처(공개 번호만) — 현장 모드 헤더의 🆘 버튼에서 바로 전화.
    ※ 개인 휴대폰 번호는 여기에 넣지 말 것. 이 파일은 공개 저장소에 그대로 올라간다.
       인솔진·가이드 번호는 Firebase `contacts` 노드에 두고(관리자 화면에서 입력),
@@ -2003,54 +2017,56 @@ document.addEventListener("pointerover",e=>{const el=e.target&&e.target.closest?
    현장 모드 (모바일) + 최신 일정표 데이터 (PDF: 2026-09-03 최종본)
    도쿄 → 요코하마 → 시즈오카 → 하마마쓰 → 오사카 / 공식 방문기관 9곳
    ====================================================================== */
-/* 각 기관: desc=개요, purpose=방문 목적, points=사전 질문·확인 포인트(배열).
-   ※ 아래 purpose/points는 초안입니다. 사전 조사 자료가 나오면 이 부분만 교체하세요. */
+/* 각 기관: desc=개요, purpose=방문 목적, points=사전 질문·확인 포인트(배열), doc=기관자료 PDF.
+   내용은 2026-09 배포된 기관별 사전조사 자료(./핸드북/*.pdf) 기준.
+   ※ 이 배열의 desc/purpose/points/doc/field/time/day 는 buildOrgSheet()에서 코드 값이
+      우선 적용된다(Firebase 저장본보다 위). 자료가 갱신되면 여기만 고치면 됨. */
 const OFFICIAL_ORGS=[
  {id:"org-1",kind:"org",day:0,time:"15:00~16:00",field:"장애인 인식개선",host:"담당 안연진",title:"① Sports of Heart",
-  url:"https://s-heart.org/",loc:"明治学院大学 白金キャンパス",
-  desc:"장애·비장애가 함께하는 스포츠·예술·문화 활동으로 장애인식개선 캠페인을 확산하는 비영리단체. 대형 참여 이벤트 '스포츠 오브 하트'를 매년 개최한다.",
-  purpose:"인식개선 캠페인을 대중 참여형 이벤트로 키워낸 방식과 기업·행정 협력 구조를 배운다.",
-  points:["캠페인에 기업·지자체를 끌어들인 방법","장애인 당사자 참가자 모집과 현장 안전 관리","성과를 무엇으로 측정하는가"]},
+  url:"https://s-heart.org/",loc:"明治学院大学 白金キャンパス",doc:"./핸드북/2. Sports of Heart.pdf",
+  desc:"장애인과 비장애인이 대등하게 함께 즐기는 스포츠·음악·패션 축제로 공생사회를 알리는 일반사단법인(2012년 설립). 패럴림픽 휠체어 마라톤 국가대표 출신 히로미치 쥰의 제안으로 발족했고, 시그니처 프로그램 '다이버시티 에키덴'은 장애인 러너·시민·연예인 등 80여 명이 어깨띠를 주고받는 릴레이 마라톤이다.",
+  purpose:"복지를 시혜가 아닌 트렌디한 문화 콘텐츠로 브랜딩해 대중 참여를 끌어낸 방식과, 정부·기업·시민을 잇는 삼각 거버넌스를 배운다.",
+  points:["장애인복지를 즐거운 참여형 축제로 만드는 기획·브랜딩 원칙","보조금에 의존하지 않는 재원 구조(기업 스폰서십·굿즈·블록체인 토큰 FiNANCiE)","장애인·비장애인이 함께 달리는 행사의 안전 관리와 당사자 참여형 기획","따뜻한동행의 공간복지·보조기기·일자리와 묶은 한일 공동 프로젝트 가능성"]},
  {id:"org-2",kind:"org",day:0,time:"16:00~18:00",field:"장애인·노인복지 강의",host:"김재근·김원경 교수",title:"② 메이지가쿠인대학 강연",
-  url:"https://www.meijigakuin.ac.jp",loc:"明治学院大学 白金キャンパス",
-  desc:"일본 사회복지 정책 전반에 대한 대학 강의. 김재근 교수(메지로대학·장애인 분야), 김원경 교수(메이지가쿠인대학·노인 분야).",
-  purpose:"일본의 장애인·노인 복지제도 최신 동향과 한국과의 제도 차이를 이해한다.",
-  points:["개호보험·장애인종합지원법의 최근 개정 방향","지역포괄케어 시스템의 실제 운영","한·일 제도 비교에서 얻을 시사점"]},
+  url:"https://www.meijigakuin.ac.jp",loc:"明治学院大学 白金キャンパス",doc:"./핸드북/1. 메이지가쿠인대학 및 일본 복지정책.pdf",
+  desc:"일본 사회복지 정책 전반에 대한 대학 강의. 메이지가쿠인대학은 1863년 설립된 일본 기독교 사회사업의 발상지로 'Do for Others(다른 이를 위해 행동하라)'를 모토로 한다. 김재근 교수(메지로대학·장애인 분야), 김원경 교수(메이지가쿠인대학·노인 분야).",
+  purpose:"개호보험·지역포괄케어에서 2024년 '돌봄의 과학화'(LIFE 아웃컴 평가), 2025년 개정 주택 세이프티넷법까지 일본 복지제도의 최신 흐름과 한국에 줄 시사점을 잡는다.",
+  points:["지역포괄케어시스템이 현장과 어르신 삶에 실제로 남긴 성과와 한계","LIFE 데이터 기반 아웃컴 평가로 전환하려면 무엇이 선행되어야 하는가","노노개호·고독사, 영 케어러, 장애인의 '부모 사후' 문제에 대한 대응","장애인 고용 대행 비즈니스 편법을 막기 위해 논의 중인 대안"]},
  {id:"org-3",kind:"org",day:1,time:"09:00~10:30",field:"자원봉사·프로보노",host:"담당 손지현",title:"③ 서비스그랜트 재팬",
-  url:"https://www.servicegrant.or.jp/",loc:"サービスグラント 東京",
-  desc:"직장인의 전문 역량(기획·디자인·IT 등)을 비영리단체에 중개하는 '프로보노' 기업자원봉사 단체.",
-  purpose:"전문 자원봉사를 지속가능한 프로그램으로 운영하는 매칭·품질관리 노하우를 배운다.",
-  points:["프로보노 참가자와 단체를 어떻게 매칭하는가","프로젝트 품질과 완주율을 어떻게 관리하는가","기업 파트너십과 수익 모델"]},
+  url:"https://www.servicegrant.or.jp/",loc:"サービスグラント 東京",doc:"./핸드북/3. 서비스그랜트 재팬.pdf",
+  desc:"직장인의 전문 역량(마케팅·홍보·IT·조직운영)을 NPO에 연결하는 프로보노 전문 인정NPO법인. 2005년 '서비스그랜트 TOKYO'로 출발해 2025년 20주년을 맞았고 프로젝트 1,000건을 넘겼다. 경상수익 약 2억 4천만 엔의 98%가 사업수익이고 보조금은 0원이다.",
+  purpose:"전문 자원봉사를 팀 단위 프로젝트로 완결시키는 매칭·코디네이션 구조와, 보조금 없이 기업 협력만으로 자립한 재원 모델을 배운다.",
+  points:["코디네이터 한 명이 동시에 관리하는 프로젝트 수와 품질관리 방식","육아휴직 복귀 전 참여하는 '마마보노', 은퇴자의 '고향 프로보노' 운영 방식","기업 프로보노 사업비, 특히 간접비를 산정하는 기준","지원받는 NPO가 지는 의무와 역할"]},
  {id:"org-4",kind:"org",day:1,time:"14:00~16:00",field:"공간복지·서비스고령자주택",host:"담당 주찬희",title:"④ 유이마루 타마다이라의 숲",
-  url:"https://yui-marl.jp/tamadaira/",loc:"ゆいまーる多摩平の森 日野市",
-  desc:"고령자와 젊은 세대가 함께 사는 지역공생형 서비스고령자주택(CCRC). 옛 공단주택 단지를 재생해 조성.",
-  purpose:"세대통합형 주거 커뮤니티의 공간 설계와 입주자 자치·돌봄 연계 방식을 살펴본다.",
-  points:["세대 간 교류를 유도하는 공간·프로그램 설계","돌봄 필요도가 높아졌을 때의 대응(계속 거주 가능 여부)","운영 주체와 지자체의 역할 분담"]},
+  url:"https://yui-marl.jp/tamadaira/",loc:"ゆいまーる多摩平の森 日野市",doc:"./핸드북/4. 유이마루 타마다이라의숲.pdf",
+  desc:"1958년 지은 2,792호 규모 공공임대단지를 헐지 않고 골조를 남겨 고쳐 쓴 재생 사업. 주민·히노시·UR이 100회 넘는 의견교환회를 거쳐 저층 5개 동을 보존했고, 커뮤니티넷이 2개 동을 20년 임대해 2011년 개관했다(서비스고령자주택 32호+커뮤니티하우스 30호). 담장 없는 개방형 구조로 청년 셰어하우스·육아가정 동과 한 단지를 이룬다.",
+  purpose:"노후 공공주택을 헐지 않고 세대통합형 주거로 되살린 재생 방식과, 단지 안에서 돌봄이 끊기지 않는 Aging in Place 구조를 살펴본다.",
+  points:["월 16만~20만 엔을 공적연금 범위 안에서 감당하도록 설계한 가격 구조","1층 소규모 다기능 '구리~은하트' 연계로 중증화·치매 발병에도 계속 거주(일반 사코쥬는 퇴소가 원칙)","담장 없는 개방형 단지에서 치매 입주자 배회를 막는 안전 대책","2026년 청년 셰어하우스(리엔또) 임대 만료 이후 세대 교류 운영 계획"]},
  {id:"org-5",kind:"org",day:2,time:"09:50~11:00",field:"노인복지·주간보호",host:"담당 김경혜",title:"⑤ 데이서비스 라스베가스",
-  url:"https://las-vegas.jp/shop/yokohamatsuzuki/",loc:"デイサービス ラスベガス 横浜都筑",
-  desc:"파칭코·카지노를 콘셉트로 한 자립지원형 주간보호시설(요코하마 츠즈키점). '즐거움'을 재활 동기로 활용한다.",
-  purpose:"이용자의 활동 참여를 끌어올리는 동기부여 설계와 리스크 관리를 배운다.",
-  points:["게임형 프로그램이 신체·인지 기능에 주는 효과를 어떻게 측정하는가","도박 우려에 대한 시설의 설명과 장치","직원 교육과 안전관리"]},
+  url:"https://las-vegas.jp/shop/yokohamatsuzuki/",loc:"デイサービス ラスベガス 横浜都筑",doc:"./핸드북/5. 데이서비스 라스베가스.pdf",
+  desc:"'마지못해 가는 곳'을 '꼭 가고 싶은 곳'으로 바꾸겠다는 문제의식에서 출발한 자립지원형 주간보호. 미국 고령자가 카지노를 여가로 즐기는 모습에서 착안해 2013년 도쿄 아다치구 1호점을 열었고 요코하마 츠즈키점은 2014년 개설. 돌봄시설 느낌을 지우려 기념지폐·LV여권·검은색 송영차량을 쓴다.",
+  purpose:"이용자의 선택과 자발성을 중심에 둔 프로그램 설계가 이용 지속률과 만족도로 이어지는 구조를 확인한다.",
+  points:["게이밍 레크리에이션·기능훈련(VEGA Stretch)·식사 메뉴에 이용자 선택권을 반영하는 방법","남성 어르신과 여성 어르신의 참여도·이용률 차이","영리기업이 개호보험 제도 안에서 운영할 때의 장점과 한계"]},
  {id:"org-6",kind:"org",day:2,time:"13:30~15:00",field:"고향사랑기부(고향납세)",host:"담당 이광재",title:"⑥ 트러스트뱅크 (고향사랑기부제)",
-  url:"https://www.trustbank.co.jp",loc:"",
-  desc:"일본 고향납세(후루사토 납세)와 지역 활성화를 연결하는 기업. 대표 플랫폼 '후루사토 초이스'를 운영한다. (Zoom 화상회의)",
-  purpose:"기부금이 지역 사업으로 순환되는 구조와 한국 고향사랑기부제에 줄 시사점을 파악한다.",
-  points:["답례품 경쟁을 넘어 '사업 지정 기부'를 어떻게 늘렸는가","지자체 컨설팅·데이터 지원 내용","한국 제도와의 차이와 도입 가능성"]},
+  url:"https://www.trustbank.co.jp",loc:"",doc:"./핸드북/6. 트러스트뱅크(고향사랑기부제).pdf",
+  desc:"일본 최대 고향납세 플랫폼 '후루사토 초이스'를 운영하는 기업(2012년 설립). 전국 지자체의 약 95%인 1,700곳 이상이 이용하며 2018년 도쿄증시 상장사 (주)체인지의 자회사가 됐다. 총무성 출신 오이 준 대표가 지자체와 기부자의 '점과 점의 만남'을 '장(플랫폼)'으로 바꾸겠다는 구상으로 창업했다. (Zoom 화상회의)",
+  purpose:"기부금이 지역 사업으로 순환되는 구조와, 시행 4년차 한국 고향사랑기부제가 19년차 일본에서 가져올 시사점을 파악한다.",
+  points:["법인 기부 허용·지정기부 확대 등 제도가 넓어져 온 과정","거버먼트 크라우드펀딩(누적 5,000건)과 지자체 DX 지원 사업 모델","고향납세가 개인 기부에서 차지하는 비중이 커진 데 대한 기부문화 축소 비판","지정기부로 협력하는 NGO가 있는지, 어떤 방식으로 함께하는지"]},
  {id:"org-7",kind:"org",day:3,time:"10:00~11:30",field:"장애인일자리·유니버설농업",host:"담당 조재연",title:"⑦ 쿄마루엔 (きょうまる園)",
-  url:"https://kyomaru.net/",loc:"きょうまる園 浜松",
-  desc:"유니버설 농업(스마트팜) 경영 모델. 장애인 약 30명을 고용해 농산물 생산·가공·판매를 운영한다. (静岡県浜松市中央区鶴見町386-1)",
-  purpose:"장애인 고용을 수익 사업으로 성립시킨 작업 설계와 판로 확보 방법을 배운다.",
-  points:["장애 특성에 맞춘 작업 공정 분해·배치","매출과 임금 수준, 정부 지원 비중","판로(직거래·기업 납품) 확보 전략"]},
+  url:"https://kyomaru.net/",loc:"きょうまる園 浜松",doc:"./핸드북/7. 쿄마루엔.pdf",
+  desc:"에도시대부터 13대를 이어온 하마마쓰의 농가로, 1984년 취농한 스즈키 아츠시 대표가 '유니버설 농업'을 경영전략으로 정립했다. 장애인 약 30명이 일하며(전 직원의 25~30%) 매출은 6,500만 엔에서 약 6억 엔으로 30년간 10배 성장했다. 2019년 일본농업상 대상·천황배 수상. (静岡県浜松市中央区鶴見町386-1)",
+  purpose:"복지나 자선이 아니라 경영전략으로 장애인 고용을 세운 작업 재설계 방식과, 사람에 맞춰 일을 다시 만드는 조직 구조를 배운다.",
+  points:["생산부문(수경부·토경부)보다 위에 배치한 '심경부(心耕部)'의 역할과 지휘체계","공정을 잘게 쪼개 단계화한 '내비게이션 맵'과 능력·급여 일치 원칙","'생력화'가 아닌 '사람을 살리는 활성화 기계' 개발 절차와 비용 부담 주체","특례자회사와의 작업청부 계약으로 만든 농가·기업·장애인 삼자 이익 구조"]},
  {id:"org-8",kind:"org",day:3,time:"15:30~17:00",field:"보조기구 전시",host:"담당 김미진",title:"⑧ ATC 에이지리스센터",
-  url:"https://www.ageless.gr.jp",loc:"ATCエイジレスセンター 大阪",
-  desc:"장애인·고령자용 복지용구·보조기기를 상설 전시하고 체험·상담할 수 있는 서일본 최대급 센터.",
-  purpose:"보조기기 정보 제공·상담·체험을 한곳에서 제공하는 운영 방식을 살펴본다.",
-  points:["기기 선정·전시 갱신 기준","상담 인력의 전문성과 연계(판매·대여·지원금)","이용자 데이터 활용"]},
+  url:"https://www.ageless.gr.jp",loc:"ATCエイジレスセンター 大阪",doc:"./핸드북/8. ATC 에이지리스센터.pdf",
+  desc:"1996년 개관한 약 1,500평 규모의 일본 최대 복지용구·보조기기 상설전시장. 오사카시와 아시아태평양무역센터(주)의 실행위원회가 주체이고 현장 운영은 BCC(주)가 맡는다. 여러 제조사 제품을 한자리에서 비교·체험할 수 있고 세미나·이벤트가 월 20회가량 열린다.",
+  purpose:"보조기기 정보 제공·상담·체험을 한곳에서 제공하는 운영 방식과, 이용자 의견을 기업 제품개발로 되돌리는 피드백 구조를 살펴본다.",
+  points:["관람 포인트 — 배리어프리 주택 모델룸, 전동휠체어·복지차량 승차 체험, IoT 낙상 감지·치유 로봇, 유니버설 디자인 생활용품","출전 기업 선정·심사 기준과 '미래전시부스'(일본 미출시 제품) 운영 방식","입장료 무료를 유지하는 재정 기반(출전료 중심 쇼룸형 모델)","방문객 앙케이트가 실제 제품 개선으로 이어진 사례"]},
  {id:"org-9",kind:"org",day:4,time:"10:00~11:30",field:"노인복지·특별양호노인홈",host:"담당 김경혜",title:"⑨ 고향의집·오사카 (故郷の家)",
-  url:"https://www.kokorono.or.jp/",loc:"故郷の家 大阪",
-  desc:"재일 한국인 어르신을 위한 다문화 공생형 특별양호노인홈. 사회복지법인 '마음의 가족'이 운영한다.",
-  purpose:"문화·언어를 배려한 돌봄(식사·행사·종교)과 재일동포 복지의 현재를 이해한다.",
-  points:["한국식 식사·명절·언어 지원을 어떻게 운영하는가","입소 대기와 재정 구조","직원 구성과 다문화 돌봄 교육"]}
+  url:"https://www.kokorono.or.jp/",loc:"故郷の家 大阪",doc:"./핸드북/9. 고향의집 오사카.pdf",
+  desc:"목포 공생원에서 출발한 사회복지법인 '마음의 가족(こころの家族)'이 운영하는 특별양호노인홈. 1980년대 재일한국인 고독사가 잇따르자 윤기 이사장이 필요성을 제기해 1989년 사카이시에 첫 고향의 집을 열었고 이후 오사카·고베·교토로 확대됐다. 지금은 재일한국인과 일본인이 함께 사는 다문화 공생형 시설을 지향한다. 특별요양 80명·단기거주 10명·데이케어 20명 규모. (堺市南区桧尾3360-12)",
+  purpose:"국경·민족·문화를 넘어 함께 사는 돌봄(HEART SERVICE)이 식사·행사·언어에서 실제로 어떻게 구현되는지 확인한다.",
+  points:["과거와 현재의 돌봄 방식이 어떻게 달라졌는가","대표적인 문화 프로그램과 이용자 반응","개호보험과 본인부담금의 비율, 그 밖의 재원 구성(기부금·위탁사업비)","지역사회에 열려 있는 개방형 프로그램"]}
 ];
 const OFFICIAL_SPOTS=[
  {id:"spot-1",kind:"visit",title:"시부야 공원 (도쿄)",url:"",loc:"渋谷 東京",desc:"9/15(화) 오전 관광·중식."},
@@ -2251,12 +2267,20 @@ function renderFmTop(){
 }
 function viewFieldToday(){
   const di=fmState.day;
-  let h=`<select class="fm-sel" onchange="fmState.day=+this.value;renderField()">`+
+  let h=handbookBtnHtml();
+  h+=`<select class="fm-sel" onchange="fmState.day=+this.value;renderField()">`+
     DAYS.map((d,i)=>`<option value="${i}"${i===di?" selected":""}>${i+1}일차 — ${d.label} (${d.dow})</option>`).join("")+`</select>`;
   h+=`<div class="fm-daynav">`+DAYS.map((d,i)=>`<span class="dot${i===di?" on":""}"></span>`).join("")+
     `<span class="hint">← 좌우로 밀어 날짜 이동 →</span></div>`;
   h+=`<div class="fm-stage" id="fmStage"><div class="fm-track" id="fmTrack"><div class="fm-page">${fmTimelineHtml(di)}</div></div></div>`;
   return h;
+}
+/* '연수 핸드북 보기' 버튼 — 날짜 스와이프 영역 바깥이라 어느 날짜에서도 항상 보인다. */
+function handbookBtnHtml(){
+  return `<button class="fm-handbook" onclick="openHandbook()">`+
+    `<span class="ic">📕</span>`+
+    `<span class="tx">연수 핸드북 보기<small>2026 따뜻한동행 일본 해외연수 핸드북 (PDF)</small></span>`+
+    `<span class="ar">›</span></button>`;
 }
 /* 특정 날짜 di의 타임라인 HTML(스와이프 스테이지에 넣는 단위) */
 function fmTimelineHtml(di){
@@ -2659,8 +2683,16 @@ function memoZoneHtml(){
     `<div class="sh-memozone" id="fmMemoZone"><div id="fmMemoWrap"></div></div>`;
 }
 /* ---- 상세 HTML 빌더 ---- */
+/* 공식 방문기관은 사전조사 자료(OFFICIAL_ORGS)의 개요·목적·질문·PDF를 우선 적용한다.
+   이 항목들은 대시보드 편집 폼에 없어서 한 번 수정하면 사라지던 값이라, 코드를 원본으로 삼는다.
+   제목·장소·홈페이지는 편집한 값(Firebase)을 그대로 쓴다. */
+function orgBrief(id){
+  const b=OFFICIAL_ORGS.find(x=>x.id===id); if(!b)return null;
+  return {day:b.day,time:b.time,field:b.field,desc:b.desc,purpose:b.purpose,points:b.points,doc:b.doc};
+}
 function buildOrgSheet(id){
-  const o=backlog.find(x=>x.id===id); if(!o)return null;
+  const raw=backlog.find(x=>x.id===id); if(!raw)return null;
+  const o=Object.assign({},raw,orgBrief(id)||{});
   const facts=[];
   if(o.day!=null)facts.push(`방문 ${o.day+1}일차`);
   if(o.time)facts.push(o.time);

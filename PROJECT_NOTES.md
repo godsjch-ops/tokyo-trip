@@ -57,7 +57,7 @@
   - 오늘: `computeTodayIdx()`로 오늘 필터. 여행 전이면 D-day + 날짜 셀렉터. 여행중이면 "지금 진행 중/다음" 카드 + 타임라인(지난 건 흐리게). `ref` 있는 일정엔 "기관 정보" 버튼.
     - **iOS풍 날짜 스와이프**: 타임라인을 손가락으로 좌우로 밀면 날짜 이동. `viewFieldToday`가 `.fm-stage>.fm-track>.fm-page` 구조로 렌더, `fmTimelineHtml(di)`가 하루 단위 HTML 생성. `fmSetupSwipe()`가 `#fmBody`에 touch(start non-passive/move non-passive로 preventDefault) 바인딩 → 드래그 중 인접 날짜 페이지(`.fm-page.adj`)를 만들어 손가락 따라 이동(미리보기), 임계(70px/20%) 넘으면 `FM_EASE`로 슬라이드 후 `fmState.day` 커밋·재렌더. 세로 스크롤은 lock='v'로 무시, 경계는 감쇠(rubber-band). 셀렉터 아래 날짜 점(`.fm-daynav`).
   - 기관: `backlog`의 `kind:"org"` 9곳 카드를 **일자별 그룹**(`.fm-daygroup`+`.fm-dayhead`, 그룹 간 간격)으로 표시 → 시트(정보 + 공식 홈페이지 + **📄 기관자료 자세히보기** + 접이식 지도 + 메모). 아래 관광(kind:"visit")도 표시.
-    - 기관(kind:"org") 시트는 길찾기 대신 `o.doc||ORG_DOC_FALLBACK` PDF를 새 창으로 엶(차량 단체 이동이라 길찾기 불필요). `ORG_DOC_FALLBACK`은 현재 해외연수 계획서 PDF(목업). 기관별 사전조사 PDF 준비되면 `OFFICIAL_ORGS`에 `doc:"./파일.pdf"` 추가 + `service-worker.js` ASSETS에 선캐시. 관광(kind:"visit")은 기존 길찾기 유지.
+    - 기관(kind:"org") 시트는 길찾기 대신 `o.doc||ORG_DOC_FALLBACK` PDF를 새 창으로 엶(차량 단체 이동이라 길찾기 불필요). 2026-09-09부터 9곳 모두 `OFFICIAL_ORGS`의 `doc:"./핸드북/N. ….pdf"`(기관별 사전조사 자료)를 가리킨다. 관광(kind:"visit")은 기존 길찾기 유지.
   - 숙소: `lodging` 카드, 오늘 밤 숙소 강조(`fmPeriodCoversDay`). 시트에 접이식 지도 + 메모.
   - 식당: `kind:"food"` 없으면 "준비 중" 안내 + 일정표 meal 블록 목록.
   - 전체(메모·설정): 내 이름 설정(`saveMyName`), 내 메모 내보내기 — **HTML 저장**(`downloadMemos`, `buildMemoHtml`이 사진 data:URI까지 담은 단독 HTML 문서 생성) / **인쇄·PDF**(`printMemos`, 새 창에 HTML 쓰고 자동 `print()` → "PDF로 저장") / **공유**(`shareMemos`, Web Share로 .html 파일, 안되면 텍스트 요약 복사). 사진이 있으면 .txt로는 담을 수 없어 HTML로 전환함(`buildMemoText`는 텍스트 요약용으로 유지). **내 메모 모아보기**(`collectMyMemos`가 `tw_memodoc_p_*` 스캔 → 카드, 탭하면 `openSheetById`로 해당 시트 열기). "PC 대시보드로 전환"(`exitFieldMode`).
@@ -112,6 +112,18 @@
 7. **확대 잠금 해제** — viewport에서 `maximum-scale=1.0, user-scalable=no` 제거. 안드로이드 크롬이 이걸 존중해 참가자가 글씨를 못 키웠다.
 
 > 검증 못 한 것: **서비스워커 동작은 실기기 확인 필요.** 개발용 브라우저 패널이 서비스워커 등록 자체를 막아(빈 1줄짜리 SW도 동일하게 실패) 오프라인·3초 타임아웃 경로는 런타임으로 확인하지 못했다. 문법 검사(`node --check`)만 통과.
+
+### 기관 자료 · 연수 핸드북 반영 (2026-09-09)
+`핸드북/` 폴더에 들어온 전체 핸드북 1개 + 기관별 사전조사 자료 9개 PDF를 앱에 연결했다.
+
+1. **연수 핸드북 버튼** (`HANDBOOK_DOC`, `openHandbook()`, `handbookBtnHtml()`) — 현장 모드 **오늘 탭 최상단**(`viewFieldToday()` 첫 줄, 날짜 셀렉트 위)과 PC 툴바에 배치. **날짜 스와이프 스테이지(`.fm-stage`) 바깥**이라 좌우로 날짜를 넘겨도 버튼은 항상 같은 자리에 남는다. 스타일은 `.fm-handbook`.
+2. **기관별 PDF 연결** — `OFFICIAL_ORGS` 9개 항목에 `doc:` 추가. ⚠️ **파일 번호와 앱 번호가 1↔2만 어긋난다**: `1. 메이지가쿠인대학…pdf` → `org-2`(② 강연), `2. Sports of Heart.pdf` → `org-1`(① SOH). 3~9번은 그대로 일치.
+3. **개요·목적·질문 갱신** — 9곳의 `desc`/`purpose`/`points`를 사전조사 자료 기준으로 교체(설립연도·대표·규모·재원 등 사실 위주).
+4. **코드 우선 병합** (`orgBrief()` → `buildOrgSheet()`) — 화면 데이터는 Firebase `backlog`에서 오므로 상수만 고치면 반영되지 않는다. 그래서 공식 기관은 `OFFICIAL_ORGS`의 `day/time/field/desc/purpose/points/doc`를 **저장본보다 우선** 적용한다(제목·장소·홈페이지는 편집값 유지). 전면교체 버튼을 누를 필요가 없고, 연수 시작 후 잠긴 상태에서도 반영된다.
+   - 부수 효과로 기존 결함이 막힌다: `saveBacklog()`는 `{id,title,desc,url,loc}`만 다시 만들어 저장하므로, PC에서 기관을 한 번 수정하면 `purpose`·`points`·`time`·`field`·`day`가 통째로 사라졌다. 이제 시트 렌더 시 코드에서 되살아난다. (`viewFieldOrgs()`의 목록 그룹핑은 아직 저장본을 그대로 쓴다 — 남은 과제.)
+   - 대신 **PC 편집 폼에서 기관 개요(`desc`)를 고쳐도 코드 값이 이긴다.** 기관 개요는 앞으로 `OFFICIAL_ORGS`에서 관리한다.
+5. **오프라인 선캐시** — `service-worker.js` ASSETS에 PDF 10개(약 4MB) 추가, `CACHE`를 `tw-tokyo-v5`로 올림 → **배포 후 각 폰이 온라인에서 1회 열어야** 캐시가 새로 만들어진다.
+6. 검증: `node --check`(index.html 인라인 JS·service-worker.js) 통과. 로컬 서버 + 실제 Firebase 데이터로 오늘 탭 5개 날짜 전부에서 버튼 유지, 9곳 시트의 PDF 링크 HTTP 200 및 개요·목적·질문 갱신 확인. 서비스워커는 이번에도 실기기 확인 필요.
 
 ## 4. 데이터 구조
 ### Firebase (Realtime DB) 노드
