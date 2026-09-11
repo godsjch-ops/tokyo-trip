@@ -1207,7 +1207,9 @@ const EMERGENCY_PUBLIC=[
    {label:"화재 · 구급차", show:"119", tel:"119", jp:true}
  ]},
  {group:"영사 조력", items:[
-   {label:"외교부 영사콜센터 (24시간)", show:"+82-2-3210-0404", tel:"+82233210404"}
+   {label:"외교부 영사콜센터 (24시간·유료)", show:"+82-2-3210-0404", tel:"+82232100404"},
+   {label:"주일본 대사관 긴급 (도쿄 · 야간·휴일)", show:"+81-70-2153-5454", tel:"+817021535454"},
+   {label:"주오사카 총영사관 긴급 (야간·휴일)", show:"+81-90-3050-0746", tel:"+819030500746"}
  ]}
 ];
 const MYMAPS_MID="1O59R_FlNsb6EqQNAsSVZwUAOwPPK2q4";
@@ -1842,7 +1844,9 @@ function openBacklogForm(id=null){
 function closeBacklogForm(){document.getElementById("blFormOverlay").classList.remove("on");}
 function saveBacklogItem(){
   const title=document.getElementById("blTitle").value.trim();if(!title){toast("제목을 입력하세요.");return;}
-  const obj={id:blEditId||uid(),title,desc:document.getElementById("blDesc").value,url:document.getElementById("blUrl").value.trim(),loc:document.getElementById("blLoc").value.trim()};
+  // 수정 시 kind·day·time·field·doc·photos 등 폼에 없는 필드는 보존(예전엔 통째로 날아가 기관이 '기관' 탭에서 사라졌음)
+  const prev=blEditId?(backlog.find(x=>x.id===blEditId)||{}):{};
+  const obj={...prev,id:blEditId||uid(),title,desc:document.getElementById("blDesc").value,url:document.getElementById("blUrl").value.trim(),loc:document.getElementById("blLoc").value.trim()};
   if(blEditId)backlog=backlog.map(x=>x.id===blEditId?obj:x);else backlog.push(obj);
   persistBacklog();closeBacklogForm();render();toast(blEditId?"수정되었습니다.":"추가되었습니다.");
 }
@@ -1975,9 +1979,11 @@ function saveDetailItem(){
   const title=document.getElementById("dTitle").value.trim();if(!title){toast("제목을 입력하세요.");return;}
   let key=dCurrent.key;
   if(key==="visit"||key==="food")key=document.getElementById("dKind").value;
-  const obj={id:dEditId||uid(),title,desc:document.getElementById("dDesc").value,
+  // 수정 시 폼에 없는 필드(kind·day·time·field·doc·period 등) 보존. 공식 기관(org)은 분류 셀렉트에 없으므로 visit로 강등되지 않게 유지
+  const prev=dEditId?(catFind(dCurrent.key,dEditId)||{}):{};
+  const obj={...prev,id:dEditId||uid(),title,desc:document.getElementById("dDesc").value,
     url:document.getElementById("dUrl").value.trim(),loc:document.getElementById("dLoc").value.trim(),photos:detailFormPhotos};
-  if(key==="visit"||key==="food")obj.kind=key;
+  if(key==="visit"||key==="food")obj.kind=(prev.kind==="org")?"org":key;
   if(key==="lodging")obj.period=document.getElementById("dPeriod").value.trim();
   catUpsert(key,obj);closeDetailForm();render();renderDetailCards();
   toast(dEditId?"수정되었습니다.":"추가되었습니다.");
@@ -2155,7 +2161,9 @@ function loadOfficialItinerary(){
   if(!typedConfirm("현재 일정·방문기관·숙소를 계획서(PDF) 최종본으로 전면 교체합니다.\n· 방금 백업 JSON이 다운로드됐어요.\n· 개인/공유 메모는 유지됩니다.","전면교체"))return;
   if(fbdb)snapshotWrite("load-official");
   events=buildOfficialEvents();
-  const keepFood=backlog.filter(x=>x.kind==="food");
+  // 앱에서 직접 추가한 식당만 보존. 코드(OFFICIAL_SPOTS)에 있는 식당은 아래에서 다시 들어오므로 제외(두 번 실행 시 중복 방지)
+  const officialIds=new Set(OFFICIAL_SPOTS.map(o=>o.id));
+  const keepFood=backlog.filter(x=>x.kind==="food"&&!officialIds.has(x.id));
   backlog=OFFICIAL_ORGS.map(o=>Object.assign({},o))
     .concat(OFFICIAL_SPOTS.map(o=>Object.assign({},o)))
     .concat(keepFood);
@@ -2570,7 +2578,7 @@ function viewFieldFood(){
     h+=`<div class="fm-sec">식당 ${foods.length}곳</div>`;
     foods.forEach(f=>{
       h+=`<div class="fm-item" onclick="openOrgSheet('${f.id}')"><div class="h"><b>${esc(f.title)}</b></div>`+
-        (f.desc?`<div class="d">${esc(f.desc)}</div>`:"")+(f.loc?`<div class="d">📍 ${esc(f.loc)}</div>`:"")+`</div>`;
+        (f.desc?`<div class="d">${esc((f.desc||"").split("\n")[0])}</div>`:"")+(f.loc?`<div class="d">📍 ${esc(f.loc)}</div>`:"")+`</div>`;
     });
   }
   h+=`<div class="fm-sec">일정표 식사 시간</div>`;
