@@ -1,7 +1,7 @@
 /* 따뜻한동행 연수 일정 — 오프라인 지원 서비스워커
  * 한 번 열어본 폰은 인터넷이 없어도 앱이 열립니다.
  * 캐시 버전을 올리면(CACHE 값 변경) 다음 접속 때 새 파일을 받습니다. */
-const CACHE = 'tw-tokyo-v5';
+const CACHE = 'tw-tokyo-v6';
 const ASSETS = [
   './',
   './index.html',
