@@ -1,0 +1,19 @@
+{
+  "name": "Ttadong Walk Together",
+  "headFontFace": "Malgun Gothic",
+  "bodyFontFace": "Malgun Gothic",
+  "colors": {
+    "dk1": "0F1B2D",
+    "lt1": "FFFFFF",
+    "dk2": "13294B",
+    "lt2": "F1F4F8",
+    "accent1": "1A7FC5",
+    "accent2": "6FAE2E",
+    "accent3": "F2A01B",
+    "accent4": "E5484D",
+    "accent5": "5B6B82",
+    "accent6": "A9C2DD",
+    "hlink": "1A7FC5",
+    "folHlink": "5B6B82"
+  }
+}

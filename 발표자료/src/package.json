@@ -1,0 +1,11 @@
+{
+  "name": "tokyo-trip-presentation",
+  "private": true,
+  "description": "2026 일본 해외연수 결과 공유 발표 덱 생성 (pptxgenjs)",
+  "scripts": {
+    "build": "node build.js raw.pptx && python post.py raw.pptx ready.pptx"
+  },
+  "dependencies": {
+    "pptxgenjs": "^4.0.1"
+  }
+}
