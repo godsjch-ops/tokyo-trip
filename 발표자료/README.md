@@ -2,6 +2,10 @@
 
 > 이 폴더는 `presentation/2026-10` 브랜치에만 있다. 앱(`main`, GitHub Pages 배포)과는 합치지 않는다.
 
+> ⚠ **2026-10-12부터 발표 파일(pptx)이 원본이다.** 직접 고친 내용(‘실제 화면’ 장 삭제 → 7번은 31~35장, 32·34번 문구 수정)이 있으므로
+> `report/fill.py`로 처음부터 다시 만들면 그 수정이 사라진다. 고칠 땐 PowerPoint에서 직접, 또는 `report/edit_closing.py`처럼 **한 장만** 고치는 방식으로.
+> 마지막 장(35) 메시지: “여러분이 문제라고 느끼는 부분의 전문가는 바로 여러분 — 가진 문제를 AI와 함께 해결해 보는 경험을 누려 보시길”.
+
 ## 회사 PC에서 이어하기 (처음 한 번)
 
 1. 저장소 받기: `git clone -b presentation/2026-10 https://github.com/godsjch-ops/tokyo-trip.git`
